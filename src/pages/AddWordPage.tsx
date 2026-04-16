@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X, Sparkles, Loader2 } from 'lucide-react';
 import { useAddWord } from '@/hooks/useWords';
+import { generateDefinition, generateExampleSentences } from '@/lib/llm';
 import type { Register } from '@/lib/types';
 
 const registers: { value: Register; label: string }[] = [
@@ -27,7 +28,48 @@ export default function AddWordPage() {
   const [collocations, setCollocations] = useState<string[]>([]);
   const [collocationInput, setCollocationInput] = useState('');
   const [register, setRegister] = useState<Register>('formal');
+  const [loadingDefinition, setLoadingDefinition] = useState(false);
+  const [loadingExample, setLoadingExample] = useState(false);
   const addWord = useAddWord();
+
+  const handleAutoDefinition = async () => {
+    if (!word.trim()) {
+      toast.error('Enter a word first');
+      return;
+    }
+    setLoadingDefinition(true);
+    try {
+      const result = await generateDefinition(word.trim());
+      setDefinition(result.definition);
+      toast.success('Definition generated!');
+    } catch {
+      toast.error('Failed to generate definition');
+    } finally {
+      setLoadingDefinition(false);
+    }
+  };
+
+  const handleAutoExample = async () => {
+    if (!word.trim()) {
+      toast.error('Enter a word first');
+      return;
+    }
+    if (!definition.trim()) {
+      toast.error('Add a definition first');
+      return;
+    }
+    setLoadingExample(true);
+    try {
+      const sentences = await generateExampleSentences(word.trim(), definition.trim());
+      // Pick the first one, user can regenerate for others
+      setExampleSentence(sentences[0]);
+      toast.success('Example generated!');
+    } catch {
+      toast.error('Failed to generate example');
+    } finally {
+      setLoadingExample(false);
+    }
+  };
 
   const addCollocation = () => {
     const trimmed = collocationInput.trim();
@@ -88,18 +130,71 @@ export default function AddWordPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+
+            {/* Word input */}
             <div className="space-y-2">
               <Label htmlFor="word">Word</Label>
-              <Input id="word" placeholder="e.g., ephemeral" value={word} onChange={(e) => setWord(e.target.value)} required />
+              <Input
+                id="word"
+                placeholder="e.g., ephemeral"
+                value={word}
+                onChange={(e) => setWord(e.target.value)}
+                required
+              />
             </div>
+
+            {/* Definition with AI button */}
             <div className="space-y-2">
-              <Label htmlFor="definition">Definition</Label>
-              <Textarea id="definition" placeholder="What does this word mean?" value={definition} onChange={(e) => setDefinition(e.target.value)} required />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="definition">Definition</Label>
+                <button
+                  type="button"
+                  onClick={handleAutoDefinition}
+                  disabled={loadingDefinition || !word.trim()}
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loadingDefinition
+                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                    : <Sparkles className="h-3 w-3" />
+                  }
+                  {loadingDefinition ? 'Generating...' : 'Auto-fill'}
+                </button>
+              </div>
+              <Textarea
+                id="definition"
+                placeholder="What does this word mean?"
+                value={definition}
+                onChange={(e) => setDefinition(e.target.value)}
+                required
+              />
             </div>
+
+            {/* Example sentence with AI button */}
             <div className="space-y-2">
-              <Label htmlFor="example">Example Sentence (optional)</Label>
-              <Textarea id="example" placeholder="Where did you first see this word?" value={exampleSentence} onChange={(e) => setExampleSentence(e.target.value)} />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="example">Example Sentence (optional)</Label>
+                <button
+                  type="button"
+                  onClick={handleAutoExample}
+                  disabled={loadingExample || !word.trim() || !definition.trim()}
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loadingExample
+                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                    : <Sparkles className="h-3 w-3" />
+                  }
+                  {loadingExample ? 'Generating...' : 'Generate'}
+                </button>
+              </div>
+              <Textarea
+                id="example"
+                placeholder="Where did you first see this word?"
+                value={exampleSentence}
+                onChange={(e) => setExampleSentence(e.target.value)}
+              />
             </div>
+
+            {/* Collocations */}
             <div className="space-y-2">
               <Label htmlFor="collocations">Collocations (optional)</Label>
               <div className="flex gap-2">
@@ -127,6 +222,8 @@ export default function AddWordPage() {
                 </div>
               )}
             </div>
+
+            {/* Register */}
             <div className="space-y-2">
               <Label>Register</Label>
               <div className="flex flex-wrap gap-2">
@@ -147,6 +244,7 @@ export default function AddWordPage() {
                 ))}
               </div>
             </div>
+
             <Button type="submit" className="w-full h-12 rounded-2xl font-display font-semibold" disabled={addWord.isPending}>
               {addWord.isPending ? 'Saving...' : 'Save Word'}
             </Button>
