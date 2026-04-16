@@ -1,0 +1,66 @@
+export type Register = 'formal' | 'casual' | 'literary' | 'slang';
+
+export interface Word {
+  id: string;
+  user_id: string;
+  word: string;
+  definition: string;
+  example_sentence: string | null;
+  emotion_anchor: string | null;
+  source: 'user' | 'native_pulse';
+  register: Register;
+  frequency_band: number;
+  created_at: string;
+}
+
+export interface WordCollocation {
+  id: string;
+  word_id: string;
+  collocation: string;
+  created_at: string;
+}
+
+export interface WordContext {
+  id: string;
+  word_id: string;
+  sentence: string;
+  source_label: string;
+  created_at: string;
+}
+
+export interface WordStats {
+  id: string;
+  user_id: string;
+  word_id: string;
+  ease_factor: number;
+  interval_days: number;
+  repetitions: number;
+  next_review_at: string;
+  last_reviewed_at: string | null;
+  times_correct: number;
+  times_incorrect: number;
+}
+
+export interface ReviewSession {
+  id: string;
+  user_id: string;
+  started_at: string;
+  ended_at: string;
+  words_reviewed: number;
+  words_correct: number;
+  session_type: 'battle' | 'context_theater' | 'generation_lab' | 'sleep_prep';
+}
+
+export interface SemanticConnection {
+  id: string;
+  word_id: string;
+  connected_word: string;
+  connection_type: 'synonym' | 'antonym' | 'collocation' | 'related';
+}
+
+export interface WordWithStats extends Word {
+  word_stats: WordStats[];
+  word_contexts: WordContext[];
+  word_collocations: WordCollocation[];
+  semantic_connections: SemanticConnection[];
+}

@@ -1,0 +1,3 @@
+[project]
+# Project ID moved to .env file for security
+# Use VITE_SUPABASE_PROJECT_ID environment variable
