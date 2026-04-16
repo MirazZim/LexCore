@@ -14,6 +14,7 @@ import { ContextPhase } from '@/components/review/ContextPhase';
 import { GenerationPhase } from '@/components/review/GenerationPhase';
 import { SummaryPhase } from '@/components/review/SummaryPhase';
 import type { ReviewPhase, ReviewResult, AiFeedback, WordContext } from '@/components/review/types';
+import { scoreSentence } from '@/lib/llm'
 
 export default function ReviewPage() {
   const [searchParams] = useSearchParams();
@@ -218,31 +219,12 @@ export default function ReviewPage() {
     setAiLoading(true);
     setAiError(false);
     try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'stepfun/step-3.5-flash:free',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an expert English language coach. A learner is practicing vocabulary by writing sentences. Evaluate their sentence briefly and naturally — like a friendly native speaker coach, not a grammar robot. Be honest but encouraging. Always respond with valid JSON only — no markdown, no backticks, no extra text.'
-            },
-            {
-              role: 'user',
-              content: `Word: ${currentItem.word.word}\nDefinition: ${currentItem.word.definition}\nLearner sentence: ${generationText.trim()}\n\nRespond ONLY with this JSON format:\n{\n  "verdict": "natural" | "unnatural" | "close",\n  "score": 1-10,\n  "what_worked": "one short sentence",\n  "fix": "one short sentence or null",\n  "better_example": "a better sentence or null"\n}`
-            }
-          ]
-        }),
-      });
-      if (!response.ok) throw new Error('AI error');
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || '';
-      const parsed = JSON.parse(content.replace(/```json|```/g, '').trim());
-      setAiFeedback(parsed);
+      const parsed = await scoreSentence(
+  currentItem.word.word,
+  currentItem.word.definition,
+  generationText.trim()
+)
+setAiFeedback(parsed)
     } catch {
       setAiError(true);
     } finally {
