@@ -35,18 +35,26 @@ const styleGuide: Record<GenerationStyle, string> = {
 };
 
 // --- Auto-generate a word suggestion ---
-export async function generateWord(hint: string, style: GenerationStyle): Promise<string> {
+export async function generateWord(
+  hint: string,
+  style: GenerationStyle,
+  exclude: string[] = [],
+): Promise<string> {
+  const seed = Math.random().toString(36).slice(2, 8)
   const content = await callLLM([
     {
       role: 'system',
       content: `You are a vocabulary coach. Suggest a single English word for a learner to study.
 Style context: ${styleGuide[style]}
-Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
+Always respond with valid JSON only — no markdown, no backticks, no extra text.
+Vary your suggestions widely — do not default to common or obvious words.`,
     },
     {
       role: 'user',
       content: `Style: ${style}
 ${hint.trim() ? `Topic / hint: ${hint.trim()}` : 'No specific topic — pick an interesting, useful word.'}
+${exclude.length > 0 ? `Do NOT suggest any of these already-used words: ${exclude.join(', ')}` : ''}
+Variation seed (for uniqueness): ${seed}
 
 Suggest one English vocabulary word well-suited to the ${style} style.
 
