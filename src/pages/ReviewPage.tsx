@@ -2,19 +2,89 @@ import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Moon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { calculateNextReview } from '@/lib/sm2';
 import { useDueWords, useUpdateWordStats, useSaveWordContext, useWords, useWordStats, useReviewSessions } from '@/hooks/useWords';
 import { supabase } from '@/lib/supabase';
 import { BattlePhase } from '@/components/review/BattlePhase';
 import { ContextPhase } from '@/components/review/ContextPhase';
+import { CollocationPhase } from '@/components/review/CollocationPhase';
 import { GenerationPhase } from '@/components/review/GenerationPhase';
 import { SummaryPhase } from '@/components/review/SummaryPhase';
-import type { ReviewPhase, ReviewResult, AiFeedback, WordContext } from '@/components/review/types';
-import { scoreSentence } from '@/lib/llm'
+import type { ReviewPhase, ReviewResult, AiFeedback, WordContext, WordCollocation } from '@/components/review/types';
+import { scoreSentence } from '@/lib/llm';
+
+export const RV_STYLES = `
+  .rv-glass {
+    background: rgba(24,24,27,0.55);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .rv-input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0.875rem;
+    padding: 0.75rem 1rem;
+    color: #fff;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .rv-input::placeholder { color: #52525b; }
+  .rv-input:focus { border-color: rgba(0,255,200,0.45); }
+  .rv-textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0.875rem;
+    padding: 0.75rem 1rem;
+    color: #fff;
+    font-size: 0.9rem;
+    outline: none;
+    resize: none;
+    min-height: 100px;
+    transition: border-color 0.2s;
+  }
+  .rv-textarea::placeholder { color: #52525b; }
+  .rv-textarea:focus { border-color: rgba(0,255,200,0.45); }
+  .rv-btn-mint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    border-radius: 1rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #18181b;
+    background: linear-gradient(135deg, #2cffca 0%, #00FFC8 100%);
+    box-shadow: 0 0 20px rgba(0,255,200,0.25);
+    transition: opacity 0.15s, transform 0.15s;
+    cursor: pointer;
+  }
+  .rv-btn-mint:hover { opacity: 0.88; transform: scale(1.015); }
+  .rv-btn-mint:disabled { opacity: 0.35; transform: none; cursor: not-allowed; box-shadow: none; }
+  .rv-btn-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    border-radius: 1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #a1a1aa;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+  .rv-btn-secondary:hover { background: rgba(255,255,255,0.09); color: #fff; border-color: rgba(255,255,255,0.15); }
+`;
 
 export default function ReviewPage() {
   const [searchParams] = useSearchParams();
@@ -29,7 +99,6 @@ export default function ReviewPage() {
   const saveContext = useSaveWordContext();
   const { data: reviewSessions = [] } = useReviewSessions();
 
-  // Compute streak
   const streak = (() => {
     if (reviewSessions.length === 0) return 0;
     const sessionDates = [...new Set(
@@ -67,7 +136,7 @@ export default function ReviewPage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(false);
   const [contexts, setContexts] = useState<WordContext[]>([]);
-
+  const [collocations, setCollocations] = useState<WordCollocation[]>([]);
   const [sessionWords, setSessionWords] = useState<typeof dueWordsData>([]);
   const [sessionReady, setSessionReady] = useState(false);
 
@@ -91,18 +160,17 @@ export default function ReviewPage() {
   const currentItem = sessionWords[currentIndex];
   const totalWords = sessionWords.length;
 
-  const loadContexts = async (wordId: string) => {
-    const { data } = await supabase
-      .from('word_contexts')
-      .select('*')
-      .eq('word_id', wordId);
-    setContexts(data || []);
+  const loadWordData = async (wordId: string) => {
+    const [ctxRes, colRes] = await Promise.all([
+      supabase.from('word_contexts').select('*').eq('word_id', wordId),
+      supabase.from('word_collocations').select('*').eq('word_id', wordId),
+    ]);
+    setContexts(ctxRes.data || []);
+    setCollocations(colRes.data || []);
   };
 
   useEffect(() => {
-    if (currentItem) {
-      loadContexts(currentItem.word.id);
-    }
+    if (currentItem) loadWordData(currentItem.word.id);
   }, [currentItem?.word.id]);
 
   useEffect(() => {
@@ -113,43 +181,52 @@ export default function ReviewPage() {
 
   if (isLoading || !sessionReady) {
     return (
-      <div className="min-h-screen px-4 pt-6 max-w-lg mx-auto space-y-6">
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-64 w-full" />
+      <div className="min-h-screen px-4 pt-8 pb-24 max-w-lg mx-auto space-y-4">
+        <Skeleton className="h-8 w-full rounded-2xl bg-zinc-800/60" />
+        <Skeleton className="h-[420px] w-full rounded-[2rem] bg-zinc-800/60" />
       </div>
     );
   }
 
   if (isSleepPrep) {
     return (
-      <div className="min-h-screen bg-background px-4 pt-6 max-w-lg mx-auto">
-        <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-5 w-5" />
+      <div className="min-h-screen px-4 pt-8 pb-24 max-w-lg mx-auto">
+        <style>{RV_STYLES}</style>
+        <div className="flex items-center gap-4 mb-8">
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center justify-center w-10 h-10 rounded-full"
+            style={{ background: 'rgba(255,255,255,0.05)', color: '#a1a1aa' }}
+          >
+            <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="flex items-center gap-2">
-            <Moon className="h-5 w-5 text-primary" />
-            <h1 className="font-display text-xl font-bold">Sleep Prep</h1>
+            <Moon className="h-5 w-5" style={{ color: '#00FFC8' }} />
+            <h1 className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              Sleep Prep
+            </h1>
           </div>
         </div>
         {sessionWords.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <Moon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="font-display text-lg">No recent words</p>
-            <p className="text-sm mt-1">Review some words first, then come back tonight.</p>
+          <div className="text-center py-20">
+            <Moon className="h-12 w-12 mx-auto mb-4 text-zinc-700" />
+            <p className="text-xl font-bold text-white mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              No recent words
+            </p>
+            <p className="text-sm text-zinc-500">Review some words first, then come back tonight.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {sessionWords.map(({ word }) => (
-              <Card key={word.id} className="border-border/50">
-                <CardContent className="p-5">
-                  <h2 className="font-display text-xl font-bold text-primary mb-2">{word.word}</h2>
-                  <p className="text-foreground mb-3">{word.definition}</p>
-                  {word.emotion_anchor && (
-                    <p className="text-sm text-muted-foreground italic">💭 {word.emotion_anchor}</p>
-                  )}
-                </CardContent>
-              </Card>
+              <div key={word.id} className="rv-glass p-5 rounded-2xl">
+                <h2 className="text-xl font-bold mb-2" style={{ color: '#00FFC8', fontFamily: "'Space Grotesk', sans-serif" }}>
+                  {word.word}
+                </h2>
+                <p className="text-zinc-300 text-sm mb-3">{word.definition}</p>
+                {word.emotion_anchor && (
+                  <p className="text-xs text-zinc-500 italic">💭 {word.emotion_anchor}</p>
+                )}
+              </div>
             ))}
           </div>
         )}
@@ -160,10 +237,15 @@ export default function ReviewPage() {
   if (totalWords === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
+        <style>{RV_STYLES}</style>
         <div className="text-center">
-          <p className="font-display text-xl font-bold mb-2">All caught up!</p>
-          <p className="text-muted-foreground mb-6">No words due for review right now.</p>
-          <Button onClick={() => navigate('/')}>Back to Dashboard</Button>
+          <p className="text-3xl font-bold text-white mb-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            All caught up!
+          </p>
+          <p className="text-zinc-500 mb-8">No words due for review right now.</p>
+          <button onClick={() => navigate('/')} className="rv-btn-mint" style={{ width: 'auto', padding: '14px 40px' }}>
+            Back to Dashboard
+          </button>
         </div>
       </div>
     );
@@ -175,9 +257,8 @@ export default function ReviewPage() {
       currentItem.stats.ease_factor,
       currentItem.stats.interval_days,
       currentItem.stats.repetitions,
-      quality
+      quality,
     );
-
     await updateWordStats.mutateAsync({
       wordStatsId: currentItem.stats.id,
       ease_factor: result.newEaseFactor,
@@ -186,7 +267,6 @@ export default function ReviewPage() {
       next_review_at: result.nextReviewAt.toISOString(),
       quality,
     });
-
     setResults(prev => [...prev, {
       wordId: currentItem.word.id,
       word: currentItem.word.word,
@@ -194,18 +274,24 @@ export default function ReviewPage() {
       correct: quality >= 3,
     }]);
     setRevealed(false);
-    setPhase(contexts.length > 0 ? 'context' : 'generation');
+    if (contexts.length > 0) {
+      setPhase('context');
+    } else if (collocations.length > 0) {
+      setPhase('collocation');
+    } else {
+      setPhase('generation');
+    }
   };
 
-  const handleClozeSubmit = () => {
-    setClozeSubmitted(true);
-  };
+  const handleClozeSubmit = () => setClozeSubmitted(true);
 
   const handleClozeNext = () => {
     setClozeAnswer('');
     setClozeSubmitted(false);
-    setPhase('generation');
+    setPhase(collocations.length > 0 ? 'collocation' : 'generation');
   };
+
+  const handleCollocationNext = () => setPhase('generation');
 
   const handleGenerationSave = async () => {
     if (!currentItem) return;
@@ -215,16 +301,15 @@ export default function ReviewPage() {
       source_label: 'My sentence',
     });
     setGenerationSaved(true);
-
     setAiLoading(true);
     setAiError(false);
     try {
       const parsed = await scoreSentence(
-  currentItem.word.word,
-  currentItem.word.definition,
-  generationText.trim()
-)
-setAiFeedback(parsed)
+        currentItem.word.word,
+        currentItem.word.definition,
+        generationText.trim(),
+      );
+      setAiFeedback(parsed);
     } catch {
       setAiError(true);
     } finally {
@@ -246,25 +331,35 @@ setAiFeedback(parsed)
     }
   };
 
-  const progressPercent = phase === 'summary'
-    ? 100
-    : (currentIndex / totalWords) * 100;
+  const progressPercent = phase === 'summary' ? 100 : (currentIndex / totalWords) * 100;
 
   if (phase === 'summary') {
     return <SummaryPhase results={results} sessionStartedAt={sessionStartRef.current} />;
   }
 
   return (
-    <div className="min-h-screen px-4 pt-6 max-w-lg mx-auto">
-      <div className="flex items-center gap-3 mb-4">
-        <button onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-5 w-5" />
+    <div className="min-h-screen px-4 pt-8 pb-24 max-w-lg mx-auto">
+      <style>{RV_STYLES}</style>
+
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center justify-center w-10 h-10 rounded-full shrink-0"
+          style={{ background: 'rgba(255,255,255,0.05)', color: '#a1a1aa' }}
+        >
+          <ArrowLeft className="h-4 w-4" />
         </button>
-        <div className="flex-1">
-          <Progress value={progressPercent} className="h-2" />
+
+        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${progressPercent}%`, background: 'linear-gradient(90deg, #2cffca, #00FFC8)' }}
+          />
         </div>
-        <span className="text-xs text-muted-foreground font-display">
-          Word {currentIndex + 1} of {totalWords}
+
+        <span className="text-xs font-bold text-zinc-500 shrink-0">
+          {currentIndex + 1} / {totalWords}
         </span>
       </div>
 
@@ -291,6 +386,15 @@ setAiFeedback(parsed)
             onClozeAnswerChange={setClozeAnswer}
             onClozeSubmit={handleClozeSubmit}
             onClozeNext={handleClozeNext}
+          />
+        )}
+
+        {phase === 'collocation' && currentItem && (
+          <CollocationPhase
+            currentItem={currentItem}
+            currentIndex={currentIndex}
+            collocations={collocations}
+            onNext={handleCollocationNext}
           />
         )}
 

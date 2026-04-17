@@ -288,6 +288,28 @@ export function useSaveWordContext() {
   });
 }
 
+export function useDeleteWord() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (wordId: string) => {
+      await supabase.from('word_stats').delete().eq('word_id', wordId);
+      await supabase.from('word_contexts').delete().eq('word_id', wordId);
+      await supabase.from('word_collocations').delete().eq('word_id', wordId);
+      await supabase.from('semantic_connections').delete().eq('word_id', wordId);
+      const { error } = await supabase.from('words').delete().eq('id', wordId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['words'] });
+      queryClient.invalidateQueries({ queryKey: ['word_stats'] });
+      queryClient.invalidateQueries({ queryKey: ['due_words'] });
+      queryClient.invalidateQueries({ queryKey: ['word_contexts'] });
+      queryClient.invalidateQueries({ queryKey: ['word_collocations'] });
+    },
+  });
+}
+
 export function useAddNativePulseWord() {
   const { user } = useAuth();
   const queryClient = useQueryClient();

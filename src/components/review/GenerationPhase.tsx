@@ -1,9 +1,5 @@
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
 import type { DueWordItem, AiFeedback } from './types';
 
 interface GenerationPhaseProps {
@@ -21,80 +17,144 @@ interface GenerationPhaseProps {
   onNextWord: () => void;
 }
 
+const verdictConfig = {
+  natural:   { bg: 'rgba(0,255,200,0.1)',   border: 'rgba(0,255,200,0.3)',   color: '#00FFC8', label: '✓ Natural' },
+  close:     { bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.3)',  color: '#f97316', label: '⚡ Almost there' },
+  unnatural: { bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.3)',   color: '#ef4444', label: '✗ Try again' },
+} as const;
+
 export function GenerationPhase({
   currentItem, currentIndex, totalWords, generationText, generationSaved,
   aiFeedback, aiLoading, aiError, isSaving,
   onGenerationTextChange, onSave, onNextWord,
 }: GenerationPhaseProps) {
+  const verdict = aiFeedback
+    ? verdictConfig[aiFeedback.verdict as keyof typeof verdictConfig] ?? verdictConfig.close
+    : null;
+
   return (
-    <motion.div key={`gen-${currentIndex}`} initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.3 }}>
-      <Card className="border-border/50 mt-8">
-        <CardContent className="p-6">
-          <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">Generation Lab</p>
-          <h2 className="font-display text-2xl font-bold text-primary mb-1">{currentItem.word.word}</h2>
-          <p className="text-sm text-muted-foreground mb-6">{currentItem.word.definition}</p>
-          <p className="text-foreground font-display mb-3">Write your own sentence using this word:</p>
-          {!generationSaved ? (
-            <div className="space-y-3">
-              <Textarea placeholder="Type your sentence..." value={generationText} onChange={(e) => onGenerationTextChange(e.target.value)} className="min-h-[100px]" />
-              <Button className="w-full rounded-2xl" onClick={onSave} disabled={!generationText.trim() || isSaving || aiLoading}>
-                {isSaving || aiLoading ? (
-                  <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Checking...</span>
-                ) : 'Submit'}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="rounded-lg bg-secondary p-3">
-                <p className="text-sm">"{generationText}"</p>
-                <p className="text-[10px] text-muted-foreground mt-1">— My sentence</p>
-              </div>
+    <motion.div
+      key={`gen-${currentIndex}`}
+      initial={{ opacity: 0, x: 60 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -60 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="rv-glass rounded-[2rem] p-8 mt-4">
+        <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 mb-2">
+          Generation Lab
+        </p>
+        <h2
+          className="text-3xl font-bold mb-1"
+          style={{ color: '#00FFC8', fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          {currentItem.word.word}
+        </h2>
+        <p className="text-zinc-400 text-sm mb-6">{currentItem.word.definition}</p>
 
-              {aiLoading && (
-                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+        <p className="text-white font-semibold mb-3">Write your own sentence using this word:</p>
+
+        {!generationSaved ? (
+          <div className="space-y-3">
+            <textarea
+              className="rv-textarea"
+              placeholder="Type your sentence…"
+              value={generationText}
+              onChange={e => onGenerationTextChange(e.target.value)}
+            />
+            <button
+              onClick={onSave}
+              disabled={!generationText.trim() || isSaving || aiLoading}
+              className="rv-btn-mint"
+            >
+              {isSaving || aiLoading ? (
+                <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Checking your sentence...
-                </div>
-              )}
-
-              {aiFeedback && (
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="rounded-xl border border-border/50 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className={cn(
-                      'rounded-full px-3 py-1 text-xs font-bold',
-                      aiFeedback.verdict === 'natural' && 'bg-ease-strong/20 text-ease-strong',
-                      aiFeedback.verdict === 'close' && 'bg-quality-hard/20 text-quality-hard',
-                      aiFeedback.verdict === 'unnatural' && 'bg-quality-again/20 text-quality-again',
-                    )}>
-                      {aiFeedback.verdict === 'natural' ? '✓ Natural' : aiFeedback.verdict === 'close' ? '⚡ Almost there' : '✗ Try again'}
-                    </span>
-                    <span className="font-display font-bold text-lg">{aiFeedback.score}/10</span>
-                  </div>
-                  <p className="text-sm"><span className="text-ease-strong font-semibold">What worked:</span> {aiFeedback.what_worked}</p>
-                  {aiFeedback.fix && (
-                    <p className="text-sm"><span className="text-quality-hard font-semibold">Fix:</span> {aiFeedback.fix}</p>
-                  )}
-                  {aiFeedback.better_example && (
-                    <blockquote className="border-l-2 border-muted-foreground/30 pl-3 text-sm text-muted-foreground italic">
-                      {aiFeedback.better_example}
-                    </blockquote>
-                  )}
-                </motion.div>
-              )}
-
-              {aiError && (
-                <p className="text-sm text-muted-foreground">AI feedback unavailable — your sentence was saved.</p>
-              )}
-
-              {(!aiLoading) && (
-                <Button className="w-full rounded-2xl" onClick={onNextWord}>
-                  {currentIndex + 1 >= totalWords ? 'View Summary' : 'Next Word'}
-                </Button>
-              )}
+                  Checking…
+                </>
+              ) : 'Submit'}
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Submitted sentence */}
+            <div
+              className="rounded-xl p-4"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+            >
+              <p className="text-zinc-200 text-sm">"{generationText}"</p>
+              <p className="text-[10px] text-zinc-600 mt-1">— My sentence</p>
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            {/* AI loading */}
+            {aiLoading && (
+              <div className="flex items-center gap-2 text-zinc-500 text-sm">
+                <Loader2 className="h-4 w-4 animate-spin" style={{ color: '#00FFC8' }} />
+                Checking your sentence…
+              </div>
+            )}
+
+            {/* AI feedback */}
+            {aiFeedback && verdict && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="rounded-xl p-5 space-y-3"
+                style={{ background: verdict.bg, border: `1px solid ${verdict.border}` }}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className="rounded-full px-3 py-1 text-xs font-bold"
+                    style={{ background: 'rgba(0,0,0,0.3)', color: verdict.color }}
+                  >
+                    {verdict.label}
+                  </span>
+                  <span
+                    className="text-2xl font-bold"
+                    style={{ color: verdict.color, fontFamily: "'Space Grotesk', sans-serif" }}
+                  >
+                    {aiFeedback.score}<span className="text-base text-zinc-500">/10</span>
+                  </span>
+                </div>
+
+                <p className="text-sm text-zinc-300">
+                  <span className="font-semibold" style={{ color: '#00FFC8' }}>What worked: </span>
+                  {aiFeedback.what_worked}
+                </p>
+
+                {aiFeedback.fix && (
+                  <p className="text-sm text-zinc-300">
+                    <span className="font-semibold" style={{ color: '#f97316' }}>Fix: </span>
+                    {aiFeedback.fix}
+                  </p>
+                )}
+
+                {aiFeedback.better_example && (
+                  <blockquote
+                    className="text-sm text-zinc-400 italic pl-3"
+                    style={{ borderLeft: '2px solid rgba(255,255,255,0.15)' }}
+                  >
+                    {aiFeedback.better_example}
+                  </blockquote>
+                )}
+              </motion.div>
+            )}
+
+            {aiError && (
+              <p className="text-sm text-zinc-500">
+                AI feedback unavailable — your sentence was saved.
+              </p>
+            )}
+
+            {!aiLoading && (
+              <button onClick={onNextWord} className="rv-btn-mint">
+                {currentIndex + 1 >= totalWords ? 'View Summary' : 'Next Word'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { Input } from '@/components/ui/input';
@@ -9,9 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { EaseBadge } from '@/components/EaseBadge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { useWords, useWordStats, useWordContexts, useWordCollocations, useSemanticConnections } from '@/hooks/useWords';
+import { useWords, useWordStats, useWordContexts, useWordCollocations, useSemanticConnections, useDeleteWord } from '@/hooks/useWords';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import type { Register } from '@/lib/types';
 
 const filterOptions: { value: string; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -28,6 +28,7 @@ export default function LibraryPage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [selectedWordId, setSelectedWordId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const now = new Date();
 
   const { data: words = [], isLoading: wordsLoading } = useWords();
@@ -35,6 +36,19 @@ export default function LibraryPage() {
   const { data: selectedContexts = [] } = useWordContexts(selectedWordId ?? undefined);
   const { data: selectedCollocations = [] } = useWordCollocations(selectedWordId ?? undefined);
   const { data: selectedConnections = [] } = useSemanticConnections(selectedWordId ?? undefined);
+  const deleteWord = useDeleteWord();
+
+  const handleDelete = async () => {
+    if (!selectedWordId) return;
+    try {
+      await deleteWord.mutateAsync(selectedWordId);
+      toast.success('Word deleted');
+      setSelectedWordId(null);
+      setConfirmDelete(false);
+    } catch {
+      toast.error('Failed to delete word');
+    }
+  };
 
   const filteredWords = useMemo(() => {
     return words.filter((w) => {
@@ -158,7 +172,38 @@ export default function LibraryPage() {
               {selectedWord && (
                 <div className="space-y-6">
                   <SheetHeader>
-                    <SheetTitle className="font-display text-2xl">{selectedWord.word}</SheetTitle>
+                    <div className="flex items-center justify-between">
+                      <SheetTitle className="font-display text-2xl">{selectedWord.word}</SheetTitle>
+                      {!confirmDelete ? (
+                        <button
+                          onClick={() => setConfirmDelete(true)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-400 hover:bg-red-500/10 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-red-400 flex items-center gap-1">
+                            <AlertTriangle className="h-3.5 w-3.5" />
+                            Sure?
+                          </span>
+                          <button
+                            onClick={() => setConfirmDelete(false)}
+                            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-muted-foreground hover:bg-secondary transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleDelete}
+                            disabled={deleteWord.isPending}
+                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-500/15 text-red-400 hover:bg-red-500/25 disabled:opacity-50 transition-colors"
+                          >
+                            {deleteWord.isPending ? 'Deleting…' : 'Delete'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </SheetHeader>
                   <div>
                     <p className="text-foreground">{selectedWord.definition}</p>
