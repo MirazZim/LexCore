@@ -85,8 +85,8 @@ export default function NativePulsePage() {
         contexts: item.examples.map(ex => ({ sentence: ex.sentence, source_label: ex.source })),
       });
       toast.success(`"${item.word}" added to your library!`);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to add word');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to add word');
     }
   };
 
@@ -100,8 +100,8 @@ export default function NativePulsePage() {
         contexts: item.examples.map(ex => ({ sentence: ex.sentence, source_label: ex.source })),
       });
       toast.success(`"${item.phrase}" added to your library!`);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to add');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to add');
     }
   };
 

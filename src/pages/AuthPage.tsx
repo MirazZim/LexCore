@@ -34,8 +34,8 @@ export default function AuthPage() {
         await signUp(email, password);
         toast.success('Account created! Check your email to confirm.');
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Something went wrong');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }

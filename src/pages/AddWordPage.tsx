@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ArrowLeft, X, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowLeft, X, Sparkles, Loader2, Briefcase, MessageCircle, Sun, GraduationCap } from 'lucide-react';
 import { useAddWord } from '@/hooks/useWords';
-import { generateDefinition, generateExampleSentences } from '@/lib/llm';
+import { generateDefinition, generateExampleSentences, generateCollocations, generateWord } from '@/lib/llm';
+import type { GenerationStyle } from '@/lib/llm';
 import type { Register } from '@/lib/types';
 
 const registers: { value: Register; label: string }[] = [
@@ -18,6 +19,18 @@ const registers: { value: Register; label: string }[] = [
   { value: 'casual', label: 'Casual' },
   { value: 'literary', label: 'Literary' },
   { value: 'slang', label: 'Slang' },
+];
+
+const generationStyles: {
+  value: GenerationStyle;
+  label: string;
+  desc: string;
+  icon: React.ElementType;
+}[] = [
+  { value: 'formal',  label: 'Formal',      desc: 'Business & academic',    icon: Briefcase },
+  { value: 'casual',  label: 'Casual',       desc: 'Friendly conversation',  icon: MessageCircle },
+  { value: 'daily',   label: 'Daily Usage',  desc: 'Everyday scenarios',     icon: Sun },
+  { value: 'ielts',   label: 'IELTS',        desc: 'Band 7–9 academic',      icon: GraduationCap },
 ];
 
 export default function AddWordPage() {
@@ -28,18 +41,34 @@ export default function AddWordPage() {
   const [collocations, setCollocations] = useState<string[]>([]);
   const [collocationInput, setCollocationInput] = useState('');
   const [register, setRegister] = useState<Register>('formal');
+  const [generationStyle, setGenerationStyle] = useState<GenerationStyle>('daily');
+  const [loadingWord, setLoadingWord] = useState(false);
+  const [showStylePicker, setShowStylePicker] = useState(false);
   const [loadingDefinition, setLoadingDefinition] = useState(false);
   const [loadingExample, setLoadingExample] = useState(false);
+  const [loadingCollocations, setLoadingCollocations] = useState(false);
   const addWord = useAddWord();
 
-  const handleAutoDefinition = async () => {
-    if (!word.trim()) {
-      toast.error('Enter a word first');
-      return;
+  const handleAutoWord = async (style: GenerationStyle) => {
+    setShowStylePicker(false);
+    setGenerationStyle(style);
+    setLoadingWord(true);
+    try {
+      const suggested = await generateWord(word.trim(), style);
+      setWord(suggested);
+      toast.success('Word suggested!');
+    } catch {
+      toast.error('Failed to suggest word');
+    } finally {
+      setLoadingWord(false);
     }
+  };
+
+  const handleAutoDefinition = async () => {
+    if (!word.trim()) { toast.error('Enter a word first'); return; }
     setLoadingDefinition(true);
     try {
-      const result = await generateDefinition(word.trim());
+      const result = await generateDefinition(word.trim(), generationStyle);
       setDefinition(result.definition);
       toast.success('Definition generated!');
     } catch {
@@ -50,24 +79,33 @@ export default function AddWordPage() {
   };
 
   const handleAutoExample = async () => {
-    if (!word.trim()) {
-      toast.error('Enter a word first');
-      return;
-    }
-    if (!definition.trim()) {
-      toast.error('Add a definition first');
-      return;
-    }
+    if (!word.trim()) { toast.error('Enter a word first'); return; }
+    if (!definition.trim()) { toast.error('Add a definition first'); return; }
     setLoadingExample(true);
     try {
-      const sentences = await generateExampleSentences(word.trim(), definition.trim());
-      // Pick the first one, user can regenerate for others
+      const sentences = await generateExampleSentences(word.trim(), definition.trim(), generationStyle);
       setExampleSentence(sentences[0]);
       toast.success('Example generated!');
     } catch {
       toast.error('Failed to generate example');
     } finally {
       setLoadingExample(false);
+    }
+  };
+
+  const handleAutoCollocations = async () => {
+    if (!word.trim()) { toast.error('Enter a word first'); return; }
+    if (!definition.trim()) { toast.error('Add a definition first'); return; }
+    setLoadingCollocations(true);
+    try {
+      const results = await generateCollocations(word.trim(), definition.trim(), generationStyle);
+      const unique = results.filter(c => !collocations.includes(c));
+      setCollocations(prev => [...prev, ...unique]);
+      toast.success('Collocations generated!');
+    } catch {
+      toast.error('Failed to generate collocations');
+    } finally {
+      setLoadingCollocations(false);
     }
   };
 
@@ -103,20 +141,18 @@ export default function AddWordPage() {
         collocations,
       });
       toast.success(`"${word}" added to your library!`, {
-        action: {
-          label: 'Go to Library',
-          onClick: () => navigate('/library'),
-        },
+        action: { label: 'Go to Library', onClick: () => navigate('/library') },
       });
       setWord('');
       setDefinition('');
       setExampleSentence('');
       setCollocations([]);
       setCollocationInput('');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to save word');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save word');
     }
   };
+
 
   return (
     <AppLayout>
@@ -131,16 +167,49 @@ export default function AddWordPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
 
-            {/* Word input */}
+            {/* Word input + style picker */}
             <div className="space-y-2">
-              <Label htmlFor="word">Word</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="word">Word</Label>
+                <button
+                  type="button"
+                  onClick={() => setShowStylePicker(v => !v)}
+                  disabled={loadingWord}
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loadingWord ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                  {loadingWord ? 'Suggesting...' : 'Suggest Word'}
+                </button>
+              </div>
               <Input
                 id="word"
-                placeholder="e.g., ephemeral"
+                placeholder="e.g., type a topic hint or leave blank…"
                 value={word}
                 onChange={(e) => setWord(e.target.value)}
                 required
               />
+              {showStylePicker && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="grid grid-cols-2 gap-2 pt-1"
+                >
+                  {generationStyles.map(({ value, label, desc, icon: Icon }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => handleAutoWord(value)}
+                      className="flex items-center gap-3 rounded-xl border border-border bg-secondary px-4 py-3 text-left hover:border-primary hover:bg-primary/5 transition-all"
+                    >
+                      <Icon className="h-4 w-4 shrink-0 text-primary" />
+                      <div>
+                        <p className="text-sm font-semibold leading-none">{label}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </motion.div>
+              )}
             </div>
 
             {/* Definition with AI button */}
@@ -153,10 +222,7 @@ export default function AddWordPage() {
                   disabled={loadingDefinition || !word.trim()}
                   className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  {loadingDefinition
-                    ? <Loader2 className="h-3 w-3 animate-spin" />
-                    : <Sparkles className="h-3 w-3" />
-                  }
+                  {loadingDefinition ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                   {loadingDefinition ? 'Generating...' : 'Auto-fill'}
                 </button>
               </div>
@@ -179,10 +245,7 @@ export default function AddWordPage() {
                   disabled={loadingExample || !word.trim() || !definition.trim()}
                   className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  {loadingExample
-                    ? <Loader2 className="h-3 w-3 animate-spin" />
-                    : <Sparkles className="h-3 w-3" />
-                  }
+                  {loadingExample ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                   {loadingExample ? 'Generating...' : 'Generate'}
                 </button>
               </div>
@@ -196,7 +259,18 @@ export default function AddWordPage() {
 
             {/* Collocations */}
             <div className="space-y-2">
-              <Label htmlFor="collocations">Collocations (optional)</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="collocations">Collocations (optional)</Label>
+                <button
+                  type="button"
+                  onClick={handleAutoCollocations}
+                  disabled={loadingCollocations || !word.trim() || !definition.trim()}
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loadingCollocations ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                  {loadingCollocations ? 'Generating...' : 'Auto-fill'}
+                </button>
+              </div>
               <div className="flex gap-2">
                 <Input
                   id="collocations"
