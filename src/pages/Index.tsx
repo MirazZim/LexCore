@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Brain, Clock, Flame, Moon, Sparkles, ArrowRight, MoreHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -19,16 +19,7 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } },
 };
 
-/* ─── Velocity bar heights (mock data – replace with real data if available) */
-const VELOCITY_BARS = [
-  { day: 'Mon', height: '40%', value: 12 },
-  { day: 'Tue', height: '65%', value: 19 },
-  { day: 'Wed', height: '35%', value: 10 },
-  { day: 'Thu', height: '90%', value: 30 },
-  { day: 'Fri', height: '75%', value: 28, active: true },
-  { day: 'Sat', height: '50%', value: 15 },
-  { day: 'Sun', height: '60%', value: 18 },
-];
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -59,18 +50,16 @@ export default function Dashboard() {
   /* ── Streak ──────────────────────────────────────────────────────── */
   const streak = (() => {
     if (reviewSessions.length === 0) return 0;
+    const dateKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
     const sessionDates = [...new Set(
-      reviewSessions.map(s => {
-        const d = new Date(s.started_at);
-        return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-      })
+      reviewSessions.map(s => dateKey(new Date(s.started_at)))
     )].sort().reverse();
 
     const today     = new Date();
-    const todayKey  = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+    const todayKey  = dateKey(today);
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayKey = `${yesterday.getFullYear()}-${yesterday.getMonth()}-${yesterday.getDate()}`;
+    const yesterdayKey = dateKey(yesterday);
 
     if (sessionDates[0] !== todayKey && sessionDates[0] !== yesterdayKey) return 0;
 
@@ -78,12 +67,27 @@ export default function Dashboard() {
     const check = new Date(today);
     if (sessionDates[0] !== todayKey) check.setDate(check.getDate() - 1);
     for (let i = 0; i < 365; i++) {
-      const key = `${check.getFullYear()}-${check.getMonth()}-${check.getDate()}`;
-      if (sessionDates.includes(key)) { count++; check.setDate(check.getDate() - 1); }
+      if (sessionDates.includes(dateKey(check))) { count++; check.setDate(check.getDate() - 1); }
       else break;
     }
     return count;
   })();
+
+  /* ── Velocity chart (last 7 days from real session data) ─────────── */
+  const velocityBars = useMemo(() => {
+    const dateKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    const bars = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      const key = dateKey(d);
+      const value = reviewSessions
+        .filter(s => dateKey(new Date(s.started_at)) === key)
+        .reduce((sum, s) => sum + s.words_reviewed, 0);
+      return { day: DAY_LABELS[d.getDay()], value, active: i === 6 };
+    });
+    const max = Math.max(...bars.map(b => b.value), 1);
+    return bars.map(b => ({ ...b, height: `${Math.max(Math.round((b.value / max) * 100), 4)}%` }));
+  }, [reviewSessions]);
 
   /* ── Recent words ────────────────────────────────────────────────── */
   const recentWords = [...words]
@@ -277,7 +281,7 @@ export default function Dashboard() {
 
                 {/* Bars */}
                 <div className="flex items-end justify-between h-44 px-1 gap-2">
-                  {VELOCITY_BARS.map(({ day, height, value, active }) => (
+                  {velocityBars.map(({ day, height, value, active }) => (
                     <div key={day} className="flex-1 flex flex-col items-center gap-2">
                       <span
                         className="text-[10px] font-bold transition-opacity duration-200"
@@ -297,7 +301,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className="flex justify-between mt-4">
-                  {VELOCITY_BARS.map(({ day, active }) => (
+                  {velocityBars.map(({ day, active }) => (
                     <span
                       key={day}
                       className="flex-1 text-center text-[10px] uppercase tracking-widest font-bold"
@@ -335,12 +339,12 @@ export default function Dashboard() {
                     recentWords.map((word) => {
                       const stats   = wordStats.find(s => s.word_id === word.id);
                       const mastery = stats ? Math.min(Math.round((stats.repetitions / 5) * 100), 100) : 0;
-                      const isStar  = stats && stats.repetitions >= 5;
+                      const isStar  = !!(stats && stats.repetitions >= 5);
 
                       return (
                         <div
                           key={word.id}
-                          onClick={() => navigate('/library')}
+                          onClick={() => navigate(`/library?word=${word.id}`)}
                           className="p-5 rounded-2xl cursor-pointer transition-all duration-200 group"
                           style={{
                             background: 'rgba(255,255,255,0.03)',

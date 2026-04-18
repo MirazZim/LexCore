@@ -1,7 +1,7 @@
-import { useState, useMemo, type ReactNode } from 'react';
+import { useState, useMemo, useEffect, type ReactNode } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { Search, Plus, Trash2, AlertTriangle, BookOpen, Clock, Sparkles, Quote } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { EaseBadge } from '@/components/EaseBadge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -102,11 +102,17 @@ const filterOptions: { value: string; label: string }[] = [
 
 export default function LibraryPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [selectedWordId, setSelectedWordId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const now = new Date();
+
+  useEffect(() => {
+    const wordParam = searchParams.get('word');
+    if (wordParam) setSelectedWordId(wordParam);
+  }, [searchParams]);
 
   const { data: words = [], isLoading: wordsLoading } = useWords();
   const { data: wordStats = [], isLoading: statsLoading } = useWordStats();
