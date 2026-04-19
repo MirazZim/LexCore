@@ -158,6 +158,35 @@ Respond ONLY with this JSON:
   return parsed.collocations
 }
 
+// --- Auto-generate synonyms ---
+export async function generateSynonyms(word: string, definition: string, style: GenerationStyle = 'daily'): Promise<string[]> {
+  const content = await callLLM([
+    {
+      role: 'system',
+      content: `You are a vocabulary coach helping English learners. Generate simple, everyday synonyms.
+Style context: ${styleGuide[style]}
+Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
+    },
+    {
+      role: 'user',
+      content: `Word: ${word}
+Definition: ${definition}
+Style: ${style}
+
+Generate 4-5 synonyms for this word. Each synonym must be very simple, common, and easy to understand — prefer short, familiar words that a learner already knows (e.g., "happy" instead of "elated").
+
+Respond ONLY with this JSON:
+{
+  "synonyms": ["synonym1", "synonym2", "synonym3", "synonym4", "synonym5"]
+}`,
+    },
+  ])
+
+  const clean = content.replace(/```json|```/g, '').trim()
+  const parsed = JSON.parse(clean)
+  return parsed.synonyms
+}
+
 // --- Auto-generate definition ---
 export async function generateDefinition(word: string, style: GenerationStyle = 'daily'): Promise<{
   definition: string

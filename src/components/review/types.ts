@@ -1,6 +1,6 @@
 import type { Word, WordStats } from '@/lib/types';
 
-export type ReviewPhase = 'battle' | 'context' | 'collocation' | 'generation' | 'summary';
+export type ReviewPhase = 'battle' | 'context' | 'collocation' | 'generation' | 'synonyms' | 'summary';
 
 export interface ReviewResult {
   wordId: string;

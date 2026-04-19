@@ -11,6 +11,7 @@ import { ContextPhase } from '@/components/review/ContextPhase';
 import { CollocationPhase } from '@/components/review/CollocationPhase';
 import { GenerationPhase } from '@/components/review/GenerationPhase';
 import { SummaryPhase } from '@/components/review/SummaryPhase';
+import { SynonymsPhase } from '@/components/review/SynonymsPhase';
 import type { ReviewPhase, ReviewResult, AiFeedback, WordContext, WordCollocation } from '@/components/review/types';
 import { scoreSentence } from '@/lib/llm';
 
@@ -137,6 +138,7 @@ export default function ReviewPage() {
   const [aiError, setAiError] = useState(false);
   const [contexts, setContexts] = useState<WordContext[]>([]);
   const [collocations, setCollocations] = useState<WordCollocation[]>([]);
+  const [synonyms, setSynonyms] = useState<string[]>([]);
   const [sessionWords, setSessionWords] = useState<typeof dueWordsData>([]);
   const [sessionReady, setSessionReady] = useState(false);
 
@@ -161,12 +163,14 @@ export default function ReviewPage() {
   const totalWords = sessionWords.length;
 
   const loadWordData = async (wordId: string) => {
-    const [ctxRes, colRes] = await Promise.all([
+    const [ctxRes, colRes, synRes] = await Promise.all([
       supabase.from('word_contexts').select('*').eq('word_id', wordId),
       supabase.from('word_collocations').select('*').eq('word_id', wordId),
+      supabase.from('semantic_connections').select('connected_word').eq('word_id', wordId).eq('connection_type', 'synonym'),
     ]);
     setContexts(ctxRes.data || []);
     setCollocations(colRes.data || []);
+    setSynonyms((synRes.data || []).map((r: { connected_word: string }) => r.connected_word));
   };
 
   useEffect(() => {
@@ -293,6 +297,20 @@ export default function ReviewPage() {
 
   const handleCollocationNext = () => setPhase('generation');
 
+  const handleSynonymsNext = () => {
+    setGenerationText('');
+    setGenerationSaved(false);
+    setAiFeedback(null);
+    setAiLoading(false);
+    setAiError(false);
+    if (currentIndex + 1 >= totalWords) {
+      setPhase('summary');
+    } else {
+      setCurrentIndex(prev => prev + 1);
+      setPhase('battle');
+    }
+  };
+
   const handleGenerationSave = async () => {
     if (!currentItem) return;
     await saveContext.mutateAsync({
@@ -318,16 +336,20 @@ export default function ReviewPage() {
   };
 
   const handleNextWord = () => {
-    setGenerationText('');
-    setGenerationSaved(false);
-    setAiFeedback(null);
-    setAiLoading(false);
-    setAiError(false);
-    if (currentIndex + 1 >= totalWords) {
-      setPhase('summary');
+    if (synonyms.length > 0) {
+      setPhase('synonyms');
     } else {
-      setCurrentIndex(prev => prev + 1);
-      setPhase('battle');
+      setGenerationText('');
+      setGenerationSaved(false);
+      setAiFeedback(null);
+      setAiLoading(false);
+      setAiError(false);
+      if (currentIndex + 1 >= totalWords) {
+        setPhase('summary');
+      } else {
+        setCurrentIndex(prev => prev + 1);
+        setPhase('battle');
+      }
     }
   };
 
@@ -412,6 +434,16 @@ export default function ReviewPage() {
             onGenerationTextChange={setGenerationText}
             onSave={handleGenerationSave}
             onNextWord={handleNextWord}
+          />
+        )}
+
+        {phase === 'synonyms' && currentItem && (
+          <SynonymsPhase
+            currentItem={currentItem}
+            currentIndex={currentIndex}
+            totalWords={totalWords}
+            synonyms={synonyms}
+            onNext={handleSynonymsNext}
           />
         )}
       </AnimatePresence>

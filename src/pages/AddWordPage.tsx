@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ArrowLeft, X, Sparkles, Loader2, Briefcase, MessageCircle, Sun, GraduationCap, BookPlus } from 'lucide-react';
 import { useAddWord } from '@/hooks/useWords';
-import { generateDefinition, generateExampleSentences, generateCollocations, generateWord } from '@/lib/llm';
+import { generateDefinition, generateExampleSentences, generateCollocations, generateWord, generateSynonyms } from '@/lib/llm';
 import type { GenerationStyle } from '@/lib/llm';
 import type { Register } from '@/lib/types';
 
@@ -52,6 +52,9 @@ export default function AddWordPage() {
   const [loadingDefinition, setLoadingDefinition]     = useState(false);
   const [loadingExample, setLoadingExample]           = useState(false);
   const [loadingCollocations, setLoadingCollocations] = useState(false);
+  const [synonyms, setSynonyms]                       = useState<string[]>([]);
+  const [synonymInput, setSynonymInput]               = useState('');
+  const [loadingSynonyms, setLoadingSynonyms]         = useState(false);
   const addWord = useAddWord();
 
   // Generates instantly with current style — no second click needed
@@ -114,6 +117,33 @@ export default function AddWordPage() {
     }
   };
 
+  const addSynonym = () => {
+    const trimmed = synonymInput.trim();
+    if (trimmed && !synonyms.includes(trimmed)) {
+      setSynonyms(prev => [...prev, trimmed]);
+      setSynonymInput('');
+    }
+  };
+
+  const handleSynonymKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') { e.preventDefault(); addSynonym(); }
+  };
+
+  const handleAutoSynonyms = async () => {
+    if (!word.trim())       { toast.error('Enter a word first'); return; }
+    if (!definition.trim()) { toast.error('Add a definition first'); return; }
+    setLoadingSynonyms(true);
+    try {
+      const results = await generateSynonyms(word.trim(), definition.trim(), generationStyle);
+      setSynonyms(results);
+      toast.success('Synonyms generated!');
+    } catch {
+      toast.error('Failed to generate synonyms');
+    } finally {
+      setLoadingSynonyms(false);
+    }
+  };
+
   const handleAutoCollocations = async () => {
     if (!word.trim())       { toast.error('Enter a word first'); return; }
     if (!definition.trim()) { toast.error('Add a definition first'); return; }
@@ -156,6 +186,7 @@ export default function AddWordPage() {
         example_sentence: exampleSentence.trim() || undefined,
         register,
         collocations,
+        synonyms,
       });
       toast.success(`"${word}" added to your library!`, {
         action: { label: 'Go to Library', onClick: () => navigate('/library') },
@@ -165,6 +196,8 @@ export default function AddWordPage() {
       setExampleSentence('');
       setCollocations([]);
       setCollocationInput('');
+      setSynonyms([]);
+      setSynonymInput('');
       setSuggestedWords([]);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to save word');
@@ -410,6 +443,65 @@ export default function AddWordPage() {
                         <button
                           type="button"
                           onClick={() => removeCollocation(i)}
+                          className="text-zinc-500 hover:text-white transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ── Synonyms ─────────────────────────────────────────── */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">
+                    Synonyms{' '}
+                    <span className="normal-case tracking-normal font-normal text-zinc-600">(optional)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleAutoSynonyms}
+                    disabled={loadingSynonyms || !word.trim() || !definition.trim()}
+                    className="ai-btn"
+                  >
+                    {loadingSynonyms
+                      ? <Loader2 className="h-3 w-3 animate-spin" />
+                      : <Sparkles className="h-3 w-3" />}
+                    {loadingSynonyms ? 'Generating…' : 'Generate'}
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    className="add-input"
+                    placeholder="e.g., happy, glad"
+                    value={synonymInput}
+                    onChange={e => setSynonymInput(e.target.value)}
+                    onKeyDown={handleSynonymKeyDown}
+                  />
+                  <button
+                    type="button"
+                    onClick={addSynonym}
+                    disabled={!synonymInput.trim()}
+                    className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-zinc-900 disabled:opacity-30 transition-all"
+                    style={{ background: 'linear-gradient(135deg, #2cffca 0%, #00FFC8 100%)' }}
+                  >
+                    Add
+                  </button>
+                </div>
+                {synonyms.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {synonyms.map((s, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-white"
+                        style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)' }}
+                      >
+                        {s}
+                        <button
+                          type="button"
+                          onClick={() => setSynonyms(prev => prev.filter((_, j) => j !== i))}
                           className="text-zinc-500 hover:text-white transition-colors"
                         >
                           <X className="h-3 w-3" />

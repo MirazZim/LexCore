@@ -165,6 +165,7 @@ export function useAddWord() {
       example_sentence?: string;
       register: string;
       collocations?: string[];
+      synonyms?: string[];
     }) => {
       const { data, error } = await supabase
         .from('words')
@@ -181,10 +182,15 @@ export function useAddWord() {
         .single();
       if (error) throw error;
 
-      // Insert collocations if provided
       if (wordData.collocations && wordData.collocations.length > 0) {
         await supabase.from('word_collocations').insert(
           wordData.collocations.map(c => ({ word_id: data.id, collocation: c }))
+        );
+      }
+
+      if (wordData.synonyms && wordData.synonyms.length > 0) {
+        await supabase.from('semantic_connections').insert(
+          wordData.synonyms.map(s => ({ word_id: data.id, connected_word: s, connection_type: 'synonym' }))
         );
       }
 
