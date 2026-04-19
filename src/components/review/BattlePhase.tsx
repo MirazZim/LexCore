@@ -65,73 +65,85 @@ export function BattlePhase({ currentItem, currentIndex, revealed, onReveal, onR
 
         {/* ── Step 1: Multiple-choice quiz ─────────────────────── */}
         {step === 'quiz' && (
-          <motion.div key="quiz" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="rv-glass rounded-[2rem] p-6 mt-4">
-              <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 mb-2 text-center">
+          <motion.div key="quiz" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.35 }}>
+            <div className="rv-glass rounded-[2rem] p-7 mt-4">
+
+              <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-zinc-500 mb-5 text-center">
                 Which meaning is correct?
               </p>
-              {/* Word — the stimulus to encode */}
-              <h2
-                className="text-5xl font-bold text-center mb-6"
-                style={{ fontFamily: "'Space Grotesk', sans-serif", color: '#00FFC8' }}
+
+              <motion.h2
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.20 }}
+                className="text-5xl font-bold text-center mb-8"
+                style={{
+                  fontFamily: "'Space Grotesk', sans-serif",
+                  color: '#00FFC8',
+                  textShadow: '0 0 32px rgba(0,255,200,0.25)',
+                }}
               >
                 {currentItem.word.word}
-              </h2>
+              </motion.h2>
 
-              {/*
-                Psychology: Elaborative Encoding + Visual Hierarchy
-                — The first 2 words (semantic core) are displayed huge so
-                  the brain forms a strong initial trace (primacy effect).
-                — The remaining definition is shown smaller beneath, giving
-                  context that deepens encoding (elaboration).
-                — Side-by-side forces active comparison, which triggers
-                  deeper processing than a passive list (generation effect).
-              */}
               <div className="grid grid-cols-2 gap-3">
                 {choices.map((choice, i) => {
-                  const words = choice.trim().split(' ');
-                  const core  = words.slice(0, 2).join(' ');   // semantic core — huge
-                  const body  = words.slice(2).join(' ');       // elaboration — small
-                  const label = i === 0 ? 'A' : 'B';
+                  const cfg = [
+                    {
+                      label: 'A',
+                      accent: '#a78bfa',
+                      bg: 'rgba(167,139,250,0.06)',
+                      border: 'rgba(167,139,250,0.16)',
+                      hoverBg: 'rgba(167,139,250,0.12)',
+                      hoverBorder: 'rgba(167,139,250,0.45)',
+                      badgeBg: 'rgba(167,139,250,0.15)',
+                    },
+                    {
+                      label: 'B',
+                      accent: '#6ee7b7',
+                      bg: 'rgba(110,231,183,0.06)',
+                      border: 'rgba(110,231,183,0.16)',
+                      hoverBg: 'rgba(110,231,183,0.12)',
+                      hoverBorder: 'rgba(110,231,183,0.45)',
+                      badgeBg: 'rgba(110,231,183,0.15)',
+                    },
+                  ][i];
                   return (
                     <motion.button
                       key={i}
                       onClick={() => handleSelect(choice)}
-                      whileTap={{ scale: 0.95 }}
-                      className="relative flex flex-col justify-between text-left p-5 rounded-2xl transition-colors"
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.28, delay: 0.1 + i * 0.08 }}
+                      whileHover={{ scale: 1.015, x: 3 }}
+                      whileTap={{ scale: 0.975 }}
+                      className="flex items-start gap-4 text-left px-5 py-4 rounded-2xl"
                       style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.07)',
-                        minHeight: 160,
+                        background: cfg.bg,
+                        border: `1px solid ${cfg.border}`,
+                        transition: 'background 0.2s, border-color 0.2s',
                       }}
-                      onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(0,255,200,0.35)')}
-                      onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)')}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = cfg.hoverBg;
+                        e.currentTarget.style.borderColor = cfg.hoverBorder;
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = cfg.bg;
+                        e.currentTarget.style.borderColor = cfg.border;
+                      }}
                     >
-                      {/* Letter — spatial anchor */}
                       <span
-                        className="text-[10px] font-black uppercase tracking-[0.25em] mb-3 block"
-                        style={{ color: '#00FFC8' }}
+                        className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold mt-0.5"
+                        style={{ background: cfg.badgeBg, color: cfg.accent }}
                       >
-                        {label}
+                        {cfg.label}
                       </span>
-
-                      {/* Semantic core — primacy hook, largest text */}
                       <span
-                        className="block text-2xl font-black leading-tight text-white mb-2"
-                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                        className="text-[14px] leading-relaxed pt-0.5"
+                        style={{ color: '#d4d4d8' }}
                       >
-                        {core}
+                        {choice}
                       </span>
-
-                      {/* Elaboration — smaller, muted, completes meaning */}
-                      {body && (
-                        <span
-                          className="block text-xs leading-relaxed line-clamp-4"
-                          style={{ color: '#71717a' }}
-                        >
-                          {body}
-                        </span>
-                      )}
                     </motion.button>
                   );
                 })}
