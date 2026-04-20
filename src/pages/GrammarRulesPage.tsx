@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookText, ChevronDown, ChevronUp, CheckCircle2, Send, Lightbulb } from 'lucide-react';
+import { BookText, ChevronDown, ChevronUp, Send, Lightbulb } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -44,18 +42,32 @@ function DrillExercise({ questions, title }: { questions: DrillQuestion[]; title
     : 0;
 
   return (
-    <div className="mt-4 space-y-3">
-      <p className="text-xs font-semibold text-green-400">📝 {title}</p>
+    <div
+      className="mt-5 rounded-2xl p-5 space-y-4"
+      style={{ background: 'rgba(0,255,200,0.03)', border: '1px solid rgba(0,255,200,0.1)' }}
+    >
+      <div className="flex items-center gap-2">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#00FFC8]" />
+        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#00FFC8' }}>
+          {title}
+        </p>
+      </div>
+
       {questions.map((q, i) => {
         const isCorrect = submitted && answers[i].trim().toLowerCase() === q.answer.toLowerCase();
         const isWrong = submitted && !isCorrect;
         return (
-          <div key={i} className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground w-5 shrink-0">{i + 1}.</span>
-              <p className="text-sm flex-1">{q.sentence}</p>
+          <div key={i} className="space-y-2">
+            <div className="flex items-start gap-3">
+              <span
+                className="w-5 h-5 rounded-lg flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5"
+                style={{ background: 'rgba(0,255,200,0.08)', color: '#00FFC8' }}
+              >
+                {i + 1}
+              </span>
+              <p className="text-sm text-zinc-300 flex-1 leading-relaxed">{q.sentence}</p>
             </div>
-            <div className="ml-7">
+            <div className="ml-8">
               <Input
                 value={answers[i]}
                 onChange={(e) => {
@@ -64,21 +76,21 @@ function DrillExercise({ questions, title }: { questions: DrillQuestion[]; title
                   setAnswers(next);
                 }}
                 disabled={submitted}
-                placeholder="Your answer..."
+                placeholder="Your answer…"
                 className={cn(
-                  'h-8 text-sm',
-                  isCorrect && 'border-green-500/50 bg-green-500/10',
-                  isWrong && 'border-destructive/50 bg-destructive/10'
+                  'h-9 text-sm bg-zinc-900/60 border-zinc-700/50 text-white placeholder:text-zinc-600 focus:border-[#00FFC8]/40 focus:ring-0 rounded-xl',
+                  isCorrect && 'border-[#00FFC8]/40 bg-[#00FFC8]/5',
+                  isWrong && 'border-red-500/40 bg-red-500/5'
                 )}
               />
               {submitted && (
-                <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="mt-1">
+                <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="mt-2">
                   {isCorrect ? (
-                    <p className="text-xs text-green-400">✅ Correct!</p>
+                    <p className="text-xs font-semibold" style={{ color: '#00FFC8' }}>✓ Correct!</p>
                   ) : (
-                    <div>
-                      <p className="text-xs text-destructive">❌ Answer: <span className="font-semibold">{q.answer}</span></p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{q.explanation}</p>
+                    <div className="space-y-0.5">
+                      <p className="text-xs text-red-400 font-semibold">✗ Answer: <span className="text-white">{q.answer}</span></p>
+                      <p className="text-xs text-zinc-500">{q.explanation}</p>
                     </div>
                   )}
                 </motion.div>
@@ -87,19 +99,30 @@ function DrillExercise({ questions, title }: { questions: DrillQuestion[]; title
           </div>
         );
       })}
-      <div className="ml-7 flex gap-2">
+
+      <div className="ml-8 flex items-center gap-3 pt-1">
         {!submitted ? (
-          <Button size="sm" onClick={handleSubmit} disabled={answers.some(a => !a.trim())} className="text-xs">
-            <Send className="h-3 w-3 mr-1" /> Submit Answers
-          </Button>
+          <button
+            onClick={handleSubmit}
+            disabled={answers.some(a => !a.trim())}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: 'rgba(0,255,200,0.12)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.2)' }}
+          >
+            <Send className="h-3 w-3" /> Submit
+          </button>
         ) : (
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold">
-              {correctCount}/{questions.length} correct
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-bold text-white">
+              {correctCount}/{questions.length}
+              <span className="text-zinc-500 font-normal ml-1">correct</span>
             </span>
-            <Button size="sm" variant="secondary" onClick={handleReset} className="text-xs">
+            <button
+              onClick={handleReset}
+              className="px-4 py-2 rounded-xl text-xs font-bold transition-all"
+              style={{ background: 'rgba(255,255,255,0.05)', color: '#a1a1aa', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
               Try Again
-            </Button>
+            </button>
           </div>
         )}
       </div>
@@ -111,20 +134,26 @@ function DrillExercise({ questions, title }: { questions: DrillQuestion[]; title
 
 function SimpleTable({ headers, rows }: { headers: string[]; rows: TableRow[] }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
+    <div className="overflow-x-auto rounded-2xl" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
       <table className="w-full text-xs">
         <thead>
-          <tr className="bg-secondary">
+          <tr style={{ background: 'rgba(0,255,200,0.06)', borderBottom: '1px solid rgba(0,255,200,0.1)' }}>
             {headers.map((h, i) => (
-              <th key={i} className="px-3 py-2 text-left font-semibold">{h}</th>
+              <th key={i} className="px-4 py-2.5 text-left font-bold uppercase tracking-wider" style={{ color: '#00FFC8', fontSize: '10px' }}>{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className={i % 2 === 0 ? '' : 'bg-secondary/50'}>
+            <tr
+              key={i}
+              style={{
+                background: i % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.03)',
+                borderBottom: i < rows.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+              }}
+            >
               {row.cells.map((cell, j) => (
-                <td key={j} className="px-3 py-2">{cell}</td>
+                <td key={j} className="px-4 py-2.5 text-zinc-300">{cell}</td>
               ))}
             </tr>
           ))}
@@ -138,12 +167,19 @@ function SimpleTable({ headers, rows }: { headers: string[]; rows: TableRow[] })
 
 function ExampleBlock({ correct, text }: { correct: boolean; text: string }) {
   return (
-    <div className={cn(
-      'rounded-lg p-2.5 text-xs border',
-      correct ? 'bg-green-500/10 border-green-500/20' : 'bg-destructive/10 border-destructive/20'
-    )}>
-      <span className="mr-1">{correct ? '✅' : '❌'}</span>
-      <span className={!correct ? 'line-through decoration-destructive/50' : ''}>{text}</span>
+    <div
+      className="rounded-xl px-3.5 py-2.5 text-xs flex items-start gap-2.5"
+      style={{
+        background: correct ? 'rgba(0,255,200,0.05)' : 'rgba(239,68,68,0.05)',
+        border: `1px solid ${correct ? 'rgba(0,255,200,0.15)' : 'rgba(239,68,68,0.15)'}`,
+      }}
+    >
+      <span className="flex-shrink-0 font-bold mt-0.5" style={{ color: correct ? '#00FFC8' : '#ef4444' }}>
+        {correct ? '✓' : '✗'}
+      </span>
+      <span className={cn('text-zinc-300 leading-relaxed', !correct && 'line-through decoration-red-500/50')}>
+        {text}
+      </span>
     </div>
   );
 }
@@ -152,9 +188,12 @@ function ExampleBlock({ correct, text }: { correct: boolean; text: string }) {
 
 function TipBlock({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-3 flex items-start gap-2">
-      <Lightbulb className="h-4 w-4 text-green-400 mt-0.5 shrink-0" />
-      <p className="text-xs text-green-300">{children}</p>
+    <div
+      className="rounded-xl p-3.5 flex items-start gap-3"
+      style={{ background: 'rgba(0,255,200,0.06)', border: '1px solid rgba(0,255,200,0.15)' }}
+    >
+      <Lightbulb className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: '#00FFC8' }} />
+      <p className="text-xs leading-relaxed" style={{ color: 'rgba(0,255,200,0.85)' }}>{children}</p>
     </div>
   );
 }
@@ -169,7 +208,7 @@ const grammarSections: GrammarSection[] = [
     title: '🔑 The Core Idea — Lock & Key',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           Think of it like a <strong>lock and key</strong>. The subject is the lock. The verb is the key. They must match — or the sentence doesn't open.
         </p>
         <TipBlock>
@@ -201,7 +240,7 @@ const grammarSections: GrammarSection[] = [
     title: '🧪 The "Replace Test" — Never Get It Wrong',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           Whenever you're unsure, <strong>replace the subject with "he" or "they"</strong> in your head.
         </p>
         <SimpleTable
@@ -222,7 +261,7 @@ const grammarSections: GrammarSection[] = [
     title: '⚡ Tricky Case 1 — Words Between Subject & Verb',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           The subject and verb are often separated by extra words. Don't get fooled. When you see <strong>[singular noun] + of + [plural noun]</strong>, the subject is always the <strong>first noun</strong>.
         </p>
         <div className="space-y-1.5">
@@ -240,7 +279,7 @@ const grammarSections: GrammarSection[] = [
     title: '⚡ Tricky Case 2 — Words That Feel Plural But Are Singular',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           These words always take <strong>singular verbs</strong>, even though they feel like they're talking about many people:
         </p>
         <SimpleTable
@@ -263,7 +302,7 @@ const grammarSections: GrammarSection[] = [
     title: '⚡ Tricky Case 3 — "There is" vs "There are"',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           With <strong>there is/are</strong>, the subject comes <strong>after</strong> the verb. Find it first, then decide.
         </p>
         <div className="space-y-1.5">
@@ -280,7 +319,7 @@ const grammarSections: GrammarSection[] = [
     title: '⚡ Tricky Case 4 — Relative Clauses (who/that/which)',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           When you use <strong>who, that, which</strong> — the verb inside that clause must agree with what who/that/which <strong>refers to</strong>.
         </p>
         <div className="space-y-1.5">
@@ -297,7 +336,7 @@ const grammarSections: GrammarSection[] = [
     title: '📊 Visual Summary & Drill',
     content: (
       <div className="space-y-3">
-        <div className="rounded-lg bg-secondary p-4 font-mono text-xs leading-relaxed whitespace-pre text-center overflow-x-auto">
+        <div className="g-mono text-center">
 {`IS THE SUBJECT SINGULAR OR PLURAL?
             |
    _________|_________
@@ -327,10 +366,10 @@ Verb + S          Verb (no S)
     title: '🔑 The Core Idea — 3-Question System',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           In some languages, articles don't exist. So your brain never learned to <em>feel</em> when they're needed. The fix is building a <strong>decision system</strong>.
         </p>
-        <div className="rounded-lg bg-secondary p-4 font-mono text-xs leading-relaxed whitespace-pre overflow-x-auto">
+        <div className="g-mono">
 {`Q1: Is the noun countable?
      |
   NO → no article (education, knowledge)
@@ -355,7 +394,7 @@ Q3: a or an?
     title: '📦 Step 1 — Countable vs Uncountable',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           This is the foundation. <strong>Countable</strong>: you can put a number in front (one book, two universities). <strong>Uncountable</strong>: you cannot (one knowledge ❌).
         </p>
         <SimpleTable
@@ -385,18 +424,18 @@ Q3: a or an?
     title: '🆕 Step 2 — First Mention vs Already Known',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           Once you confirm a noun is countable, decide which article based on <strong>shared knowledge</strong>.
         </p>
         <div>
-          <p className="text-xs font-semibold mb-1.5">Use <strong>a / an</strong> when:</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">Use <strong>a / an</strong> when:</p>
           <div className="space-y-1.5">
             <ExampleBlock correct text="I saw a dog today. (any dog — first mention)" />
             <ExampleBlock correct text="She attends a university in Ireland. (we don't know which one yet)" />
           </div>
         </div>
         <div>
-          <p className="text-xs font-semibold mb-1.5">Use <strong>the</strong> when:</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">Use <strong>the</strong> when:</p>
           <div className="space-y-1.5">
             <ExampleBlock correct text="I saw a dog. The dog was barking. (now we know which dog)" />
             <ExampleBlock correct text="The sun rises in the east. (only one sun)" />
@@ -412,7 +451,7 @@ Q3: a or an?
     title: '🔤 Step 3 — "a" or "an"?',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           Depends on the <strong>sound</strong> of the next word — not the letter.
         </p>
         <SimpleTable
@@ -436,7 +475,7 @@ Q3: a or an?
     content: (
       <div className="space-y-4">
         <div>
-          <p className="text-xs font-semibold mb-1.5">Case 1 — General Statements (no article)</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">Case 1 — General Statements (no article)</p>
           <div className="space-y-1.5">
             <ExampleBlock correct text="Education is important. (education as a concept)" />
             <ExampleBlock correct text="The education in Finland is excellent. (specific education system)" />
@@ -444,14 +483,14 @@ Q3: a or an?
           </div>
         </div>
         <div>
-          <p className="text-xs font-semibold mb-1.5">Case 2 — Plural Countable Nouns in General</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">Case 2 — Plural Countable Nouns in General</p>
           <div className="space-y-1.5">
             <ExampleBlock correct text="Universities should offer broader education." />
             <ExampleBlock correct text="The universities in Ireland are world-class. (specific ones)" />
           </div>
         </div>
         <div>
-          <p className="text-xs font-semibold mb-1.5">Case 3 — Jobs and Roles (always use a/an)</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">Case 3 — Jobs and Roles (always use a/an)</p>
           <div className="space-y-1.5">
             <ExampleBlock correct text="She is a doctor." />
             <ExampleBlock correct text="I am a student." />
@@ -459,8 +498,8 @@ Q3: a or an?
           </div>
         </div>
         <div>
-          <p className="text-xs font-semibold mb-1.5">Case 4 — Unique Things (always use the)</p>
-          <p className="text-xs text-muted-foreground">The sun, the moon, the internet, the government, the environment</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">Case 4 — Unique Things (always use the)</p>
+          <p className="text-xs text-zinc-500">The sun, the moon, the internet, the government, the environment</p>
         </div>
       </div>
     ),
@@ -471,7 +510,7 @@ Q3: a or an?
     title: '📊 Visual Summary & Drill',
     content: (
       <div className="space-y-3">
-        <div className="rounded-lg bg-secondary p-4 font-mono text-xs leading-relaxed whitespace-pre overflow-x-auto">
+        <div className="g-mono">
 {`      NOUN
         |
   Is it countable?
@@ -507,10 +546,10 @@ knowledge     /          \\
     title: '🔑 The Core Idea — Timeline Thinking',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           Every English sentence lives on a <strong>timeline</strong>. Before you write a verb, ask: <em>"When does this action happen?"</em> Past, present, or future — and is it finished, ongoing, or habitual?
         </p>
-        <div className="rounded-lg bg-secondary p-4 font-mono text-xs leading-relaxed whitespace-pre text-center overflow-x-auto">
+        <div className="g-mono text-center">
 {`  PAST ←————————— NOW ————————→ FUTURE
    |                |                |
 did / was doing   do / am doing   will do / going to
@@ -527,7 +566,7 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '🔄 Present Simple vs Present Continuous',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           <strong>Present Simple</strong> = habits, facts, routines. <strong>Present Continuous</strong> = actions happening right now or temporary situations.
         </p>
         <SimpleTable
@@ -545,7 +584,7 @@ finished?         habit or now?   plan or spontaneous?`}
         </div>
         <TipBlock><strong>The signal word test:</strong> See "every day/always/usually"? → Simple. See "right now/currently"? → Continuous.</TipBlock>
         <div className="mt-3">
-          <p className="text-xs font-semibold mb-1.5">⚠️ Stative Verbs — Verbs That NEVER Use Continuous</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">⚠️ Stative Verbs — Verbs That NEVER Use Continuous</p>
           <p className="text-xs text-muted-foreground mb-2">Some verbs describe states, not actions. They <strong>never</strong> take the continuous form:</p>
           <SimpleTable
             headers={['Category', 'Verbs']}
@@ -571,7 +610,7 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '⏪ Past Simple vs Present Perfect',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           This is the <strong>#1 tense mistake</strong> for most learners. The difference is simple once you see it:
         </p>
         <SimpleTable
@@ -590,7 +629,7 @@ finished?         habit or now?   plan or spontaneous?`}
         </div>
         <TipBlock><strong>Golden rule:</strong> If you mention WHEN (yesterday, in 2020, last month), use <strong>Past Simple</strong>. If there's no specific time and the action matters NOW, use <strong>Present Perfect</strong>.</TipBlock>
         <div className="mt-3">
-          <p className="text-xs font-semibold mb-1.5">The "Since vs For" Trap</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">The "Since vs For" Trap</p>
           <div className="space-y-1.5">
             <ExampleBlock correct text="I have lived here since 2019. (since = a point in time)" />
             <ExampleBlock correct text="I have lived here for 5 years. (for = a duration)" />
@@ -607,7 +646,7 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '🔀 Past Simple vs Past Continuous',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           Use these two together when telling stories: one action <strong>interrupted</strong> another.
         </p>
         <SimpleTable
@@ -632,7 +671,7 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '⏩ Future: "will" vs "going to"',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           Both talk about the future — but they signal <strong>different levels of planning</strong>.
         </p>
         <SimpleTable
@@ -668,10 +707,10 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '🔑 The Core Idea — Size Thinking',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           English prepositions follow a <strong>size logic</strong>: big containers → <em>in</em>, surfaces → <em>on</em>, precise points → <em>at</em>. This works for both <strong>time</strong> and <strong>place</strong>.
         </p>
-        <div className="rounded-lg bg-secondary p-4 font-mono text-xs leading-relaxed whitespace-pre text-center overflow-x-auto">
+        <div className="g-mono text-center">
 {`       BIG ────────── MEDIUM ────────── SMALL
         IN              ON               AT
   months, years      days, dates     exact times
@@ -704,7 +743,7 @@ finished?         habit or now?   plan or spontaneous?`}
         </div>
         <TipBlock><strong>Memory trick:</strong> IN = big time box (months/years). ON = specific day (it sits ON the calendar). AT = exact point (pinpointed).</TipBlock>
         <div className="mt-3">
-          <p className="text-xs font-semibold mb-1.5">⚠️ Exceptions That Fool Everyone</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">⚠️ Exceptions That Fool Everyone</p>
           <SimpleTable
             headers={['Phrase', 'Preposition', 'Why']}
             rows={[
@@ -748,7 +787,7 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '⚡ Tricky Preposition Pairs',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">These preposition combinations cause the most errors:</p>
+        <p className="text-sm text-zinc-400 leading-relaxed">These preposition combinations cause the most errors:</p>
         <SimpleTable
           headers={['Correct', 'Incorrect', 'Rule']}
           rows={[
@@ -782,7 +821,7 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '🔑 The Core Idea — Homophones & Lookalikes',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           Most "common mistakes" are words that <strong>sound the same but mean different things</strong> (homophones), or words that <strong>look similar but have different uses</strong>. The fix is simple — learn the <strong>substitution test</strong> for each pair.
         </p>
         <TipBlock><strong>Golden rule:</strong> For every confusing word pair, there's a <strong>2-second test</strong> you can run in your head. Learn the test, not the grammar jargon.</TipBlock>
@@ -795,7 +834,7 @@ finished?         habit or now?   plan or spontaneous?`}
     title: "🔀 Its vs It's",
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           <strong>"It's"</strong> = "it is" or "it has." <strong>"Its"</strong> = possessive (belonging to it).
         </p>
         <div className="space-y-1.5">
@@ -868,7 +907,7 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '🔀 Affect vs Effect',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           <strong>Affect</strong> = verb (to influence). <strong>Effect</strong> = noun (the result).
         </p>
         <div className="space-y-1.5">
@@ -886,7 +925,7 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '🔀 Fewer vs Less',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           <strong>Fewer</strong> = countable things. <strong>Less</strong> = uncountable things.
         </p>
         <div className="space-y-1.5">
@@ -914,7 +953,7 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '🔑 The Core Idea — One Complete Thought',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           Every sentence needs a <strong>subject</strong> (who/what) and a <strong>verb</strong> (does what). That's a complete thought. The most common structure errors happen when you either <strong>jam too many thoughts together</strong> or <strong>leave a thought incomplete</strong>.
         </p>
         <TipBlock><strong>Golden rule:</strong> Each sentence = one complete thought. Two complete thoughts? Either <strong>split them</strong> or <strong>join them properly</strong> with a conjunction.</TipBlock>
@@ -927,7 +966,7 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '🚫 Run-on Sentences & Comma Splices',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           A <strong>run-on</strong> smashes two sentences together with no punctuation. A <strong>comma splice</strong> joins them with just a comma (not enough!).
         </p>
         <div className="space-y-1.5">
@@ -951,7 +990,7 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '🧩 Sentence Fragments',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           A fragment is an incomplete thought — it's missing a subject, a verb, or doesn't express a full idea.
         </p>
         <div className="space-y-1.5">
@@ -972,7 +1011,7 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '⚖️ Parallel Structure',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           When listing actions or ideas, keep them in the <strong>same grammatical form</strong>.
         </p>
         <div className="space-y-1.5">
@@ -991,7 +1030,7 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '🚫 Double Negatives',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           In standard English, two negatives cancel out and make a <strong>positive</strong>. Use only <strong>one negative</strong> per clause.
         </p>
         <div className="space-y-1.5">
@@ -1018,10 +1057,10 @@ finished?         habit or now?   plan or spontaneous?`}
     title: '🔑 The Core Idea — Shades of Meaning',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           Modal verbs don't describe actions — they describe the <strong>speaker's attitude</strong>: how possible, necessary, or permitted something is. Think of them as <strong>dimmer switches</strong>, not on/off buttons.
         </p>
-        <div className="rounded-lg bg-secondary p-4 font-mono text-xs leading-relaxed whitespace-pre text-center overflow-x-auto">
+        <div className="g-mono text-center">
 {`CERTAINTY SCALE:
 must be ──── should be ──── might be ──── can't be
  100%          80%            50%            0%
@@ -1132,10 +1171,10 @@ required     advised       optional      free choice`}
     title: '🔑 The Core Idea — The Reality Scale',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           Conditionals express <strong>"if X happens, then Y happens."</strong> The 4 types represent a scale from <strong>100% real</strong> to <strong>impossible</strong>.
         </p>
-        <div className="rounded-lg bg-secondary p-4 font-mono text-xs leading-relaxed whitespace-pre text-center overflow-x-auto">
+        <div className="g-mono text-center">
 {`REALITY SCALE:
 Zero ──── First ──── Second ──── Third
  FACT     LIKELY     UNLIKELY    IMPOSSIBLE
@@ -1152,7 +1191,7 @@ true      possible  imaginary     can't change`}
     title: '0️⃣ Zero Conditional (Facts)',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           <strong>If + present, present.</strong> Used for things that are <strong>always true</strong> — scientific facts, general truths.
         </p>
         <div className="space-y-1.5">
@@ -1170,7 +1209,7 @@ true      possible  imaginary     can't change`}
     title: '1️⃣ First Conditional (Likely Future)',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           <strong>If + present simple, will + verb.</strong> Used for <strong>real, possible</strong> future situations.
         </p>
         <div className="space-y-1.5">
@@ -1188,7 +1227,7 @@ true      possible  imaginary     can't change`}
     title: '2️⃣ Second Conditional (Unlikely / Imaginary)',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           <strong>If + past simple, would + verb.</strong> Used for <strong>hypothetical, unlikely, or imaginary</strong> present/future situations.
         </p>
         <div className="space-y-1.5">
@@ -1207,7 +1246,7 @@ true      possible  imaginary     can't change`}
     title: '3️⃣ Third Conditional (Impossible Past)',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           <strong>If + past perfect (had + past participle), would have + past participle.</strong> Used for <strong>regrets and imagining different past outcomes</strong>. The situation is <strong>impossible to change</strong>.
         </p>
         <div className="space-y-1.5">
@@ -1235,7 +1274,7 @@ true      possible  imaginary     can't change`}
     title: '🔑 The Core Idea — Punctuation = Breathing Instructions',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           Think of punctuation as <strong>breathing instructions</strong> for the reader. A comma = short pause. A period = full stop and breathe. A semicolon = a longer pause between connected ideas.
         </p>
         <TipBlock><strong>Golden rule:</strong> Read your sentence aloud. Where you naturally pause → comma. Where you stop → period. If you run out of breath → you need punctuation.</TipBlock>
@@ -1249,35 +1288,35 @@ true      possible  imaginary     can't change`}
     content: (
       <div className="space-y-4">
         <div>
-          <p className="text-xs font-semibold mb-1.5">1. Lists (Oxford Comma)</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">1. Lists (Oxford Comma)</p>
           <div className="space-y-1.5">
             <ExampleBlock correct text="I bought eggs, milk, and bread." />
             <ExampleBlock correct={false} text="I bought eggs, milk and bread. (can be ambiguous)" />
           </div>
         </div>
         <div>
-          <p className="text-xs font-semibold mb-1.5">2. Before conjunctions joining two complete sentences</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">2. Before conjunctions joining two complete sentences</p>
           <div className="space-y-1.5">
             <ExampleBlock correct text="I was tired, so I went to bed." />
             <ExampleBlock correct text="She called, but nobody answered." />
           </div>
         </div>
         <div>
-          <p className="text-xs font-semibold mb-1.5">3. After introductory phrases</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">3. After introductory phrases</p>
           <div className="space-y-1.5">
             <ExampleBlock correct text="After the meeting, we went to lunch." />
             <ExampleBlock correct text="However, the results were surprising." />
           </div>
         </div>
         <div>
-          <p className="text-xs font-semibold mb-1.5">4. Around extra information (non-essential clauses)</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">4. Around extra information (non-essential clauses)</p>
           <div className="space-y-1.5">
             <ExampleBlock correct text="My sister, who lives in London, is visiting." />
             <ExampleBlock correct text="The book, which I bought yesterday, is fascinating." />
           </div>
         </div>
         <div>
-          <p className="text-xs font-semibold mb-1.5">5. Direct address</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">5. Direct address</p>
           <div className="space-y-1.5">
             <ExampleBlock correct text="Let's eat, grandma! (talking TO grandma)" />
             <ExampleBlock correct={false} text="Let's eat grandma! (eating grandma 😱)" />
@@ -1293,9 +1332,9 @@ true      possible  imaginary     can't change`}
     title: '✏️ Apostrophes — Possession & Contractions',
     content: (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">Apostrophes do exactly <strong>two jobs</strong>: show possession and show missing letters.</p>
+        <p className="text-sm text-zinc-400 leading-relaxed">Apostrophes do exactly <strong>two jobs</strong>: show possession and show missing letters.</p>
         <div>
-          <p className="text-xs font-semibold mb-1.5">Possession:</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">Possession:</p>
           <SimpleTable
             headers={['Owner', 'Rule', 'Example']}
             rows={[
@@ -1306,7 +1345,7 @@ true      possible  imaginary     can't change`}
           />
         </div>
         <div className="mt-3">
-          <p className="text-xs font-semibold mb-1.5">Contractions (missing letters):</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">Contractions (missing letters):</p>
           <SimpleTable
             headers={['Full Form', 'Contraction']}
             rows={[
@@ -1329,15 +1368,15 @@ true      possible  imaginary     can't change`}
     content: (
       <div className="space-y-3">
         <div>
-          <p className="text-xs font-semibold mb-1.5">Semicolons (;) — connecting related complete sentences:</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">Semicolons (;) — connecting related complete sentences:</p>
           <div className="space-y-1.5">
             <ExampleBlock correct text="I have a big exam tomorrow; I can't go out tonight." />
             <ExampleBlock correct text="She loves hiking; however, she hates camping." />
           </div>
-          <p className="text-xs text-muted-foreground mt-2">Use a semicolon when two sentences are <strong>closely related</strong> and you want to show the connection.</p>
+          <p className="text-xs text-zinc-500 mt-2">Use a semicolon when two sentences are <strong>closely related</strong> and you want to show the connection.</p>
         </div>
         <div className="mt-3">
-          <p className="text-xs font-semibold mb-1.5">Colons (:) — introducing lists, explanations, or emphasis:</p>
+          <p className="text-xs font-bold text-zinc-300 mb-1.5">Colons (:) — introducing lists, explanations, or emphasis:</p>
           <div className="space-y-1.5">
             <ExampleBlock correct text="I need three things: patience, coffee, and sleep." />
             <ExampleBlock correct text="There is one rule: never give up." />
@@ -1376,43 +1415,75 @@ function SectionCard({ section }: { section: GrammarSection }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <Card className="border-border/50">
-      <CardContent className="p-4">
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center justify-between text-left"
+    <div
+      className="rounded-2xl overflow-hidden transition-all duration-200"
+      style={{
+        background: expanded ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)',
+        border: expanded ? '1px solid rgba(0,255,200,0.15)' : '1px solid rgba(255,255,255,0.06)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+      }}
+    >
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between text-left px-5 py-4 gap-3"
+      >
+        <span
+          className="font-semibold text-sm text-white leading-snug"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
-          <span className="font-display font-semibold text-sm">{section.title}</span>
-          {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />}
-        </button>
+          {section.title}
+        </span>
+        <span
+          className="flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center transition-all"
+          style={{
+            background: expanded ? 'rgba(0,255,200,0.12)' : 'rgba(255,255,255,0.05)',
+            color: expanded ? '#00FFC8' : '#71717a',
+          }}
+        >
+          {expanded
+            ? <ChevronUp className="h-3.5 w-3.5" />
+            : <ChevronDown className="h-3.5 w-3.5" />}
+        </span>
+      </button>
 
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-3 overflow-hidden"
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div
+              className="px-5 pb-5 space-y-3"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
             >
-              {section.content}
+              <div className="pt-4">{section.content}</div>
               {section.drill && (
                 <DrillExercise questions={section.drill} title="Practice Drill" />
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </CardContent>
-    </Card>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
 /* ─── Page ─── */
 
+const pageContainer = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.06 } },
+};
+const pageItem = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
+};
+
 export default function GrammarRulesPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-
-  const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
-  const item = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } };
 
   const filteredSections = activeCategory
     ? grammarSections.filter(s => s.category === activeCategory)
@@ -1420,26 +1491,67 @@ export default function GrammarRulesPage() {
 
   return (
     <AppLayout>
-      <div className="px-4 pt-6 pb-24 max-w-lg mx-auto">
-        <motion.div variants={container} initial="hidden" animate="show">
-          <motion.div variants={item} className="mb-6">
-            <div className="flex items-center gap-2 mb-1">
-              <BookText className="h-5 w-5 text-green-400" />
-              <h1 className="font-display text-2xl font-bold">Grammar Rules</h1>
+      <style>{`
+        .g-glass {
+          background: rgba(255,255,255,0.03);
+          backdrop-filter: blur(40px);
+          -webkit-backdrop-filter: blur(40px);
+          border: 1px solid rgba(255,255,255,0.07);
+        }
+        .g-mono {
+          background: rgba(0,0,0,0.35);
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 0.875rem;
+          padding: 1rem 1.25rem;
+          font-family: 'JetBrains Mono', 'Fira Code', monospace;
+          font-size: 11px;
+          line-height: 1.8;
+          color: #a1a1aa;
+          overflow-x: auto;
+          white-space: pre;
+        }
+      `}</style>
+
+      <div className="px-6 pt-8 pb-28 max-w-3xl mx-auto">
+        <motion.div variants={pageContainer} initial="hidden" animate="show" className="space-y-6">
+
+          {/* ── Header ─────────────────────────────────────────────────── */}
+          <motion.div variants={pageItem} className="flex items-end justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 mb-1">
+                <div
+                  className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: 'rgba(0,255,200,0.08)', border: '1px solid rgba(0,255,200,0.15)' }}
+                >
+                  <BookText className="h-4 w-4" style={{ color: '#00FFC8' }} />
+                </div>
+                <h1
+                  className="text-4xl font-bold text-white tracking-tight"
+                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                >
+                  Grammar
+                </h1>
+              </div>
+              <p className="text-sm text-zinc-500 ml-0.5">Essential rules — with interactive drills</p>
             </div>
-            <p className="text-sm text-muted-foreground">Essential rules made simple — with practice drills</p>
+            <span
+              className="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full"
+              style={{ background: 'rgba(0,255,200,0.08)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.15)' }}
+            >
+              {grammarSections.length} sections
+            </span>
           </motion.div>
 
-          {/* Category filters */}
-          <motion.div variants={item} className="mb-6 flex flex-wrap gap-2">
+          {/* ── Category filters ────────────────────────────────────────── */}
+          <motion.div variants={pageItem} className="flex flex-wrap gap-2">
             <button
               onClick={() => setActiveCategory(null)}
-              className={cn(
-                'rounded-full px-3 py-1.5 text-xs font-medium border transition-all',
+              className="px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all duration-150"
+              style={
                 !activeCategory
-                  ? 'bg-green-500/20 text-green-300 border-green-500/40'
-                  : 'bg-secondary text-secondary-foreground border-border hover:border-green-500/30'
-              )}
+                  ? { background: 'rgba(0,255,200,0.12)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.25)' }
+                  : { background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.07)' }
+              }
             >
               All
             </button>
@@ -1447,43 +1559,50 @@ export default function GrammarRulesPage() {
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={cn(
-                  'rounded-full px-3 py-1.5 text-xs font-medium border transition-all',
+                className="px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all duration-150"
+                style={
                   activeCategory === cat
-                    ? 'bg-green-500/20 text-green-300 border-green-500/40'
-                    : 'bg-secondary text-secondary-foreground border-border hover:border-green-500/30'
-                )}
+                    ? { background: 'rgba(0,255,200,0.12)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.25)' }
+                    : { background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.07)' }
+                }
               >
                 {categoryEmojis[cat]} {cat}
               </button>
             ))}
           </motion.div>
 
-          {/* Sections */}
+          {/* ── Sections ────────────────────────────────────────────────── */}
           {activeCategory ? (
-            <motion.div variants={item} className="space-y-3 mb-8">
+            <motion.div variants={pageItem} className="space-y-2.5">
               {filteredSections.map(section => (
-                <motion.div key={section.id} variants={item}>
-                  <SectionCard section={section} />
-                </motion.div>
+                <SectionCard key={section.id} section={section} />
               ))}
             </motion.div>
           ) : (
             categories.map(cat => (
-              <motion.div key={cat} variants={item} className="mb-8">
-                <h2 className="font-display text-lg font-semibold mb-3">
-                  {categoryEmojis[cat]} {cat}
-                </h2>
-                <div className="space-y-3">
+              <motion.div key={cat} variants={pageItem} className="space-y-2.5">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-lg">{categoryEmojis[cat]}</span>
+                  <h2
+                    className="text-lg font-bold text-white"
+                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  >
+                    {cat}
+                  </h2>
+                  <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.05)' }} />
+                  <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+                    {grammarSections.filter(s => s.category === cat).length} rules
+                  </span>
+                </div>
+                <div className="space-y-2.5">
                   {grammarSections.filter(s => s.category === cat).map(section => (
-                    <motion.div key={section.id} variants={item}>
-                      <SectionCard section={section} />
-                    </motion.div>
+                    <SectionCard key={section.id} section={section} />
                   ))}
                 </div>
               </motion.div>
             ))
           )}
+
         </motion.div>
       </div>
     </AppLayout>
