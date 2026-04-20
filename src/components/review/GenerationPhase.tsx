@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RotateCcw } from 'lucide-react';
 import type { DueWordItem, AiFeedback } from './types';
 
 interface GenerationPhaseProps {
@@ -15,6 +15,7 @@ interface GenerationPhaseProps {
   onGenerationTextChange: (value: string) => void;
   onSave: () => void;
   onNextWord: () => void;
+  onRetry: () => void;
 }
 
 const verdictConfig = {
@@ -26,7 +27,7 @@ const verdictConfig = {
 export function GenerationPhase({
   currentItem, currentIndex, totalWords, generationText, generationSaved,
   aiFeedback, aiLoading, aiError, isSaving,
-  onGenerationTextChange, onSave, onNextWord,
+  onGenerationTextChange, onSave, onNextWord, onRetry,
 }: GenerationPhaseProps) {
   const verdict = aiFeedback
     ? verdictConfig[aiFeedback.verdict as keyof typeof verdictConfig] ?? verdictConfig.close
@@ -148,9 +149,23 @@ export function GenerationPhase({
             )}
 
             {!aiLoading && (
-              <button onClick={onNextWord} className="rv-btn-mint">
-                {currentIndex + 1 >= totalWords ? 'View Summary' : 'Next Word'}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={onRetry}
+                  className="flex items-center justify-center gap-2 flex-1 rounded-2xl py-3 text-sm font-bold transition-all active:scale-95"
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    color: '#a1a1aa',
+                  }}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Try Again
+                </button>
+                <button onClick={onNextWord} className="rv-btn-mint flex-1">
+                  {currentIndex + 1 >= totalWords ? 'View Summary' : 'Next Word'}
+                </button>
+              </div>
             )}
           </div>
         )}

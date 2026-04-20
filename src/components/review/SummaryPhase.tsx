@@ -165,8 +165,12 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
 
         {/* CTA */}
         <motion.div variants={item}>
-          <button onClick={() => navigate('/')} className="rv-btn-mint">
-            Back to Dashboard
+          <button
+            onClick={() => navigate('/')}
+            disabled={saveSession.isPending}
+            className="rv-btn-mint"
+          >
+            {saveSession.isPending ? 'Saving…' : 'Back to Dashboard'}
           </button>
         </motion.div>
 

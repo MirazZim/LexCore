@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Brain, Clock, Flame, Moon, Sparkles, ArrowRight, MoreHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -31,8 +31,34 @@ export default function Dashboard() {
 
   const now = new Date();
   const hour = now.getHours();
-  const isEvening = hour >= 20;
-  const greeting = hour < 12 ? 'morning' : isEvening ? 'evening' : 'afternoon';
+  const isSleepPrepActive = hour >= 20 || hour < 3;
+  const greeting = hour < 12 ? 'morning' : (hour >= 20 || hour < 3) ? 'evening' : 'afternoon';
+
+  const [sleepCountdown, setSleepCountdown] = useState('');
+  useEffect(() => {
+    const tick = () => {
+      const n = new Date();
+      const h = n.getHours();
+      const active = h >= 20 || h < 3;
+      const target = new Date(n);
+      if (active) {
+        if (h >= 20) target.setDate(target.getDate() + 1);
+        target.setHours(3, 0, 0, 0);
+      } else {
+        target.setHours(20, 0, 0, 0);
+      }
+      const diff = target.getTime() - n.getTime();
+      const hh = Math.floor(diff / 3600000);
+      const mm = Math.floor((diff % 3600000) / 60000);
+      const ss = Math.floor((diff % 60000) / 1000);
+      setSleepCountdown(
+        `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`
+      );
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   /* Seed on first load */
   useEffect(() => {
@@ -43,8 +69,8 @@ export default function Dashboard() {
 
   /* ── Derived stats ───────────────────────────────────────────────── */
   const totalWords = words.length;
-  const dueToday   = dueWords.length;
-  const mastered   = wordStats.filter(s => s.repetitions >= 5).length;
+  const dueToday = dueWords.length;
+  const mastered = wordStats.filter(s => s.repetitions >= 5).length;
   const masteredPct = totalWords > 0 ? Math.round((mastered / totalWords) * 100) : 0;
 
   /* ── Streak ──────────────────────────────────────────────────────── */
@@ -55,8 +81,8 @@ export default function Dashboard() {
       reviewSessions.map(s => dateKey(new Date(s.started_at)))
     )].sort().reverse();
 
-    const today     = new Date();
-    const todayKey  = dateKey(today);
+    const today = new Date();
+    const todayKey = dateKey(today);
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayKey = dateKey(yesterday);
@@ -194,16 +220,17 @@ export default function Dashboard() {
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </button>
 
-              {/* Sleep prep (evening only) */}
-              {isEvening && (
-                <button
-                  onClick={() => navigate('/review?mode=sleep_prep')}
-                  className="ml-4 inline-flex items-center gap-2 px-6 py-4 rounded-full font-semibold text-sm text-zinc-300 border border-zinc-700 hover:border-zinc-500 transition-all"
-                >
-                  <Moon className="h-4 w-4" />
-                  Sleep Prep Mode
-                </button>
-              )}
+              {/* Sleep prep button — always visible with countdown */}
+              <button
+                onClick={() => isSleepPrepActive && navigate('/review?mode=sleep_prep')}
+                className="ml-4 inline-flex items-center gap-2 px-6 py-4 rounded-full font-semibold text-sm transition-all"
+                style={isSleepPrepActive
+                  ? { color: '#00FFC8', border: '1px solid rgba(0,255,200,0.3)', background: 'rgba(0,255,200,0.07)' }
+                  : { color: '#52525b', border: '1px solid rgba(255,255,255,0.07)', cursor: 'default' }}
+              >
+                <Moon className="h-4 w-4" />
+                {isSleepPrepActive ? 'Sleep Prep' : `Sleep Prep in ${sleepCountdown}`}
+              </button>
             </div>
           </motion.section>
 
@@ -337,9 +364,9 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     recentWords.map((word) => {
-                      const stats   = wordStats.find(s => s.word_id === word.id);
+                      const stats = wordStats.find(s => s.word_id === word.id);
                       const mastery = stats ? Math.min(Math.round((stats.repetitions / 5) * 100), 100) : 0;
-                      const isStar  = !!(stats && stats.repetitions >= 5);
+                      const isStar = !!(stats && stats.repetitions >= 5);
 
                       return (
                         <div

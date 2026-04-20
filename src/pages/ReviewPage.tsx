@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Moon } from 'lucide-react';
+import { ArrowLeft, Moon, CheckCircle2, Flame, X, Brain, Zap, Clock3 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { calculateNextReview } from '@/lib/sm2';
 import { useDueWords, useUpdateWordStats, useSaveWordContext, useWords, useWordStats, useReviewSessions } from '@/hooks/useWords';
@@ -98,7 +98,7 @@ export default function ReviewPage() {
   const { data: allStats = [] } = useWordStats();
   const updateWordStats = useUpdateWordStats();
   const saveContext = useSaveWordContext();
-  const { data: reviewSessions = [] } = useReviewSessions();
+  const { data: reviewSessions = [], isLoading: sessionsLoading } = useReviewSessions();
 
   const streak = (() => {
     if (reviewSessions.length === 0) return 0;
@@ -141,6 +141,35 @@ export default function ReviewPage() {
   const [synonyms, setSynonyms] = useState<string[]>([]);
   const [sessionWords, setSessionWords] = useState<typeof dueWordsData>([]);
   const [sessionReady, setSessionReady] = useState(false);
+  const [showScienceModal, setShowScienceModal] = useState(false);
+  const [sleepCountdown, setSleepCountdown] = useState('');
+  const [isSleepPrepActive, setIsSleepPrepActive] = useState(false);
+
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      const h = now.getHours();
+      const active = h >= 20 || h < 3;
+      setIsSleepPrepActive(active);
+      const target = new Date(now);
+      if (active) {
+        if (h >= 20) target.setDate(target.getDate() + 1);
+        target.setHours(3, 0, 0, 0);
+      } else {
+        target.setHours(20, 0, 0, 0);
+      }
+      const diff = target.getTime() - now.getTime();
+      const hh = Math.floor(diff / 3600000);
+      const mm = Math.floor((diff % 3600000) / 60000);
+      const ss = Math.floor((diff % 60000) / 1000);
+      setSleepCountdown(
+        `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`
+      );
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const liveDueWords = isSleepPrep
     ? allStats
@@ -153,11 +182,11 @@ export default function ReviewPage() {
     : dueWordsData;
 
   useEffect(() => {
-    if (!sessionReady && liveDueWords.length > 0) {
+    if (!isLoading && !sessionReady) {
       setSessionWords(liveDueWords);
       setSessionReady(true);
     }
-  }, [liveDueWords, sessionReady]);
+  }, [isLoading, liveDueWords, sessionReady]);
 
   const currentItem = sessionWords[currentIndex];
   const totalWords = sessionWords.length;
@@ -183,7 +212,7 @@ export default function ReviewPage() {
     setClozeSubmitted(false);
   }, [currentIndex]);
 
-  if (isLoading || !sessionReady) {
+  if (isLoading || sessionsLoading || !sessionReady) {
     return (
       <div className="min-h-screen px-4 pt-8 pb-24 max-w-lg mx-auto space-y-4">
         <Skeleton className="h-8 w-full rounded-2xl bg-zinc-800/60" />
@@ -240,17 +269,235 @@ export default function ReviewPage() {
 
   if (totalWords === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="min-h-screen px-4 pt-8 pb-24 max-w-lg mx-auto flex flex-col justify-center">
         <style>{RV_STYLES}</style>
-        <div className="text-center">
-          <p className="text-3xl font-bold text-white mb-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            All caught up!
-          </p>
-          <p className="text-zinc-500 mb-8">No words due for review right now.</p>
-          <button onClick={() => navigate('/')} className="rv-btn-mint" style={{ width: 'auto', padding: '14px 40px' }}>
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="space-y-6"
+        >
+          {/* Badge */}
+          <div className="flex justify-center">
+            <span
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.3em]"
+              style={{ background: 'rgba(0,255,200,0.1)', color: '#00FFC8' }}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Today's mission complete
+            </span>
+          </div>
+
+          {/* Headline */}
+          <div className="text-center">
+            <h1
+              className="text-4xl font-bold text-white leading-tight mb-3"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              You've done<br />
+              <span style={{ color: '#00FFC8' }}>today's part.</span>
+            </h1>
+            <p className="text-zinc-400 text-base leading-relaxed mb-4">
+              Your brain is consolidating right now.<br />
+              Don't skip tonight — sleep prep locks it in.
+            </p>
+            <button
+              onClick={() => setShowScienceModal(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all"
+              style={{ background: 'rgba(255,255,255,0.06)', color: '#a1a1aa', border: '1px solid rgba(255,255,255,0.09)' }}
+            >
+              <Brain className="w-4 h-4" />
+              Why is Sleep Prep important?
+            </button>
+          </div>
+
+          {/* Sleep Prep card */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+            className="rv-glass rounded-[1.75rem] p-6"
+            style={isSleepPrepActive ? { border: '1px solid rgba(0,255,200,0.18)' } : undefined}
+          >
+            <div className="flex items-start gap-4 mb-4">
+              <div
+                className="flex-shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center"
+                style={{ background: 'rgba(0,255,200,0.1)' }}
+              >
+                <Moon className="w-5 h-5" style={{ color: '#00FFC8' }} />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <p className="text-white font-bold text-base" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    Sleep Prep Mode
+                  </p>
+                  {isSleepPrepActive && (
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                      style={{ background: 'rgba(0,255,200,0.12)', color: '#00FFC8' }}
+                    >
+                      Live
+                    </span>
+                  )}
+                </div>
+                <p className="text-zinc-500 text-sm mt-1">
+                  {isSleepPrepActive
+                    ? 'Active now — revisit today\'s words before bed.'
+                    : 'Available 8 PM – 3 AM. Locks in what you learned.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Countdown */}
+            <div
+              className="rounded-xl px-4 py-3 flex items-center justify-between"
+              style={{ background: 'rgba(255,255,255,0.04)' }}
+            >
+              <span className="text-xs text-zinc-500 font-medium">
+                {isSleepPrepActive ? 'Ends in' : 'Starts in'}
+              </span>
+              <span
+                className="text-lg font-bold tabular-nums tracking-widest"
+                style={{ color: isSleepPrepActive ? '#00FFC8' : '#52525b', fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                {sleepCountdown}
+              </span>
+            </div>
+
+            {isSleepPrepActive && (
+              <button
+                onClick={() => navigate('/review?mode=sleep_prep')}
+                className="rv-btn-mint mt-3"
+              >
+                <Moon className="w-4 h-4" />
+                Start Sleep Prep
+              </button>
+            )}
+          </motion.div>
+
+          {/* Streak card */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.35, duration: 0.4 }}
+            className="rv-glass rounded-[1.75rem] p-5 flex items-center gap-5"
+          >
+            <div
+              className="flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center"
+              style={{ background: 'rgba(249,115,22,0.12)' }}
+            >
+              <Flame className="w-7 h-7" style={{ color: '#f97316' }} />
+            </div>
+            <div className="flex-1">
+              <p
+                className="text-3xl font-bold text-white leading-none"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                {streak} day{streak !== 1 ? 's' : ''}
+              </p>
+              <p className="text-zinc-500 text-xs mt-1">
+                {streak > 0
+                  ? "Don't review tomorrow and your streak resets."
+                  : 'Start your streak — come back tomorrow.'}
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Dashboard link */}
+          <button
+            onClick={() => navigate('/')}
+            className="rv-btn-secondary"
+          >
             Back to Dashboard
           </button>
-        </div>
+        </motion.div>
+
+        {/* Science modal */}
+        <AnimatePresence>
+          {showScienceModal && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowScienceModal(false)}
+                className="fixed inset-0 z-40"
+                style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+              />
+
+              {/* Sheet */}
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 40 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                className="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto rounded-t-[2rem] px-6 pt-6 pb-10"
+                style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                {/* Handle */}
+                <div className="w-10 h-1 rounded-full bg-zinc-700 mx-auto mb-6" />
+
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    The Science of Sleep Prep
+                  </h2>
+                  <button
+                    onClick={() => setShowScienceModal(false)}
+                    className="w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ background: 'rgba(255,255,255,0.07)', color: '#71717a' }}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Cards */}
+                <div className="space-y-3">
+                  <div className="rounded-2xl p-4 flex gap-4" style={{ background: 'rgba(0,255,200,0.07)', border: '1px solid rgba(0,255,200,0.12)' }}>
+                    <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,255,200,0.12)' }}>
+                      <Brain className="w-5 h-5" style={{ color: '#00FFC8' }} />
+                    </div>
+                    <div>
+                      <p className="text-white font-bold text-sm mb-1">Memory Consolidation</p>
+                      <p className="text-zinc-400 text-xs leading-relaxed">
+                        During sleep, your hippocampus replays what you learned and transfers it to long-term memory. Reviewing words right before sleep feeds this process directly.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl p-4 flex gap-4" style={{ background: 'rgba(249,115,22,0.07)', border: '1px solid rgba(249,115,22,0.12)' }}>
+                    <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(249,115,22,0.12)' }}>
+                      <Zap className="w-5 h-5" style={{ color: '#f97316' }} />
+                    </div>
+                    <div>
+                      <p className="text-white font-bold text-sm mb-1">The Spacing Effect</p>
+                      <p className="text-zinc-400 text-xs leading-relaxed">
+                        Two exposures to a word in one day — once during review, once before sleep — is dramatically more effective than one. Your retention can jump by up to 40%.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl p-4 flex gap-4" style={{ background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.12)' }}>
+                    <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.12)' }}>
+                      <Clock3 className="w-5 h-5" style={{ color: '#8b5cf6' }} />
+                    </div>
+                    <div>
+                      <p className="text-white font-bold text-sm mb-1">The Last 5 Minutes Rule</p>
+                      <p className="text-zinc-400 text-xs leading-relaxed">
+                        What you think about in the final minutes before sleep gets prioritised for consolidation. Sleep prep is timed exactly for this window.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-center text-zinc-600 text-xs mt-5">
+                  Based on research by Walker (2017), Stickgold (2005), and Ebbinghaus forgetting curve studies.
+                </p>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
@@ -311,13 +558,16 @@ export default function ReviewPage() {
     }
   };
 
+  const handleGenerationRetry = () => {
+    setGenerationText('');
+    setGenerationSaved(false);
+    setAiFeedback(null);
+    setAiLoading(false);
+    setAiError(false);
+  };
+
   const handleGenerationSave = async () => {
     if (!currentItem) return;
-    await saveContext.mutateAsync({
-      word_id: currentItem.word.id,
-      sentence: generationText.trim(),
-      source_label: 'My sentence',
-    });
     setGenerationSaved(true);
     setAiLoading(true);
     setAiError(false);
@@ -335,7 +585,13 @@ export default function ReviewPage() {
     }
   };
 
-  const handleNextWord = () => {
+  const handleNextWord = async () => {
+    if (!currentItem) return;
+    await saveContext.mutateAsync({
+      word_id: currentItem.word.id,
+      sentence: generationText.trim(),
+      source_label: 'My sentence',
+    });
     if (synonyms.length > 0) {
       setPhase('synonyms');
     } else {
@@ -434,6 +690,7 @@ export default function ReviewPage() {
             onGenerationTextChange={setGenerationText}
             onSave={handleGenerationSave}
             onNextWord={handleNextWord}
+            onRetry={handleGenerationRetry}
           />
         )}
 
