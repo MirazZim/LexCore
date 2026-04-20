@@ -86,38 +86,37 @@ export function BattlePhase({ currentItem, currentIndex, revealed, onReveal, onR
                 {currentItem.word.word}
               </motion.h2>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-3">
                 {choices.map((choice, i) => {
                   const cfg = [
                     {
                       label: 'A',
                       accent: '#a78bfa',
-                      bg: 'rgba(167,139,250,0.06)',
-                      border: 'rgba(167,139,250,0.16)',
-                      hoverBg: 'rgba(167,139,250,0.12)',
-                      hoverBorder: 'rgba(167,139,250,0.45)',
-                      badgeBg: 'rgba(167,139,250,0.15)',
+                      bg: 'rgba(167,139,250,0.08)',
+                      border: 'rgba(167,139,250,0.22)',
+                      hoverBg: 'rgba(167,139,250,0.15)',
+                      hoverBorder: 'rgba(167,139,250,0.55)',
+                      badgeBg: 'rgba(167,139,250,0.18)',
                     },
                     {
                       label: 'B',
                       accent: '#6ee7b7',
-                      bg: 'rgba(110,231,183,0.06)',
-                      border: 'rgba(110,231,183,0.16)',
-                      hoverBg: 'rgba(110,231,183,0.12)',
-                      hoverBorder: 'rgba(110,231,183,0.45)',
-                      badgeBg: 'rgba(110,231,183,0.15)',
+                      bg: 'rgba(110,231,183,0.08)',
+                      border: 'rgba(110,231,183,0.22)',
+                      hoverBg: 'rgba(110,231,183,0.15)',
+                      hoverBorder: 'rgba(110,231,183,0.55)',
+                      badgeBg: 'rgba(110,231,183,0.18)',
                     },
                   ][i];
                   return (
                     <motion.button
                       key={i}
                       onClick={() => handleSelect(choice)}
-                      initial={{ opacity: 0, x: -12 }}
-                      animate={{ opacity: 1, x: 0 }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.28, delay: 0.1 + i * 0.08 }}
-                      whileHover={{ scale: 1.015, x: 3 }}
                       whileTap={{ scale: 0.975 }}
-                      className="flex items-start gap-4 text-left px-5 py-4 rounded-2xl"
+                      className="flex items-center gap-4 text-left w-full px-5 py-4 rounded-2xl"
                       style={{
                         background: cfg.bg,
                         border: `1px solid ${cfg.border}`,
@@ -133,14 +132,14 @@ export function BattlePhase({ currentItem, currentIndex, revealed, onReveal, onR
                       }}
                     >
                       <span
-                        className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold mt-0.5"
+                        className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-xl text-sm font-bold"
                         style={{ background: cfg.badgeBg, color: cfg.accent }}
                       >
                         {cfg.label}
                       </span>
                       <span
-                        className="text-[14px] leading-relaxed pt-0.5"
-                        style={{ color: '#d4d4d8' }}
+                        className="text-base leading-snug font-bold flex-1"
+                        style={{ color: '#ffffff' }}
                       >
                         {choice}
                       </span>
