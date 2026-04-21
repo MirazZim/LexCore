@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useWords, useWordStats, useWordContexts, useWordCollocations, useSemanticConnections, useDeleteWord } from '@/hooks/useWords';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { currentRetrievability, dbStateToCard } from '@/lib/fsrs';
 
 /* ─── Animation variants ─────────────────────────────────────────── */
 const container: Variants = {
@@ -52,7 +53,7 @@ function getMemoryStatus(stats: { repetitions: number; difficulty: number; times
   const total = stats.times_correct + stats.times_incorrect;
   const accuracy = total > 0 ? stats.times_correct / total : 0;
 
-  if (stats.repetitions >= 5 && stats.difficulty <= 4 && accuracy >= 0.8) return {
+  if (stats.stability >= 21 && stats.state === 2 && accuracy >= 0.8) return {
     label: 'Strong memory',
     color: '#00FFC8',
     description: "This word has settled in. You'll likely reach for it without thinking.",
@@ -79,15 +80,19 @@ function getMemoryStatus(stats: { repetitions: number; difficulty: number; times
   };
 }
 
-function formatNextReview(_scheduledDays: number, nextReviewAt: string, now: Date): string {
-  const diff = Math.ceil((new Date(nextReviewAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  if (diff <= 0) return 'Ready now';
-  if (diff === 1) return 'Tomorrow';
-  if (diff < 14) return `In ${diff} days`;
-  const weeks = Math.round(diff / 7);
-  if (weeks < 8) return `In ${weeks} week${weeks !== 1 ? 's' : ''}`;
-  const months = Math.round(diff / 30);
-  return `In ${months} month${months !== 1 ? 's' : ''}`;
+function formatTimeUntil(nextReviewAt: string, now: Date): string {
+  const diffMs = new Date(nextReviewAt).getTime() - now.getTime();
+  if (diffMs <= 0) return 'Ready now';
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 60) return `${mins} min${mins !== 1 ? 's' : ''}`;
+  const hours = Math.round(diffMs / 3600000);
+  if (hours < 24) return `${hours} hr${hours !== 1 ? 's' : ''}`;
+  const days = Math.round(diffMs / 86400000);
+  if (days < 14) return `${days} day${days !== 1 ? 's' : ''}`;
+  const weeks = Math.round(days / 7);
+  if (weeks < 8) return `${weeks} week${weeks !== 1 ? 's' : ''}`;
+  const months = Math.round(days / 30);
+  return `${months} month${months !== 1 ? 's' : ''}`;
 }
 
 const filterOptions: { value: string; label: string }[] = [
@@ -107,7 +112,7 @@ export default function LibraryPage() {
   const [filter, setFilter] = useState('all');
   const [selectedWordId, setSelectedWordId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const now = new Date();
+  const now = useMemo(() => new Date(), []);
 
   useEffect(() => {
     const wordParam = searchParams.get('word');
@@ -143,26 +148,25 @@ export default function LibraryPage() {
       }
       if (filter === 'mastered') {
         const stats = wordStats.find(s => s.word_id === w.id);
-        return stats && stats.repetitions >= 5;
+        return stats && stats.state === 2 && stats.stability >= 21;
       }
       return w.register === filter;
     });
-  }, [words, wordStats, search, filter]);
+  }, [words, wordStats, search, filter, now]);
 
   const selectedWord = selectedWordId ? words.find(w => w.id === selectedWordId) : null;
   const selectedStats = selectedWordId ? wordStats.find(s => s.word_id === selectedWordId) : null;
 
-  const getDaysUntilReview = (wordId: string) => {
+  const getNextReviewLabel = (wordId: string) => {
     const stats = wordStats.find(s => s.word_id === wordId);
     if (!stats) return null;
-    const diff = Math.ceil((new Date(stats.next_review_at).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return diff;
+    return formatTimeUntil(stats.next_review_at, now);
   };
 
   /* ── Derived stats ──────────────────────────────────────────────── */
   const totalWords = words.length;
   const dueCount = wordStats.filter(s => new Date(s.next_review_at) <= now).length;
-  const masteredCount = wordStats.filter(s => s.repetitions >= 5).length;
+  const masteredCount = wordStats.filter(s => s.state === 2 && s.stability >= 21).length;
 
   const isLoading = wordsLoading || statsLoading;
 
@@ -297,10 +301,10 @@ export default function LibraryPage() {
             <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredWords.map(word => {
                 const stats = wordStats.find(s => s.word_id === word.id);
-                const daysUntil = getDaysUntilReview(word.id);
-                const mastery = stats ? Math.min(Math.round((stats.repetitions / 5) * 100), 100) : 0;
-                const isStar = stats && stats.repetitions >= 5;
-                const isDue = daysUntil !== null && daysUntil <= 0;
+                const nextLabel = getNextReviewLabel(word.id);
+                const mastery = stats ? Math.min(Math.round((stats.stability / 30) * 100), 100) : 0;
+                const isStar = stats && stats.state === 2 && stats.stability >= 21;
+                const isDue = nextLabel === 'Ready now';
 
                 return (
                   <motion.div
@@ -343,7 +347,7 @@ export default function LibraryPage() {
                         className="text-[10px] font-bold uppercase tracking-wider"
                         style={{ color: isDue ? '#00FFC8' : '#52525b' }}
                       >
-                        {isDue ? 'Due' : daysUntil !== null ? `${daysUntil}d` : '—'}
+                        {isDue ? 'Due' : nextLabel ?? '—'}
                       </span>
                     </div>
                   </motion.div>
@@ -366,7 +370,15 @@ export default function LibraryPage() {
               const memory = getMemoryStatus(selectedStats);
               const totalAttempts = selectedStats ? selectedStats.times_correct + selectedStats.times_incorrect : 0;
               const accuracyPct = totalAttempts > 0 ? Math.round((selectedStats!.times_correct / totalAttempts) * 100) : 0;
-              const nextReview = selectedStats ? formatNextReview(selectedStats.scheduled_days, selectedStats.next_review_at, now) : null;
+              const nextReview = selectedStats ? formatTimeUntil(selectedStats.next_review_at, now) : null;
+              const recallPct = selectedStats ? Math.round(currentRetrievability(dbStateToCard(selectedStats)) * 100) : 0;
+              const stabilityLabel = selectedStats
+                ? selectedStats.stability < 1 ? 'Hours'
+                  : selectedStats.stability < 7 ? `${Math.round(selectedStats.stability)}d`
+                  : selectedStats.stability < 30 ? `${Math.round(selectedStats.stability / 7)}w`
+                  : `${Math.round(selectedStats.stability / 30)}mo`
+                : '—';
+              const stageLabel = selectedStats ? (['New', 'Learning', 'Review', 'Relearning'][selectedStats.state] ?? '—') : '—';
 
               return (
               <>
@@ -481,16 +493,11 @@ export default function LibraryPage() {
                   <section>
                     <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 mb-3">Memory</h3>
                     <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6 space-y-5">
+                      {/* Status */}
                       <div>
                         <div className="flex items-center gap-3 mb-1.5">
-                          <span
-                            className="h-2.5 w-2.5 rounded-full"
-                            style={{ background: memory.color, boxShadow: `0 0 14px ${memory.color}` }}
-                          />
-                          <span
-                            className="text-2xl font-bold text-white"
-                            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                          >
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ background: memory.color, boxShadow: `0 0 14px ${memory.color}` }} />
+                          <span className="text-2xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                             {memory.label}
                           </span>
                         </div>
@@ -498,72 +505,52 @@ export default function LibraryPage() {
                       </div>
 
                       {selectedStats && (
-                        <div className="space-y-3">
+                        <>
+                          {/* Recall chance + Memory lasts */}
                           <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-xl bg-[#00FFC8]/[0.04] border border-[#00FFC8]/15 px-4 py-3">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-[#00FFC8]/80">Recalled</span>
-                                <span className="h-1.5 w-1.5 rounded-full bg-[#00FFC8]" style={{ boxShadow: '0 0 8px #00FFC8' }} />
-                              </div>
-                              <div className="flex items-baseline gap-1.5">
-                                <span
-                                  className="text-3xl font-bold text-white leading-none"
-                                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                                >
-                                  {selectedStats.times_correct}
-                                </span>
-                                <span className="text-[11px] text-zinc-500">times</span>
+                            <div className="rounded-xl bg-white/[0.03] border border-white/5 px-4 py-3">
+                              <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-zinc-500 block mb-1">Recall chance</span>
+                              <span className="text-2xl font-bold text-white leading-none" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                                {recallPct}%
+                              </span>
+                              <div className="h-1 rounded-full bg-zinc-800 mt-2 overflow-hidden">
+                                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${recallPct}%`, background: memory.color }} />
                               </div>
                             </div>
-                            <div className="rounded-xl bg-red-500/[0.04] border border-red-500/15 px-4 py-3">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-red-400/80">Missed</span>
-                                <span className="h-1.5 w-1.5 rounded-full bg-red-400" style={{ boxShadow: '0 0 8px rgb(248,113,113)' }} />
-                              </div>
-                              <div className="flex items-baseline gap-1.5">
-                                <span
-                                  className="text-3xl font-bold text-white leading-none"
-                                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                                >
-                                  {selectedStats.times_incorrect}
-                                </span>
-                                <span className="text-[11px] text-zinc-500">times</span>
-                              </div>
+                            <div className="rounded-xl bg-white/[0.03] border border-white/5 px-4 py-3">
+                              <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-zinc-500 block mb-1">Memory lasts</span>
+                              <span className="text-2xl font-bold text-white leading-none" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                                {stabilityLabel}
+                              </span>
+                              <span className="text-[10px] text-zinc-500 block mt-1">{stageLabel}</span>
                             </div>
                           </div>
 
-                          {totalAttempts > 0 && (
-                            <div>
-                              <div className="flex items-baseline justify-between mb-2">
-                                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500">Recall accuracy</span>
-                                <span
-                                  className="text-sm font-bold text-white"
-                                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                                >
-                                  {accuracyPct}%
-                                </span>
-                              </div>
-                              <div className="h-1.5 rounded-full bg-zinc-900 overflow-hidden">
-                                <div
-                                  className="h-full rounded-full transition-all duration-700"
-                                  style={{ width: `${accuracyPct}%`, background: memory.color }}
-                                />
-                              </div>
+                          {/* Recalled / Missed / Accuracy inline */}
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{selectedStats.times_correct}</span>
+                              <span className="text-[11px] text-zinc-500">recalled</span>
                             </div>
-                          )}
-                        </div>
+                            <div className="h-3 w-px bg-zinc-800" />
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{selectedStats.times_incorrect}</span>
+                              <span className="text-[11px] text-zinc-500">missed</span>
+                            </div>
+                            {totalAttempts > 0 && (
+                              <>
+                                <div className="h-3 w-px bg-zinc-800" />
+                                <span className="text-[11px] text-zinc-400">{accuracyPct}% accuracy</span>
+                              </>
+                            )}
+                          </div>
+                        </>
                       )}
 
                       {selectedStats && (
                         <div className="flex items-center justify-between pt-2 border-t border-white/5">
                           <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500">Next encounter</span>
-                          <span
-                            className="text-sm font-bold"
-                            style={{
-                              color: nextReview === 'Ready now' ? '#00FFC8' : 'white',
-                              fontFamily: "'Space Grotesk', sans-serif",
-                            }}
-                          >
+                          <span className="text-sm font-bold" style={{ color: nextReview === 'Ready now' ? '#00FFC8' : 'white', fontFamily: "'Space Grotesk', sans-serif" }}>
                             {nextReview}
                           </span>
                         </div>

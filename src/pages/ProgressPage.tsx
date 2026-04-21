@@ -33,7 +33,7 @@ export default function ProgressPage() {
   const { data: words = [], isLoading: wordsLoading } = useWords();
   const { data: wordStats = [], isLoading: statsLoading } = useWordStats();
   const { data: sessions = [], isLoading: sessionsLoading } = useReviewSessions();
-  const now = new Date();
+  const now = useMemo(() => new Date(), []);
 
   const calendarDays = useMemo(() => {
     const days = [];
@@ -50,14 +50,19 @@ export default function ProgressPage() {
   const masteryData = useMemo(() => {
     const weeks = [];
     for (let i = 3; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i * 7);
-      const label = `W${4 - i}`;
-      const mastered = wordStats.filter(s => s.repetitions >= 5 - i).length;
-      weeks.push({ name: label, mastered: Math.min(mastered, words.length) });
+      const cutoff = new Date(now);
+      cutoff.setDate(cutoff.getDate() - i * 7);
+      const label = i === 0 ? 'Now' : `W${4 - i}`;
+      const mastered = wordStats.filter(s =>
+        s.state === 2 &&
+        s.stability >= 21 &&
+        s.last_reviewed_at &&
+        new Date(s.last_reviewed_at) <= cutoff
+      ).length;
+      weeks.push({ name: label, mastered });
     }
     return weeks;
-  }, [wordStats, words]);
+  }, [wordStats]);
 
   const qualityDist = useMemo(() => {
     const total = sessions.reduce((acc, s) => acc + s.words_reviewed, 0);
@@ -370,7 +375,7 @@ export default function ProgressPage() {
                 className="text-[10px] font-bold uppercase tracking-widest"
                 style={{ color: 'rgba(0,255,200,0.5)' }}
               >
-                Ease Factor
+                Difficulty
               </span>
             </div>
             {hardestWords.length === 0 ? (

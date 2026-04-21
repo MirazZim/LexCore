@@ -70,7 +70,7 @@ export default function Dashboard() {
   /* ── Derived stats ───────────────────────────────────────────────── */
   const totalWords = words.length;
   const dueToday = dueWords.length;
-  const mastered = wordStats.filter(s => s.repetitions >= 5).length;
+  const mastered = wordStats.filter(s => s.state === 2 && s.stability >= 21).length;
   const masteredPct = totalWords > 0 ? Math.round((mastered / totalWords) * 100) : 0;
 
   /* ── Streak ──────────────────────────────────────────────────────── */
@@ -280,8 +280,9 @@ export default function Dashboard() {
                   <div>
                     <div className="flex items-end gap-2">
                       <span className="text-5xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                        {masteredPct}%
+                        {mastered}
                       </span>
+                      <span className="text-zinc-500 text-sm mb-1.5">/ {totalWords} words</span>
                     </div>
                     {/* Progress bar */}
                     <div className="mt-3 h-1 w-full rounded-full bg-zinc-800 overflow-hidden">
@@ -365,8 +366,8 @@ export default function Dashboard() {
                   ) : (
                     recentWords.map((word) => {
                       const stats = wordStats.find(s => s.word_id === word.id);
-                      const mastery = stats ? Math.min(Math.round((stats.repetitions / 5) * 100), 100) : 0;
-                      const isStar = !!(stats && stats.repetitions >= 5);
+                      const mastery = stats ? Math.min(Math.round((stats.stability / 30) * 100), 100) : 0;
+                      const isStar = !!(stats && stats.state === 2 && stats.stability >= 21);
 
                       return (
                         <div
