@@ -32,8 +32,12 @@ export interface WordStats {
   id: string;
   user_id: string;
   word_id: string;
-  ease_factor: number;
-  interval_days: number;
+  stability: number;
+  difficulty: number;
+  state: number;           // 0=New 1=Learning 2=Review 3=Relearning
+  elapsed_days: number;
+  scheduled_days: number;
+  lapses: number;
   repetitions: number;
   next_review_at: string;
   last_reviewed_at: string | null;

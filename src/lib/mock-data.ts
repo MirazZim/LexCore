@@ -26,14 +26,14 @@ export const mockWords: Word[] = [
 ];
 
 export const mockWordStats: WordStats[] = [
-  { id: 'ws1', user_id: MOCK_USER_ID, word_id: 'w1', ease_factor: 2.6, interval_days: 10, repetitions: 5, next_review_at: hoursFromNow(-2), last_reviewed_at: daysAgo(10), times_correct: 5, times_incorrect: 1 },
-  { id: 'ws2', user_id: MOCK_USER_ID, word_id: 'w2', ease_factor: 2.3, interval_days: 6, repetitions: 3, next_review_at: hoursFromNow(-5), last_reviewed_at: daysAgo(6), times_correct: 3, times_incorrect: 2 },
-  { id: 'ws3', user_id: MOCK_USER_ID, word_id: 'w3', ease_factor: 1.6, interval_days: 1, repetitions: 1, next_review_at: hoursFromNow(1), last_reviewed_at: daysAgo(1), times_correct: 1, times_incorrect: 4 },
-  { id: 'ws4', user_id: MOCK_USER_ID, word_id: 'w4', ease_factor: 2.1, interval_days: 3, repetitions: 2, next_review_at: hoursFromNow(-1), last_reviewed_at: daysAgo(3), times_correct: 2, times_incorrect: 2 },
-  { id: 'ws5', user_id: MOCK_USER_ID, word_id: 'w5', ease_factor: 1.5, interval_days: 1, repetitions: 0, next_review_at: hoursFromNow(-3), last_reviewed_at: daysAgo(1), times_correct: 0, times_incorrect: 3 },
-  { id: 'ws6', user_id: MOCK_USER_ID, word_id: 'w6', ease_factor: 2.5, interval_days: 6, repetitions: 2, next_review_at: hoursFromNow(24), last_reviewed_at: daysAgo(6), times_correct: 2, times_incorrect: 0 },
-  { id: 'ws7', user_id: MOCK_USER_ID, word_id: 'w7', ease_factor: 2.8, interval_days: 15, repetitions: 6, next_review_at: hoursFromNow(48), last_reviewed_at: daysAgo(15), times_correct: 6, times_incorrect: 0 },
-  { id: 'ws8', user_id: MOCK_USER_ID, word_id: 'w8', ease_factor: 2.0, interval_days: 1, repetitions: 1, next_review_at: hoursFromNow(-6), last_reviewed_at: daysAgo(1), times_correct: 1, times_incorrect: 1 },
+  { id: 'ws1', user_id: MOCK_USER_ID, word_id: 'w1', stability: 10, difficulty: 3.5, state: 2, elapsed_days: 10, scheduled_days: 10, repetitions: 5, next_review_at: hoursFromNow(-2), last_reviewed_at: daysAgo(10), times_correct: 5, times_incorrect: 1 },
+  { id: 'ws2', user_id: MOCK_USER_ID, word_id: 'w2', stability: 6,  difficulty: 5.0, state: 2, elapsed_days: 6,  scheduled_days: 6,  repetitions: 3, next_review_at: hoursFromNow(-5), last_reviewed_at: daysAgo(6),  times_correct: 3, times_incorrect: 2 },
+  { id: 'ws3', user_id: MOCK_USER_ID, word_id: 'w3', stability: 1,  difficulty: 8.5, state: 1, elapsed_days: 1,  scheduled_days: 1,  repetitions: 1, next_review_at: hoursFromNow(1),  last_reviewed_at: daysAgo(1),  times_correct: 1, times_incorrect: 4 },
+  { id: 'ws4', user_id: MOCK_USER_ID, word_id: 'w4', stability: 3,  difficulty: 5.5, state: 2, elapsed_days: 3,  scheduled_days: 3,  repetitions: 2, next_review_at: hoursFromNow(-1), last_reviewed_at: daysAgo(3),  times_correct: 2, times_incorrect: 2 },
+  { id: 'ws5', user_id: MOCK_USER_ID, word_id: 'w5', stability: 1,  difficulty: 9.0, state: 1, elapsed_days: 1,  scheduled_days: 1,  repetitions: 0, next_review_at: hoursFromNow(-3), last_reviewed_at: daysAgo(1),  times_correct: 0, times_incorrect: 3 },
+  { id: 'ws6', user_id: MOCK_USER_ID, word_id: 'w6', stability: 6,  difficulty: 4.0, state: 2, elapsed_days: 6,  scheduled_days: 6,  repetitions: 2, next_review_at: hoursFromNow(24), last_reviewed_at: daysAgo(6),  times_correct: 2, times_incorrect: 0 },
+  { id: 'ws7', user_id: MOCK_USER_ID, word_id: 'w7', stability: 15, difficulty: 3.0, state: 2, elapsed_days: 15, scheduled_days: 15, repetitions: 6, next_review_at: hoursFromNow(48), last_reviewed_at: daysAgo(15), times_correct: 6, times_incorrect: 0 },
+  { id: 'ws8', user_id: MOCK_USER_ID, word_id: 'w8', stability: 1,  difficulty: 6.0, state: 1, elapsed_days: 1,  scheduled_days: 1,  repetitions: 1, next_review_at: hoursFromNow(-6), last_reviewed_at: daysAgo(1),  times_correct: 1, times_incorrect: 1 },
 ];
 
 export const mockWordContexts: WordContext[] = [
@@ -127,14 +127,14 @@ export function getDueWords(): { word: Word; stats: WordStats }[] {
     .filter(item => item.word);
 }
 
-export function getEaseColor(easeFactor: number): string {
-  if (easeFactor < 1.8) return 'ease-struggling';
-  if (easeFactor <= 2.4) return 'ease-learning';
+export function getEaseColor(difficulty: number): string {
+  if (difficulty > 7) return 'ease-struggling';
+  if (difficulty >= 4) return 'ease-learning';
   return 'ease-strong';
 }
 
-export function getEaseLabel(easeFactor: number): string {
-  if (easeFactor < 1.8) return 'Struggling';
-  if (easeFactor <= 2.4) return 'Learning';
+export function getEaseLabel(difficulty: number): string {
+  if (difficulty > 7) return 'Struggling';
+  if (difficulty >= 4) return 'Learning';
   return 'Strong';
 }

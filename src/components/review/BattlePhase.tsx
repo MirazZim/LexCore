@@ -1,14 +1,16 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, XCircle, Flame, TrendingUp } from 'lucide-react';
+import { Rating } from 'ts-fsrs';
+import { dbStateToCard, currentRetrievability } from '@/lib/fsrs';
 import type { DueWordItem } from './types';
 import type { Word } from '@/lib/types';
 
-const qualityConfig = [
-  { quality: 0, label: 'Again', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.35)',  color: '#ef4444' },
-  { quality: 2, label: 'Hard',  bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.35)', color: '#f97316' },
-  { quality: 4, label: 'Good',  bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.35)', color: '#3b82f6' },
-  { quality: 5, label: 'Easy',  bg: 'rgba(0,255,200,0.12)',  border: 'rgba(0,255,200,0.35)',  color: '#00FFC8' },
+const ratingConfig = [
+  { rating: Rating.Again, label: 'Again', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.35)', color: '#ef4444' },
+  { rating: Rating.Hard, label: 'Hard', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.35)', color: '#f97316' },
+  { rating: Rating.Good, label: 'Good', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.35)', color: '#3b82f6' },
+  { rating: Rating.Easy, label: 'Easy', bg: 'rgba(0,255,200,0.12)', border: 'rgba(0,255,200,0.35)', color: '#00FFC8' },
 ];
 
 interface BattlePhaseProps {
@@ -16,7 +18,7 @@ interface BattlePhaseProps {
   currentIndex: number;
   revealed: boolean;
   onReveal: () => void;
-  onRate: (quality: number) => void;
+  onRate: (rating: Rating) => void;
   allWords: Word[];
   streak: number;
 }
@@ -27,6 +29,13 @@ export function BattlePhase({ currentItem, currentIndex, revealed, onReveal, onR
   const [step, setStep] = useState<BattleStep>('quiz');
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const isCorrect = selectedAnswer === currentItem.word.definition;
+
+  // Retrievability % for display — new FSRS equivalent of "ease"
+  const retrievabilityPct = useMemo(() => {
+    if (currentItem.stats.state === 0) return 100; // New card
+    const card = dbStateToCard(currentItem.stats);
+    return Math.round(currentRetrievability(card) * 100);
+  }, [currentItem.stats]);
 
   const choices = useMemo(() => {
     const correctDef = currentItem.word.definition;
@@ -48,9 +57,9 @@ export function BattlePhase({ currentItem, currentIndex, revealed, onReveal, onR
     if (isCorrect) onReveal();
   };
 
-  const handleRate = (quality: number) => {
+  const handleRate = (rating: Rating) => {
     setStep('progress');
-    setTimeout(() => onRate(quality), 0);
+    setTimeout(() => onRate(rating), 0);
   };
 
   return (
@@ -226,7 +235,7 @@ export function BattlePhase({ currentItem, currentIndex, revealed, onReveal, onR
                     </p>
                   )}
 
-                  {/* Streak / ease strip */}
+                  {/* Streak / recall strength strip */}
                   <div
                     className="flex items-center justify-center gap-8 py-3 rounded-xl mb-6"
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
@@ -240,9 +249,9 @@ export function BattlePhase({ currentItem, currentIndex, revealed, onReveal, onR
                     <div className="flex items-center gap-1.5">
                       <TrendingUp className="h-4 w-4" style={{ color: '#00FFC8' }} />
                       <span className="font-bold text-sm text-white">
-                        {(currentItem.stats.ease_factor * 100 / 2.5).toFixed(0)}%
+                        {retrievabilityPct}%
                       </span>
-                      <span className="text-xs text-zinc-500">ease</span>
+                      <span className="text-xs text-zinc-500">recall</span>
                     </div>
                   </div>
 
@@ -250,10 +259,10 @@ export function BattlePhase({ currentItem, currentIndex, revealed, onReveal, onR
                     How well did you recall this?
                   </p>
                   <div className="grid grid-cols-4 gap-2">
-                    {qualityConfig.map(btn => (
+                    {ratingConfig.map(btn => (
                       <button
-                        key={btn.quality}
-                        onClick={() => handleRate(btn.quality)}
+                        key={btn.rating}
+                        onClick={() => handleRate(btn.rating)}
                         className="rounded-xl py-3 text-sm font-bold transition-all active:scale-95"
                         style={{
                           background: btn.bg,

@@ -392,7 +392,7 @@ export default function Dashboard() {
                               {word.word}
                             </h4>
                             <div className="flex items-center gap-2 shrink-0 ml-3">
-                              {stats && <EaseBadge easeFactor={stats.ease_factor} />}
+                              {stats && <EaseBadge difficulty={stats.difficulty} />}
                               <span style={{ color: isStar ? '#00FFC8' : '#3f3f46', fontSize: 16 }}>★</span>
                             </div>
                           </div>

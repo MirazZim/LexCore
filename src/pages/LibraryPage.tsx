@@ -43,7 +43,7 @@ function highlightWord(text: string, word: string): ReactNode {
 
 type MemoryStatus = { label: string; color: string; description: string };
 
-function getMemoryStatus(stats: { repetitions: number; ease_factor: number; times_correct: number; times_incorrect: number } | null | undefined): MemoryStatus {
+function getMemoryStatus(stats: { repetitions: number; difficulty: number; times_correct: number; times_incorrect: number } | null | undefined): MemoryStatus {
   if (!stats) return {
     label: 'New word',
     color: '#71717a',
@@ -52,7 +52,7 @@ function getMemoryStatus(stats: { repetitions: number; ease_factor: number; time
   const total = stats.times_correct + stats.times_incorrect;
   const accuracy = total > 0 ? stats.times_correct / total : 0;
 
-  if (stats.repetitions >= 5 && stats.ease_factor >= 2.5 && accuracy >= 0.8) return {
+  if (stats.repetitions >= 5 && stats.difficulty <= 4 && accuracy >= 0.8) return {
     label: 'Strong memory',
     color: '#00FFC8',
     description: "This word has settled in. You'll likely reach for it without thinking.",
@@ -79,7 +79,7 @@ function getMemoryStatus(stats: { repetitions: number; ease_factor: number; time
   };
 }
 
-function formatNextReview(intervalDays: number, nextReviewAt: string, now: Date): string {
+function formatNextReview(_scheduledDays: number, nextReviewAt: string, now: Date): string {
   const diff = Math.ceil((new Date(nextReviewAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   if (diff <= 0) return 'Ready now';
   if (diff === 1) return 'Tomorrow';
@@ -323,7 +323,7 @@ export default function LibraryPage() {
                         </span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0 ml-3">
-                        {stats && <EaseBadge easeFactor={stats.ease_factor} />}
+                        {stats && <EaseBadge difficulty={stats.difficulty} />}
                         <span style={{ color: isStar ? '#00FFC8' : '#3f3f46', fontSize: 16 }}>★</span>
                       </div>
                     </div>
@@ -366,7 +366,7 @@ export default function LibraryPage() {
               const memory = getMemoryStatus(selectedStats);
               const totalAttempts = selectedStats ? selectedStats.times_correct + selectedStats.times_incorrect : 0;
               const accuracyPct = totalAttempts > 0 ? Math.round((selectedStats!.times_correct / totalAttempts) * 100) : 0;
-              const nextReview = selectedStats ? formatNextReview(selectedStats.interval_days, selectedStats.next_review_at, now) : null;
+              const nextReview = selectedStats ? formatNextReview(selectedStats.scheduled_days, selectedStats.next_review_at, now) : null;
 
               return (
               <>

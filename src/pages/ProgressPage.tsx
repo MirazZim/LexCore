@@ -73,11 +73,11 @@ export default function ProgressPage() {
 
   const hardestWords = useMemo(() => {
     return [...wordStats]
-      .sort((a, b) => a.ease_factor - b.ease_factor)
+      .sort((a, b) => b.difficulty - a.difficulty)
       .slice(0, 5)
       .map(s => ({
         word: words.find(w => w.id === s.word_id)?.word || '',
-        easeFactor: s.ease_factor,
+        difficulty: s.difficulty,
       }));
   }, [wordStats, words]);
 
@@ -408,7 +408,7 @@ export default function ProgressPage() {
                         {w.word}
                       </span>
                     </div>
-                    <EaseBadge easeFactor={w.easeFactor} />
+                    <EaseBadge difficulty={w.difficulty} />
                   </div>
                 ))}
               </div>

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Word, WordStats, WordContext, WordCollocation, SemanticConnection, ReviewSession } from '@/lib/types';
+import { schedule, dbStateToCard, Rating, type Card } from '@/lib/fsrs';
 
 export function useWords() {
   const { user } = useAuth();
@@ -207,39 +208,62 @@ export function useAddWord() {
 }
 
 export function useUpdateWordStats() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (update: {
       wordStatsId: string;
-      ease_factor: number;
-      interval_days: number;
-      repetitions: number;
-      next_review_at: string;
-      quality: number;
+      wordId: string;
+      rating: Rating;      // 1..4
+      cardBefore: Card;    // snapshot from current DB state
     }) => {
-      const isCorrect = update.quality >= 3;
+      const now = new Date();
+      const { card: cardAfter } = schedule(update.cardBefore, update.rating, now);
+      const isCorrect = update.rating !== Rating.Again;
 
-      // Read current counts first
       const { data: current } = await supabase
         .from('word_stats')
         .select('times_correct, times_incorrect')
         .eq('id', update.wordStatsId)
         .single();
 
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('word_stats')
         .update({
-          ease_factor: update.ease_factor,
-          interval_days: update.interval_days,
-          repetitions: update.repetitions,
-          next_review_at: update.next_review_at,
-          last_reviewed_at: new Date().toISOString(),
+          stability: cardAfter.stability,
+          difficulty: cardAfter.difficulty,
+          state: cardAfter.state,
+          elapsed_days: cardAfter.elapsed_days,
+          scheduled_days: cardAfter.scheduled_days,
+          repetitions: cardAfter.reps,
+          lapses: cardAfter.lapses,
+          next_review_at: cardAfter.due.toISOString(),
+          last_reviewed_at: now.toISOString(),
           times_correct: isCorrect ? ((current?.times_correct || 0) + 1) : (current?.times_correct || 0),
           times_incorrect: !isCorrect ? ((current?.times_incorrect || 0) + 1) : (current?.times_incorrect || 0),
         })
         .eq('id', update.wordStatsId);
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      const { error: logError } = await supabase
+        .from('review_events')
+        .insert({
+          user_id: user!.id,
+          word_id: update.wordId,
+          reviewed_at: now.toISOString(),
+          rating: update.rating,
+          state_before: update.cardBefore.state,
+          stability_before: update.cardBefore.stability,
+          difficulty_before: update.cardBefore.difficulty,
+          elapsed_days_before: update.cardBefore.elapsed_days,
+          scheduled_days_before: update.cardBefore.scheduled_days,
+          state_after: cardAfter.state,
+          stability_after: cardAfter.stability,
+          difficulty_after: cardAfter.difficulty,
+          scheduled_days_after: cardAfter.scheduled_days,
+        });
+      if (logError) throw logError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['word_stats'] });

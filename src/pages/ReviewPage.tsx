@@ -3,7 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Moon, CheckCircle2, Flame, X, Brain, Zap, Clock3 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { calculateNextReview } from '@/lib/sm2';
+import { Rating } from 'ts-fsrs';
+import { dbStateToCard } from '@/lib/fsrs';
 import { useDueWords, useUpdateWordStats, useSaveWordContext, useWords, useWordStats, useReviewSessions } from '@/hooks/useWords';
 import { supabase } from '@/lib/supabase';
 import { BattlePhase } from '@/components/review/BattlePhase';
@@ -173,12 +174,12 @@ export default function ReviewPage() {
 
   const liveDueWords = isSleepPrep
     ? allStats
-        .filter(s => s.last_reviewed_at && new Date(s.last_reviewed_at) >= new Date(Date.now() - 86400000))
-        .map(stats => ({
-          word: allWords.find(w => w.id === stats.word_id)!,
-          stats,
-        }))
-        .filter(item => item.word)
+      .filter(s => s.last_reviewed_at && new Date(s.last_reviewed_at) >= new Date(Date.now() - 86400000))
+      .map(stats => ({
+        word: allWords.find(w => w.id === stats.word_id)!,
+        stats,
+      }))
+      .filter(item => item.word)
     : dueWordsData;
 
   useEffect(() => {
@@ -502,28 +503,25 @@ export default function ReviewPage() {
     );
   }
 
-  const handleRate = async (quality: number) => {
+  const handleRate = async (rating: Rating) => {
     if (!currentItem) return;
-    const result = calculateNextReview(
-      currentItem.stats.ease_factor,
-      currentItem.stats.interval_days,
-      currentItem.stats.repetitions,
-      quality,
-    );
+
+    const cardBefore = dbStateToCard(currentItem.stats);
+
     await updateWordStats.mutateAsync({
       wordStatsId: currentItem.stats.id,
-      ease_factor: result.newEaseFactor,
-      interval_days: result.newInterval,
-      repetitions: result.newRepetitions,
-      next_review_at: result.nextReviewAt.toISOString(),
-      quality,
+      wordId: currentItem.word.id,
+      rating,
+      cardBefore,
     });
+
     setResults(prev => [...prev, {
       wordId: currentItem.word.id,
       word: currentItem.word.word,
-      quality,
-      correct: quality >= 3,
+      quality: rating,
+      correct: rating !== Rating.Again, // FSRS: anything above Again counts as successful
     }]);
+
     setRevealed(false);
     if (contexts.length > 0) {
       setPhase('context');
@@ -533,7 +531,6 @@ export default function ReviewPage() {
       setPhase('generation');
     }
   };
-
   const handleClozeSubmit = () => setClozeSubmitted(true);
 
   const handleClozeNext = () => {
