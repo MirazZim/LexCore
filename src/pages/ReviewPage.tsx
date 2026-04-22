@@ -143,6 +143,7 @@ export default function ReviewPage() {
   const [sessionWords, setSessionWords] = useState<typeof dueWordsData>([]);
   const [sessionReady, setSessionReady] = useState(false);
   const [showScienceModal, setShowScienceModal] = useState(false);
+  const [activeConnector, setActiveConnector] = useState<string | null>(null);
   const [sleepCountdown, setSleepCountdown] = useState('');
   const [isSleepPrepActive, setIsSleepPrepActive] = useState(false);
 
@@ -613,7 +614,7 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="min-h-screen px-4 pt-8 pb-24 max-w-lg mx-auto">
+    <div className="min-h-screen pt-8 pb-24 px-4 max-w-lg mx-auto">
       <style>{RV_STYLES}</style>
 
       {/* Header */}
@@ -638,69 +639,73 @@ export default function ReviewPage() {
         </span>
       </div>
 
-      <AnimatePresence mode="wait">
-        {phase === 'battle' && currentItem && (
-          <BattlePhase
-            currentItem={currentItem}
-            currentIndex={currentIndex}
-            revealed={revealed}
-            onReveal={() => setRevealed(true)}
-            onRate={handleRate}
-            allWords={allWords}
-            streak={streak}
-          />
-        )}
+      <div>
+          <AnimatePresence mode="wait">
+            {phase === 'battle' && currentItem && (
+              <BattlePhase
+                currentItem={currentItem}
+                currentIndex={currentIndex}
+                revealed={revealed}
+                onReveal={() => setRevealed(true)}
+                onRate={handleRate}
+                allWords={allWords}
+                streak={streak}
+              />
+            )}
 
-        {phase === 'context' && currentItem && (
-          <ContextPhase
-            currentItem={currentItem}
-            currentIndex={currentIndex}
-            contexts={contexts}
-            clozeAnswer={clozeAnswer}
-            clozeSubmitted={clozeSubmitted}
-            onClozeAnswerChange={setClozeAnswer}
-            onClozeSubmit={handleClozeSubmit}
-            onClozeNext={handleClozeNext}
-          />
-        )}
+            {phase === 'context' && currentItem && (
+              <ContextPhase
+                currentItem={currentItem}
+                currentIndex={currentIndex}
+                contexts={contexts}
+                clozeAnswer={clozeAnswer}
+                clozeSubmitted={clozeSubmitted}
+                onClozeAnswerChange={setClozeAnswer}
+                onClozeSubmit={handleClozeSubmit}
+                onClozeNext={handleClozeNext}
+              />
+            )}
 
-        {phase === 'collocation' && currentItem && (
-          <CollocationPhase
-            currentItem={currentItem}
-            currentIndex={currentIndex}
-            collocations={collocations}
-            onNext={handleCollocationNext}
-          />
-        )}
+            {phase === 'collocation' && currentItem && (
+              <CollocationPhase
+                currentItem={currentItem}
+                currentIndex={currentIndex}
+                collocations={collocations}
+                onNext={handleCollocationNext}
+              />
+            )}
 
-        {phase === 'generation' && currentItem && (
-          <GenerationPhase
-            currentItem={currentItem}
-            currentIndex={currentIndex}
-            totalWords={totalWords}
-            generationText={generationText}
-            generationSaved={generationSaved}
-            aiFeedback={aiFeedback}
-            aiLoading={aiLoading}
-            aiError={aiError}
-            isSaving={saveContext.isPending}
-            onGenerationTextChange={setGenerationText}
-            onSave={handleGenerationSave}
-            onNextWord={handleNextWord}
-            onRetry={handleGenerationRetry}
-          />
-        )}
+            {phase === 'generation' && currentItem && (
+              <GenerationPhase
+                currentItem={currentItem}
+                currentIndex={currentIndex}
+                totalWords={totalWords}
+                generationText={generationText}
+                generationSaved={generationSaved}
+                aiFeedback={aiFeedback}
+                aiLoading={aiLoading}
+                aiError={aiError}
+                isSaving={saveContext.isPending}
+                activeConnector={activeConnector}
+                onConnectorChange={setActiveConnector}
+                onGenerationTextChange={setGenerationText}
+                onSave={handleGenerationSave}
+                onNextWord={handleNextWord}
+                onRetry={handleGenerationRetry}
+              />
+            )}
 
-        {phase === 'synonyms' && currentItem && (
-          <SynonymsPhase
-            currentItem={currentItem}
-            currentIndex={currentIndex}
-            totalWords={totalWords}
-            synonyms={synonyms}
-            onNext={handleSynonymsNext}
-          />
-        )}
-      </AnimatePresence>
+            {phase === 'synonyms' && currentItem && (
+              <SynonymsPhase
+                currentItem={currentItem}
+                currentIndex={currentIndex}
+                totalWords={totalWords}
+                synonyms={synonyms}
+                onNext={handleSynonymsNext}
+              />
+            )}
+          </AnimatePresence>
+      </div>
     </div>
   );
 }
