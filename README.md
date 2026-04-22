@@ -2,7 +2,7 @@
 
 # 🧠 LexCore
 
-**Neuroscience-based vocabulary acquisition engine powered by spaced repetition and AI.**
+**Neuroscience-based vocabulary acquisition engine powered by FSRS spaced repetition and AI.**
 
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?style=flat-square&logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
@@ -18,19 +18,24 @@
 
 ## 🔍 What is LexCore?
 
-LexCore is a vocabulary learning app built on the principle that the **brain doesn't memorize — it reconstructs**. Instead of passive flashcards, LexCore forces active recall through a **battle mode** quiz system, then uses the **SM-2 spaced repetition algorithm** to schedule each word at the precise moment before you'd forget it.
+LexCore is a vocabulary learning app built on the principle that the **brain doesn't memorize — it reconstructs**. Instead of passive flashcards, LexCore forces active recall through a **6-phase review session**, then uses the **FSRS v6 spaced repetition algorithm** to schedule each word at the precise moment before you'd forget it.
 
-The competitive edge: an **AI-powered auto-scoring pipeline** that evaluates your responses on a 0–5 scale — eliminating self-rating bias and making your review data actually trustworthy.
+The competitive edge: an **AI-powered sentence scoring pipeline** that evaluates your own generated sentences — making your review data trustworthy and pushing you toward real production of the word.
 
 ---
 
 ## ✨ Features
 
-- ⚔️ **Battle Mode** — 4-choice quiz before definition reveal. Forces recall, not recognition.
-- 🤖 **AI Auto-Scoring** — OpenRouter-powered response evaluation. No self-rating.
-- 🔁 **SM-2 Spaced Repetition** — Intervals calculated from your actual performance.
-- 📚 **Word Library** — Add words with definitions, collocations, and example sentences.
-- 📊 **Progress Dashboard** — Streak tracking, accuracy rates, and review history.
+- ⚔️ **Battle Phase** — 4-choice cloze test before definition reveal. Forces recall, not recognition.
+- 📖 **Context Phase** — Read real example sentences, fill in the blank.
+- 🔗 **Collocation Phase** — Review natural word pairings and usage patterns.
+- ✍️ **Generation Phase** — Write your own sentence; AI scores it on the spot.
+- 🔄 **Synonyms Phase** — Review semantically related words to build a richer mental web.
+- 🤖 **AI Auto-Scoring** — OpenRouter-powered sentence evaluation. No self-rating bias.
+- 🔁 **FSRS v6 Spaced Repetition** — State-machine scheduling (New → Learning → Review → Relearning) driven by actual memory stability, not fixed intervals.
+- 🌙 **Sleep Prep Mode** — Evening review session (8 PM–3 AM) that leverages sleep consolidation.
+- 📚 **Word Library** — Add words with definitions, collocations, synonyms, and emotion anchors. Claude auto-generates content.
+- 📊 **Progress Dashboard** — Streak tracking, 7-day velocity chart, mastered word count, and due-today count.
 - 🔐 **Auth & RLS** — Row-level security so your data stays yours.
 
 ---
@@ -45,8 +50,7 @@ The competitive edge: an **AI-powered auto-scoring pipeline** that evaluates you
 | Styling | Tailwind CSS, shadcn/ui, Framer Motion |
 | Backend | Supabase (PostgreSQL + Auth + RLS) |
 | AI Scoring | OpenRouter (`stepfun/step-3.5-flash`) |
-| Algorithm | SM-2 Spaced Repetition (FSRS migration planned) |
-| Testing | Vitest, Playwright, Testing Library |
+| Algorithm | FSRS v6 (`ts-fsrs`) — 95% target retention |
 | Build | Vite, Bun |
 
 ---
@@ -73,7 +77,9 @@ graph TB
             BottomNav[Bottom Navigation]
             BattlePhase[Battle Phase]
             ContextPhase[Context Phase]
+            CollocationsPhase[Collocations Phase]
             GenerationPhase[Generation Phase]
+            SynonymsPhase[Synonyms Phase]
             SummaryPhase[Summary Phase]
             UIComponents[shadcn/ui Components]
         end
@@ -85,7 +91,7 @@ graph TB
         end
 
         subgraph "Business Logic"
-            SM2[SM-2 Algorithm]
+            FSRS[FSRS v6 Algorithm<br/>ts-fsrs]
             Utils[Utilities]
         end
 
@@ -107,11 +113,12 @@ graph TB
 
     ReviewPage --> BattlePhase
     ReviewPage --> ContextPhase
+    ReviewPage --> CollocationsPhase
     ReviewPage --> GenerationPhase
+    ReviewPage --> SynonymsPhase
     ReviewPage --> SummaryPhase
 
-    BattlePhase --> SM2
-    ContextPhase --> SM2
+    BattlePhase --> FSRS
     GenerationPhase --> OpenRouter
 
     CustomHooks --> QueryClient
@@ -122,7 +129,7 @@ graph TB
     SupabaseClient --> Database
     Database --> RLS
 
-    style SM2 fill:#fff4e1
+    style FSRS fill:#fff4e1
     style OpenRouter fill:#ffe1f5
     style Database fill:#f0f0f0
     style AuthContext fill:#e1f5ff
@@ -137,64 +144,65 @@ sequenceDiagram
     participant User
     participant ReviewPage
     participant useDueWords
-    participant SM2Algorithm
+    participant FSRSAlgorithm
     participant useUpdateWordStats
     participant Database
 
-    ReviewPage->>useDueWords: Fetch due words
+    ReviewPage->>useDueWords: Fetch due words (max 20)
     useDueWords->>Database: SELECT words WHERE next_review_at <= NOW()
     Database-->>useDueWords: Return due words
     useDueWords-->>ReviewPage: Display words
 
-    User->>ReviewPage: Review word & rate quality (0-5)
-    ReviewPage->>SM2Algorithm: Calculate next review
-    SM2Algorithm->>SM2Algorithm: Compute ease factor, interval, repetitions
-    SM2Algorithm-->>ReviewPage: Return new values
-
-    ReviewPage->>useUpdateWordStats: Update stats
-    useUpdateWordStats->>Database: UPDATE word_stats
-    Database-->>useUpdateWordStats: Success
-
-    ReviewPage->>ReviewPage: Next word or finish
-
-    alt Session complete
-        ReviewPage->>Database: INSERT INTO review_sessions
+    loop For each word
+        User->>ReviewPage: Battle → Context → Collocations → Generation → Synonyms
+        ReviewPage->>FSRSAlgorithm: schedule(card, rating)
+        FSRSAlgorithm->>FSRSAlgorithm: Compute stability, difficulty, next interval
+        FSRSAlgorithm-->>ReviewPage: New card state
+        ReviewPage->>useUpdateWordStats: Persist updated stats
+        useUpdateWordStats->>Database: UPDATE word_stats
     end
+
+    ReviewPage->>Database: INSERT INTO review_sessions
+    ReviewPage-->>User: Summary phase (streak, accuracy, words reviewed)
 ```
 
 ---
 
-### SM-2 Spaced Repetition Algorithm
+### FSRS v6 State Machine
 
 ```mermaid
 flowchart TD
-    Start([User Reviews Word]) --> Rate[User Rates Quality 0-5]
-    Rate --> Check{Quality >= 3?}
+    New([New Word Added]) --> FirstReview[First Review]
+    FirstReview --> Learning[State: Learning]
 
-    Check -->|No - Failed| Reset[Reset Progress<br/>repetitions = 0<br/>interval = 1 day]
-    Check -->|Yes - Success| CheckRep{Check Repetitions}
+    Learning --> RateAgain{Rating?}
 
-    CheckRep -->|repetitions = 0| First[interval = 1 day]
-    CheckRep -->|repetitions = 1| Second[interval = 6 days]
-    CheckRep -->|repetitions >= 2| Calculate[interval = previous × ease_factor]
+    RateAgain -->|Again| Relearning[State: Relearning<br/>Stability reset]
+    RateAgain -->|Hard / Good / Easy| StabilityCalc[Compute new stability<br/>& difficulty]
 
-    First --> UpdateEase
-    Second --> UpdateEase
-    Calculate --> UpdateEase
-    Reset --> Schedule
+    StabilityCalc --> CheckState{Stability >= threshold?}
 
-    UpdateEase["Update Ease Factor
-    EF = EF + 0.1 - (5-q) × 0.08 + (5-q)² × 0.02
-    Min EF = 1.3"] --> Increment[repetitions += 1]
+    CheckState -->|No| Learning
+    CheckState -->|Yes| Review[State: Review<br/>Long-term scheduling]
 
-    Increment --> Schedule[Schedule Next Review<br/>next_review_at = today + interval]
-    Schedule --> Save[Save to Database]
-    Save --> End([Word Rescheduled])
+    Review --> RateLater{Next review rating?}
+    RateLater -->|Again - Lapse| Relearning
+    RateLater -->|Hard / Good / Easy| StabilityUpdate[Update stability<br/>& difficulty]
+    StabilityUpdate --> Review
 
-    style Check fill:#ffe1e1
-    style UpdateEase fill:#e1f5ff
-    style Schedule fill:#e1ffe1
+    Relearning --> Recovery[Short-interval recovery steps]
+    Recovery --> Review
+
+    style New fill:#e1ffe1
+    style Learning fill:#fff4e1
+    style Review fill:#e1f5ff
+    style Relearning fill:#ffe1e1
 ```
+
+**Key FSRS parameters** (configured in `src/lib/fsrs.ts`):
+- `request_retention: 0.95` — target 95% recall probability at review time
+- `maximum_interval: 365` days — cap on scheduling gap
+- `enable_fuzz: true` — jitter to prevent review clustering
 
 ---
 
@@ -233,8 +241,9 @@ erDiagram
         uuid id PK
         uuid user_id FK
         uuid word_id FK
-        float ease_factor
-        int interval_days
+        int state
+        float stability
+        float difficulty
         int repetitions
         timestamp next_review_at
         timestamp last_reviewed_at
@@ -317,7 +326,9 @@ graph TD
 
     Protected4 --> BattlePhase[BattlePhase]
     Protected4 --> ContextPhase[ContextPhase]
+    Protected4 --> CollocationsPhase[CollocationsPhase]
     Protected4 --> GenerationPhase[GenerationPhase]
+    Protected4 --> SynonymsPhase[SynonymsPhase]
     Protected4 --> SummaryPhase[SummaryPhase]
 
     Protected1 --> AppLayout[AppLayout]
@@ -382,28 +393,21 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## 🗺️ Roadmap
 
-- [x] SM-2 spaced repetition engine
-- [x] Battle mode 4-choice quiz
-- [x] AI auto-scoring via OpenRouter
-- [x] Word library with collocations
-- [x] Review session tracking
-- [ ] FSRS algorithm migration (shadow mode → full)
-- [ ] Sentence generation phase
+- [x] FSRS v6 spaced repetition engine (`ts-fsrs`)
+- [x] Battle phase — 4-choice cloze quiz
+- [x] Context phase — example sentence cloze
+- [x] Collocation phase — natural word pairings
+- [x] Generation phase — write your own sentence
+- [x] Synonyms phase — semantic network review
+- [x] AI sentence scoring via OpenRouter
+- [x] Word library with collocations, synonyms, emotion anchors
+- [x] Claude-powered auto-generation of definitions and examples
+- [x] Review session tracking and streak system
+- [x] Sleep Prep mode (evening consolidation sessions)
+- [ ] User settings UI (retention target, new cards/day, max interval)
 - [ ] Offline support (PWA)
 - [ ] Export/import vocabulary sets
 - [ ] Native mobile app (React Native)
-
----
-
-## 🧪 Running Tests
-
-```bash
-# Unit tests
-bun test
-
-# E2E tests
-bun playwright test
-```
 
 ---
 
@@ -413,10 +417,10 @@ bun playwright test
 lexcore/
 ├── src/
 │   ├── components/        # Reusable UI components
-│   │   ├── review/        # BattlePhase, ContextPhase, etc.
+│   │   ├── review/        # BattlePhase, ContextPhase, CollocationsPhase, etc.
 │   │   └── ui/            # shadcn/ui components
 │   ├── hooks/             # Custom React hooks (useWords, useDueWords, etc.)
-│   ├── lib/               # SM-2 algorithm, Supabase client, utilities
+│   ├── lib/               # FSRS algorithm (ts-fsrs), Supabase client, utilities
 │   ├── pages/             # Route-level page components
 │   ├── context/           # AuthContext
 │   └── types/             # TypeScript types

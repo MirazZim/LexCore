@@ -12,7 +12,7 @@ import {
 const f = fsrs(
     generatorParameters({
         maximum_interval: 365,
-        request_retention: 0.95, // target 95% recall probability at review time
+        request_retention: 0.90, // target 90% recall probability at review time
         enable_fuzz: true,      // adds small jitter so reviews don't all cluster
     })
 );
