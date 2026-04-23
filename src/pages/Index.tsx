@@ -112,7 +112,7 @@ export default function Dashboard() {
       return { day: DAY_LABELS[d.getDay()], value, active: i === 6 };
     });
     const max = Math.max(...bars.map(b => b.value), 1);
-    return bars.map(b => ({ ...b, height: `${Math.max(Math.round((b.value / max) * 100), 4)}%` }));
+    return bars.map(b => ({ ...b, heightPx: Math.max(Math.round((b.value / max) * 128), 6) }));
   }, [reviewSessions]);
 
   /* ── Recent words ────────────────────────────────────────────────── */
@@ -297,7 +297,7 @@ export default function Dashboard() {
 
               {/* ── Daily Velocity chart ──────────────────────────────── */}
               <motion.div variants={item} className="glass-panel p-8 rounded-[2rem]">
-                <div className="flex justify-between items-center mb-10">
+                <div className="flex justify-between items-center mb-8">
                   <div>
                     <h3 className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                       Daily Velocity
@@ -307,37 +307,60 @@ export default function Dashboard() {
                   <MoreHorizontal className="h-5 w-5 text-zinc-600" />
                 </div>
 
-                {/* Bars */}
-                <div className="flex items-end justify-between h-44 px-1 gap-2">
-                  {velocityBars.map(({ day, height, value, active }) => (
-                    <div key={day} className="flex-1 flex flex-col items-center gap-2">
-                      <span
-                        className="text-[10px] font-bold transition-opacity duration-200"
-                        style={{ color: active ? '#00FFC8' : 'transparent' }}
-                      >
-                        {value}
-                      </span>
-                      <div
-                        className="w-full rounded-t-lg transition-all duration-300 bar-hover cursor-pointer"
-                        style={{
-                          height,
-                          background: active ? '#00FFC8' : 'rgba(255,255,255,0.08)',
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
+                {/* Chart area */}
+                <div className="relative">
+                  {/* Subtle grid lines */}
+                  <div className="absolute left-0 right-0 top-0 bottom-8 flex flex-col justify-between pointer-events-none">
+                    {[0, 1, 2, 3].map(i => (
+                      <div key={i} className="w-full border-t border-white/[0.04]" />
+                    ))}
+                  </div>
 
-                <div className="flex justify-between mt-4">
-                  {velocityBars.map(({ day, active }) => (
-                    <span
-                      key={day}
-                      className="flex-1 text-center text-[10px] uppercase tracking-widest font-bold"
-                      style={{ color: active ? '#00FFC8' : '#52525b' }}
-                    >
-                      {day}
-                    </span>
-                  ))}
+                  {/* Bars */}
+                  <div className="flex items-end justify-between gap-1.5" style={{ height: 148 }}>
+                    {velocityBars.map(({ day, heightPx, value, active }) => (
+                      <div key={day} className="flex-1 flex flex-col items-center gap-1.5 group">
+                        <span
+                          className="text-[11px] font-bold tabular-nums transition-all duration-300"
+                          style={{
+                            color: active ? '#00FFC8' : value > 0 ? 'rgba(255,255,255,0.55)' : 'transparent',
+                            textShadow: active ? '0 0 8px rgba(0,255,200,0.6)' : 'none',
+                          }}
+                        >
+                          {value > 0 ? value : ' '}
+                        </span>
+                        <div
+                          className="w-full rounded-xl transition-all duration-500 cursor-pointer"
+                          style={{
+                            height: heightPx,
+                            background: active
+                              ? 'linear-gradient(180deg, #00FFC8 0%, #00C4A0 100%)'
+                              : value > 0
+                                ? 'linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.25) 100%)'
+                                : 'rgba(255,255,255,0.05)',
+                            boxShadow: active
+                              ? '0 0 24px rgba(0,255,200,0.35), 0 4px 12px rgba(0,255,200,0.2)'
+                              : 'none',
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Day labels */}
+                  <div className="flex justify-between mt-3">
+                    {velocityBars.map(({ day, active, value }) => (
+                      <span
+                        key={day}
+                        className="flex-1 text-center text-[10px] uppercase tracking-widest font-bold transition-colors duration-200"
+                        style={{
+                          color: active ? '#00FFC8' : value > 0 ? '#71717a' : '#3f3f46',
+                        }}
+                      >
+                        {day}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </motion.div>
             </div>
