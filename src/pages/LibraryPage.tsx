@@ -1,15 +1,16 @@
 import { useState, useMemo, useEffect, type ReactNode } from 'react';
 import { motion, type Variants } from 'framer-motion';
-import { Search, Plus, Trash2, AlertTriangle, BookOpen, Clock, Sparkles, Quote } from 'lucide-react';
+import { Search, Plus, Trash2, AlertTriangle, BookOpen, Clock, Sparkles, Quote, Pencil, X, Loader2 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { EaseBadge } from '@/components/EaseBadge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useWords, useWordStats, useWordContexts, useWordCollocations, useSemanticConnections, useDeleteWord } from '@/hooks/useWords';
+import { useWords, useWordStats, useWordContexts, useWordCollocations, useSemanticConnections, useDeleteWord, useUpdateWord } from '@/hooks/useWords';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { currentRetrievability, dbStateToCard } from '@/lib/fsrs';
+import type { Register } from '@/lib/types';
 
 /* ─── Animation variants ─────────────────────────────────────────── */
 const container: Variants = {
@@ -105,6 +106,13 @@ const filterOptions: { value: string; label: string }[] = [
   { value: 'slang', label: 'Slang' },
 ];
 
+const registers: { value: Register; label: string }[] = [
+  { value: 'formal',   label: 'Formal' },
+  { value: 'casual',   label: 'Casual' },
+  { value: 'literary', label: 'Literary' },
+  { value: 'slang',    label: 'Slang' },
+];
+
 export default function LibraryPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -112,6 +120,14 @@ export default function LibraryPage() {
   const [filter, setFilter] = useState('all');
   const [selectedWordId, setSelectedWordId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editWord, setEditWord] = useState('');
+  const [editDefinition, setEditDefinition] = useState('');
+  const [editRegister, setEditRegister] = useState<Register>('formal');
+  const [editCollocations, setEditCollocations] = useState<string[]>([]);
+  const [editSynonyms, setEditSynonyms] = useState<string[]>([]);
+  const [editCollocationInput, setEditCollocationInput] = useState('');
+  const [editSynonymInput, setEditSynonymInput] = useState('');
   const now = useMemo(() => new Date(), []);
 
   useEffect(() => {
@@ -125,6 +141,7 @@ export default function LibraryPage() {
   const { data: selectedCollocations = [] } = useWordCollocations(selectedWordId ?? undefined);
   const { data: selectedConnections = [] } = useSemanticConnections(selectedWordId ?? undefined);
   const deleteWord = useDeleteWord();
+  const updateWord = useUpdateWord();
 
   const handleDelete = async () => {
     if (!selectedWordId) return;
@@ -135,6 +152,52 @@ export default function LibraryPage() {
       setConfirmDelete(false);
     } catch {
       toast.error('Failed to delete word');
+    }
+  };
+
+  const handleStartEdit = () => {
+    if (!selectedWord) return;
+    setEditWord(selectedWord.word);
+    setEditDefinition(selectedWord.definition);
+    setEditRegister(selectedWord.register);
+    setEditCollocations(selectedCollocations.map(c => c.collocation));
+    setEditSynonyms(selectedConnections.filter(c => c.connection_type === 'synonym').map(c => c.connected_word));
+    setEditCollocationInput('');
+    setEditSynonymInput('');
+    setIsEditing(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!selectedWordId || !editWord.trim() || !editDefinition.trim()) return;
+    try {
+      await updateWord.mutateAsync({
+        id: selectedWordId,
+        word: editWord.trim(),
+        definition: editDefinition.trim(),
+        register: editRegister,
+        collocations: editCollocations,
+        synonyms: editSynonyms,
+      });
+      toast.success('Word updated');
+      setIsEditing(false);
+    } catch {
+      toast.error('Failed to update word');
+    }
+  };
+
+  const addEditCollocation = () => {
+    const t = editCollocationInput.trim();
+    if (t && !editCollocations.includes(t)) {
+      setEditCollocations(prev => [...prev, t]);
+      setEditCollocationInput('');
+    }
+  };
+
+  const addEditSynonym = () => {
+    const t = editSynonymInput.trim();
+    if (t && !editSynonyms.includes(t)) {
+      setEditSynonyms(prev => [...prev, t]);
+      setEditSynonymInput('');
     }
   };
 
@@ -199,6 +262,34 @@ export default function LibraryPage() {
         .glow-mint { box-shadow: 0 0 28px rgba(0,255,200,0.25); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { scrollbar-width: none; }
+        .edit-input {
+          width: 100%;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 0.75rem;
+          padding: 0.625rem 0.875rem;
+          color: #fff;
+          font-size: 0.9rem;
+          outline: none;
+          transition: border-color 0.2s;
+        }
+        .edit-input::placeholder { color: #52525b; }
+        .edit-input:focus { border-color: rgba(0,255,200,0.45); }
+        .edit-textarea {
+          width: 100%;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 0.75rem;
+          padding: 0.625rem 0.875rem;
+          color: #fff;
+          font-size: 0.9rem;
+          outline: none;
+          resize: none;
+          min-height: 80px;
+          transition: border-color 0.2s;
+        }
+        .edit-textarea::placeholder { color: #52525b; }
+        .edit-textarea:focus { border-color: rgba(0,255,200,0.45); }
       `}</style>
 
       <div className="px-6 pt-8 pb-28 max-w-5xl mx-auto">
@@ -361,7 +452,13 @@ export default function LibraryPage() {
         {/* ── Detail modal ────────────────────────────────────────── */}
         <Dialog
           open={!!selectedWordId}
-          onOpenChange={(open) => { if (!open) { setSelectedWordId(null); setConfirmDelete(false); } }}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedWordId(null);
+              setConfirmDelete(false);
+              setIsEditing(false);
+            }
+          }}
         >
           <DialogContent
             className="max-w-2xl w-[calc(100%-2rem)] p-0 gap-0 bg-zinc-950 border-white/5 rounded-[1.5rem] overflow-hidden flex flex-col max-h-[85vh]"
@@ -389,186 +486,356 @@ export default function LibraryPage() {
                       className="text-5xl font-bold text-white text-left leading-none tracking-tight"
                       style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                     >
-                      {selectedWord.word}
+                      {isEditing ? (editWord || 'Edit Word') : selectedWord.word}
                     </DialogTitle>
-                    <span
-                      className="shrink-0 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
-                      style={{ background: `${memory.color}14`, color: memory.color, boxShadow: `inset 0 0 0 1px ${memory.color}30` }}
-                    >
-                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: memory.color, boxShadow: `0 0 8px ${memory.color}` }} />
-                      {memory.label}
-                    </span>
+                    {!isEditing && (
+                      <span
+                        className="shrink-0 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
+                        style={{ background: `${memory.color}14`, color: memory.color, boxShadow: `inset 0 0 0 1px ${memory.color}30` }}
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: memory.color, boxShadow: `0 0 8px ${memory.color}` }} />
+                        {memory.label}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/5 text-zinc-400">
-                      {selectedWord.register}
-                    </span>
-                    <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/5 text-zinc-400">
-                      Frequency {selectedWord.frequency_band}/5
-                    </span>
-                  </div>
+                  {!isEditing && (
+                    <div className="flex flex-wrap gap-2">
+                      <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/5 text-zinc-400">
+                        {selectedWord.register}
+                      </span>
+                      <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/5 text-zinc-400">
+                        Frequency {selectedWord.frequency_band}/5
+                      </span>
+                    </div>
+                  )}
                 </DialogHeader>
 
                 {/* ── Scrollable body ─────────────────────────────── */}
                 <div className="flex-1 overflow-y-auto px-8 pb-8 space-y-8">
 
-                  {/* Meaning — accent border for prominence */}
-                  <div className="pl-5 border-l-2 border-[#00FFC8]/60">
-                    <p className="text-lg leading-relaxed text-white/90" style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 400 }}>
-                      {selectedWord.definition}
-                    </p>
-                  </div>
+                  {isEditing ? (
+                    /* ── Edit form ──────────────────────────────── */
+                    <div className="space-y-5">
 
-                  {/* Emotion anchor — evocative pull quote */}
-                  {selectedWord.emotion_anchor && (
-                    <figure className="relative rounded-2xl bg-gradient-to-br from-[#00FFC8]/[0.06] via-transparent to-transparent border border-white/5 p-6">
-                      <Quote className="absolute top-5 left-5 h-4 w-4 text-[#00FFC8]/40" />
-                      <blockquote className="text-base italic text-zinc-100 leading-relaxed pl-8">
-                        {selectedWord.emotion_anchor}
-                      </blockquote>
-                      <figcaption className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#00FFC8]/70 mt-3 pl-8">
-                        The feeling
-                      </figcaption>
-                    </figure>
-                  )}
-
-                  {/* In the wild — examples as scenes with the word highlighted */}
-                  {selectedContexts.length > 0 && (
-                    <section>
-                      <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 mb-3">In the wild</h3>
-                      <div className="space-y-3">
-                        {selectedContexts.map(ctx => (
-                          <div key={ctx.id} className="relative rounded-2xl bg-white/[0.03] border border-white/5 p-5 pl-6 overflow-hidden">
-                            <span className="absolute left-0 top-4 bottom-4 w-[2px] bg-[#00FFC8]/40 rounded-full" />
-                            <p className="text-[15px] text-zinc-200 leading-relaxed">
-                              {highlightWord(ctx.sentence, selectedWord.word)}
-                            </p>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mt-2.5">
-                              {ctx.source_label}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
-
-                  {/* Natural pairings — collocations as usage phrases */}
-                  {selectedCollocations.length > 0 && (
-                    <section>
-                      <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 mb-3">Natural pairings</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {selectedCollocations.map(c => (
-                          <div
-                            key={c.id}
-                            className="rounded-xl bg-white/[0.03] border border-white/5 px-4 py-3 text-[15px] text-zinc-200 hover:border-[#00FFC8]/20 transition-colors"
-                          >
-                            {highlightWord(c.collocation, selectedWord.word)}
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
-
-                  {/* Webs of meaning — semantic connections */}
-                  {selectedConnections.length > 0 && (
-                    <section>
-                      <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 mb-3">Webs of meaning</h3>
+                      {/* Word */}
                       <div className="space-y-1.5">
-                        {selectedConnections.map(c => (
-                          <div
-                            key={c.id}
-                            className="flex items-center gap-3 rounded-xl bg-white/[0.03] border border-white/5 px-4 py-2.5"
+                        <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">Word</label>
+                        <input
+                          className="edit-input"
+                          value={editWord}
+                          onChange={e => setEditWord(e.target.value)}
+                          placeholder="Word"
+                        />
+                      </div>
+
+                      {/* Definition */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">Definition</label>
+                        <textarea
+                          className="edit-textarea"
+                          value={editDefinition}
+                          onChange={e => setEditDefinition(e.target.value)}
+                          placeholder="Definition"
+                          rows={3}
+                        />
+                      </div>
+
+                      {/* Register */}
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">Register</label>
+                        <div className="flex flex-wrap gap-2">
+                          {registers.map(r => (
+                            <button
+                              key={r.value}
+                              type="button"
+                              onClick={() => setEditRegister(r.value)}
+                              className="rounded-full px-4 py-2 text-sm font-semibold transition-all"
+                              style={editRegister === r.value
+                                ? { background: 'rgba(0,255,200,0.15)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.4)' }
+                                : { background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.07)' }
+                              }
+                            >
+                              {r.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Collocations */}
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">Collocations</label>
+                        <div className="flex gap-2">
+                          <input
+                            className="edit-input"
+                            placeholder="e.g., make an effort"
+                            value={editCollocationInput}
+                            onChange={e => setEditCollocationInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addEditCollocation(); } }}
+                          />
+                          <button
+                            type="button"
+                            onClick={addEditCollocation}
+                            disabled={!editCollocationInput.trim()}
+                            className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-zinc-900 disabled:opacity-30 transition-all"
+                            style={{ background: 'linear-gradient(135deg, #2cffca 0%, #00FFC8 100%)' }}
                           >
-                            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 w-20 shrink-0">
-                              {c.connection_type}
-                            </span>
-                            <span className="text-[15px] text-zinc-100">{c.connected_word}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
-
-                  {/* Memory — human-language status */}
-                  <section>
-                    <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 mb-3">Memory</h3>
-                    <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6 space-y-5">
-                      {/* Status */}
-                      <div>
-                        <div className="flex items-center gap-3 mb-1.5">
-                          <span className="h-2.5 w-2.5 rounded-full" style={{ background: memory.color, boxShadow: `0 0 14px ${memory.color}` }} />
-                          <span className="text-2xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                            {memory.label}
-                          </span>
+                            Add
+                          </button>
                         </div>
-                        <p className="text-sm text-zinc-400 leading-relaxed pl-5">{memory.description}</p>
+                        {editCollocations.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {editCollocations.map((c, i) => (
+                              <span
+                                key={i}
+                                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-white"
+                                style={{ background: 'rgba(0,255,200,0.1)', border: '1px solid rgba(0,255,200,0.2)' }}
+                              >
+                                {c}
+                                <button
+                                  type="button"
+                                  onClick={() => setEditCollocations(prev => prev.filter((_, j) => j !== i))}
+                                  className="text-zinc-500 hover:text-white transition-colors"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
-                      {selectedStats && (
-                        <>
-                          {/* Recall chance + Memory lasts */}
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-xl bg-white/[0.03] border border-white/5 px-4 py-3">
-                              <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-zinc-500 block mb-1">Recall chance</span>
-                              <span className="text-2xl font-bold text-white leading-none" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                                {recallPct}%
-                              </span>
-                              <div className="h-1 rounded-full bg-zinc-800 mt-2 overflow-hidden">
-                                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${recallPct}%`, background: memory.color }} />
-                              </div>
-                            </div>
-                            <div className="rounded-xl bg-white/[0.03] border border-white/5 px-4 py-3">
-                              <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-zinc-500 block mb-1">Memory lasts</span>
-                              <span className="text-2xl font-bold text-white leading-none" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                                {stabilityLabel}
-                              </span>
-                              <span className="text-[10px] text-zinc-500 block mt-1">{stageLabel}</span>
-                            </div>
-                          </div>
-
-                          {/* Recalled / Missed / Accuracy inline */}
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{selectedStats.times_correct}</span>
-                              <span className="text-[11px] text-zinc-500">recalled</span>
-                            </div>
-                            <div className="h-3 w-px bg-zinc-800" />
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{selectedStats.times_incorrect}</span>
-                              <span className="text-[11px] text-zinc-500">missed</span>
-                            </div>
-                            {totalAttempts > 0 && (
-                              <>
-                                <div className="h-3 w-px bg-zinc-800" />
-                                <span className="text-[11px] text-zinc-400">{accuracyPct}% accuracy</span>
-                              </>
-                            )}
-                          </div>
-                        </>
-                      )}
-
-                      {selectedStats && (
-                        <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                          <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500">Next encounter</span>
-                          <span className="text-sm font-bold" style={{ color: nextReview === 'Ready now' ? '#00FFC8' : 'white', fontFamily: "'Space Grotesk', sans-serif" }}>
-                            {nextReview}
-                          </span>
+                      {/* Synonyms */}
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">Synonyms</label>
+                        <div className="flex gap-2">
+                          <input
+                            className="edit-input"
+                            placeholder="e.g., happy, glad"
+                            value={editSynonymInput}
+                            onChange={e => setEditSynonymInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addEditSynonym(); } }}
+                          />
+                          <button
+                            type="button"
+                            onClick={addEditSynonym}
+                            disabled={!editSynonymInput.trim()}
+                            className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-zinc-900 disabled:opacity-30 transition-all"
+                            style={{ background: 'linear-gradient(135deg, #2cffca 0%, #00FFC8 100%)' }}
+                          >
+                            Add
+                          </button>
                         </div>
-                      )}
+                        {editSynonyms.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {editSynonyms.map((s, i) => (
+                              <span
+                                key={i}
+                                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-white"
+                                style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)' }}
+                              >
+                                {s}
+                                <button
+                                  type="button"
+                                  onClick={() => setEditSynonyms(prev => prev.filter((_, j) => j !== i))}
+                                  className="text-zinc-500 hover:text-white transition-colors"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </section>
+                  ) : (
+                    /* ── View mode ──────────────────────────────── */
+                    <>
+                      {/* Meaning — accent border for prominence */}
+                      <div className="pl-5 border-l-2 border-[#00FFC8]/60">
+                        <p className="text-lg leading-relaxed text-white/90" style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 400 }}>
+                          {selectedWord.definition}
+                        </p>
+                      </div>
+
+                      {/* Emotion anchor — evocative pull quote */}
+                      {selectedWord.emotion_anchor && (
+                        <figure className="relative rounded-2xl bg-gradient-to-br from-[#00FFC8]/[0.06] via-transparent to-transparent border border-white/5 p-6">
+                          <Quote className="absolute top-5 left-5 h-4 w-4 text-[#00FFC8]/40" />
+                          <blockquote className="text-base italic text-zinc-100 leading-relaxed pl-8">
+                            {selectedWord.emotion_anchor}
+                          </blockquote>
+                          <figcaption className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#00FFC8]/70 mt-3 pl-8">
+                            The feeling
+                          </figcaption>
+                        </figure>
+                      )}
+
+                      {/* In the wild — examples as scenes with the word highlighted */}
+                      {selectedContexts.length > 0 && (
+                        <section>
+                          <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 mb-3">In the wild</h3>
+                          <div className="space-y-3">
+                            {selectedContexts.map(ctx => (
+                              <div key={ctx.id} className="relative rounded-2xl bg-white/[0.03] border border-white/5 p-5 pl-6 overflow-hidden">
+                                <span className="absolute left-0 top-4 bottom-4 w-[2px] bg-[#00FFC8]/40 rounded-full" />
+                                <p className="text-[15px] text-zinc-200 leading-relaxed">
+                                  {highlightWord(ctx.sentence, selectedWord.word)}
+                                </p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mt-2.5">
+                                  {ctx.source_label}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+
+                      {/* Natural pairings — collocations as usage phrases */}
+                      {selectedCollocations.length > 0 && (
+                        <section>
+                          <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 mb-3">Natural pairings</h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {selectedCollocations.map(c => (
+                              <div
+                                key={c.id}
+                                className="rounded-xl bg-white/[0.03] border border-white/5 px-4 py-3 text-[15px] text-zinc-200 hover:border-[#00FFC8]/20 transition-colors"
+                              >
+                                {highlightWord(c.collocation, selectedWord.word)}
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+
+                      {/* Webs of meaning — semantic connections */}
+                      {selectedConnections.length > 0 && (
+                        <section>
+                          <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 mb-3">Webs of meaning</h3>
+                          <div className="space-y-1.5">
+                            {selectedConnections.map(c => (
+                              <div
+                                key={c.id}
+                                className="flex items-center gap-3 rounded-xl bg-white/[0.03] border border-white/5 px-4 py-2.5"
+                              >
+                                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 w-20 shrink-0">
+                                  {c.connection_type}
+                                </span>
+                                <span className="text-[15px] text-zinc-100">{c.connected_word}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+
+                      {/* Memory — human-language status */}
+                      <section>
+                        <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 mb-3">Memory</h3>
+                        <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-6 space-y-5">
+                          {/* Status */}
+                          <div>
+                            <div className="flex items-center gap-3 mb-1.5">
+                              <span className="h-2.5 w-2.5 rounded-full" style={{ background: memory.color, boxShadow: `0 0 14px ${memory.color}` }} />
+                              <span className="text-2xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                                {memory.label}
+                              </span>
+                            </div>
+                            <p className="text-sm text-zinc-400 leading-relaxed pl-5">{memory.description}</p>
+                          </div>
+
+                          {selectedStats && (
+                            <>
+                              {/* Recall chance + Memory lasts */}
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="rounded-xl bg-white/[0.03] border border-white/5 px-4 py-3">
+                                  <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-zinc-500 block mb-1">Recall chance</span>
+                                  <span className="text-2xl font-bold text-white leading-none" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                                    {recallPct}%
+                                  </span>
+                                  <div className="h-1 rounded-full bg-zinc-800 mt-2 overflow-hidden">
+                                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${recallPct}%`, background: memory.color }} />
+                                  </div>
+                                </div>
+                                <div className="rounded-xl bg-white/[0.03] border border-white/5 px-4 py-3">
+                                  <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-zinc-500 block mb-1">Memory lasts</span>
+                                  <span className="text-2xl font-bold text-white leading-none" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                                    {stabilityLabel}
+                                  </span>
+                                  <span className="text-[10px] text-zinc-500 block mt-1">{stageLabel}</span>
+                                </div>
+                              </div>
+
+                              {/* Recalled / Missed / Accuracy inline */}
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-baseline gap-1.5">
+                                  <span className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{selectedStats.times_correct}</span>
+                                  <span className="text-[11px] text-zinc-500">recalled</span>
+                                </div>
+                                <div className="h-3 w-px bg-zinc-800" />
+                                <div className="flex items-baseline gap-1.5">
+                                  <span className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{selectedStats.times_incorrect}</span>
+                                  <span className="text-[11px] text-zinc-500">missed</span>
+                                </div>
+                                {totalAttempts > 0 && (
+                                  <>
+                                    <div className="h-3 w-px bg-zinc-800" />
+                                    <span className="text-[11px] text-zinc-400">{accuracyPct}% accuracy</span>
+                                  </>
+                                )}
+                              </div>
+                            </>
+                          )}
+
+                          {selectedStats && (
+                            <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500">Next encounter</span>
+                              <span className="text-sm font-bold" style={{ color: nextReview === 'Ready now' ? '#00FFC8' : 'white', fontFamily: "'Space Grotesk', sans-serif" }}>
+                                {nextReview}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </section>
+                    </>
+                  )}
                 </div>
 
-                {/* Footer: Delete action */}
+                {/* Footer */}
                 <div className="shrink-0 px-7 py-4 border-t border-white/5 bg-zinc-950/80 backdrop-blur-xl flex items-center justify-end gap-2">
-                  {!confirmDelete ? (
-                    <button
-                      onClick={() => setConfirmDelete(true)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-red-400 border border-red-500/20 hover:bg-red-500/10 hover:border-red-500/40 transition-colors"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Delete Word
-                    </button>
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={() => setIsEditing(false)}
+                        className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleUpdate}
+                        disabled={updateWord.isPending || !editWord.trim() || !editDefinition.trim()}
+                        className="flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-zinc-900 disabled:opacity-40 transition-all glow-mint"
+                        style={{ background: 'linear-gradient(135deg, #2cffca 0%, #00FFC8 100%)' }}
+                      >
+                        {updateWord.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                        {updateWord.isPending ? 'Saving…' : 'Save Changes'}
+                      </button>
+                    </>
+                  ) : !confirmDelete ? (
+                    <>
+                      <button
+                        onClick={handleStartEdit}
+                        className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-zinc-400 border border-white/10 hover:text-white hover:border-white/20 transition-colors"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Edit Word
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(true)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-red-400 border border-red-500/20 hover:bg-red-500/10 hover:border-red-500/40 transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete Word
+                      </button>
+                    </>
                   ) : (
                     <>
                       <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-red-400 mr-auto">
