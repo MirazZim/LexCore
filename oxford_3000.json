@@ -1,0 +1,12177 @@
+[
+  {
+    "word": "I",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "a",
+    "cefr": "A1",
+    "pos": "article"
+  },
+  {
+    "word": "able",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "about",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "above",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "across",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "act",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "active",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "activity",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "add",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "address",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "adult",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "afternoon",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "ago",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "agree",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "air",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "airport",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "all",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "allow",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "alphabet",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "also",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "always",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "and",
+    "cefr": "A1",
+    "pos": "conjunction"
+  },
+  {
+    "word": "angry",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "animal",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "answer",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "any",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "anyone",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "anything",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "area",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "arm",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "art",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "as",
+    "cefr": "A1",
+    "pos": "conjunction"
+  },
+  {
+    "word": "ask",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "at",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "away",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "baby",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "back",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "bad",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "bag",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "ball",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "banana",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "bank",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "bathroom",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "be",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "beach",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "beautiful",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "because",
+    "cefr": "A1",
+    "pos": "conjunction"
+  },
+  {
+    "word": "become",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "bed",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "before",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "begin",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "behind",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "believe",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "between",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "big",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "birthday",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "black",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "blue",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "body",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "book",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "boring",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "born",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "both",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "box",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "boy",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "bread",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "break",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "bring",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "brother",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "brown",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "build",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "bus",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "business",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "but",
+    "cefr": "A1",
+    "pos": "conjunction"
+  },
+  {
+    "word": "buy",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "by",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "cake",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "call",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "camera",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "car",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "cat",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "centre",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "chair",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "change",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "check",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "chicken",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "child",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "chocolate",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "city",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "class",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "clean",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "clear",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "clock",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "close",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "clothes",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "club",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "coffee",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "cold",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "colour",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "come",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "computer",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "correct",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "cost",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "could",
+    "cefr": "A1",
+    "pos": "modal"
+  },
+  {
+    "word": "country",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "course",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "cup",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "cut",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "dad",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "dance",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "dark",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "daughter",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "day",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "dead",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "desk",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "dictionary",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "different",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "difficult",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "dinner",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "do",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "dog",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "door",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "down",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "draw",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "dress",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "drink",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "drive",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "each",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "early",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "easy",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "eat",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "egg",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "eight",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "eleven",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "end",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "enjoy",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "enough",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "even",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "ever",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "every",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "everyone",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "everything",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "example",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "eye",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "face",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "family",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "far",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "fast",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "fat",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "father",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "feel",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "few",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "film",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "find",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "finger",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "finish",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "first",
+    "cefr": "A1",
+    "pos": "ordinal"
+  },
+  {
+    "word": "fish",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "five",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "floor",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "flower",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "fly",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "follow",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "food",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "football",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "for",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "forget",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "four",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "free",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "friend",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "from",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "full",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "fun",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "game",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "garden",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "get",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "girl",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "give",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "glass",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "glasses",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "go",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "good",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "goodbye",
+    "cefr": "A1",
+    "pos": "exclamation"
+  },
+  {
+    "word": "grass",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "great",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "green",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "grey",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "group",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "grow",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "hair",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "hand",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "happy",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "hat",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "have",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "he",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "head",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "hear",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "heart",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "hello",
+    "cefr": "A1",
+    "pos": "exclamation"
+  },
+  {
+    "word": "help",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "her",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "here",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "high",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "him",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "his",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "home",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "hope",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "horse",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "hospital",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "hot",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "hotel",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "hour",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "house",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "how",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "hundred",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "hungry",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "idea",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "if",
+    "cefr": "A1",
+    "pos": "conjunction"
+  },
+  {
+    "word": "important",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "in",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "information",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "into",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "it",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "jacket",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "job",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "just",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "keep",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "key",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "kind",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "know",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "lake",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "language",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "large",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "last",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "late",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "learn",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "leave",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "left",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "leg",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "lemon",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "letter",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "life",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "light",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "like",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "listen",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "little",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "live",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "long",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "look",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "love",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "low",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "lunch",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "make",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "man",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "many",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "map",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "market",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "me",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "mean",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "meat",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "meet",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "milk",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "minute",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "mirror",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "miss",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "money",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "month",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "morning",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "mother",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "mouth",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "much",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "music",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "must",
+    "cefr": "A1",
+    "pos": "modal"
+  },
+  {
+    "word": "my",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "name",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "need",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "new",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "news",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "next",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "nice",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "night",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "nine",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "no",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "nose",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "not",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "notebook",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "now",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "number",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "ocean",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "of",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "off",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "often",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "old",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "on",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "one",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "only",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "open",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "or",
+    "cefr": "A1",
+    "pos": "conjunction"
+  },
+  {
+    "word": "orange",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "other",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "our",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "out",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "over",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "own",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "page",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "paper",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "part",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "pay",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "pen",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "pencil",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "people",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "phone",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "photo",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "picture",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "pink",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "place",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "plan",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "plate",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "play",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "please",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "point",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "police",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "possible",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "purple",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "put",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "question",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "quickly",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "rain",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "read",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "ready",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "red",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "remember",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "restaurant",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "rice",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "right",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "rock",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "room",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "run",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "sad",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "same",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "say",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "school",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "sea",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "see",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "sell",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "send",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "seven",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "she",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "shirt",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "shoe",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "shop",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "short",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "should",
+    "cefr": "A1",
+    "pos": "modal"
+  },
+  {
+    "word": "show",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "sick",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "sing",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "sister",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "sit",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "six",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "small",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "snow",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "so",
+    "cefr": "A1",
+    "pos": "conjunction"
+  },
+  {
+    "word": "sock",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "sofa",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "some",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "someone",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "something",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "sometimes",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "son",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "soon",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "sorry",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "soup",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "speak",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "spoon",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "sport",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "stand",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "start",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "stay",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "still",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "stomach",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "stop",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "story",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "study",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "such",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "sugar",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "swim",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "table",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "take",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "talk",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "tall",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "tea",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "teach",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "teacher",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "telephone",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "television",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "tell",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "ten",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "than",
+    "cefr": "A1",
+    "pos": "conjunction"
+  },
+  {
+    "word": "thank",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "that",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "the",
+    "cefr": "A1",
+    "pos": "article"
+  },
+  {
+    "word": "their",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "them",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "then",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "there",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "these",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "they",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "thin",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "thing",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "think",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "this",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "those",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "three",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "through",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "time",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "tired",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "to",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "today",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "tomorrow",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "too",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "town",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "train",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "travel",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "tree",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "trousers",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "try",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "turn",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "twelve",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "twenty",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "two",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "umbrella",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "under",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "understand",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "up",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "us",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "use",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "very",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "visit",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "wait",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "walk",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "want",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "warm",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "watch",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "water",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "we",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "weather",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "week",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "well",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "what",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "when",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "where",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "which",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "white",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "who",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "why",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "will",
+    "cefr": "A1",
+    "pos": "modal"
+  },
+  {
+    "word": "with",
+    "cefr": "A1",
+    "pos": "preposition"
+  },
+  {
+    "word": "woman",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "word",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "work",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "world",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "write",
+    "cefr": "A1",
+    "pos": "verb"
+  },
+  {
+    "word": "year",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "yellow",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "yes",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "yesterday",
+    "cefr": "A1",
+    "pos": "adverb"
+  },
+  {
+    "word": "you",
+    "cefr": "A1",
+    "pos": "pronoun"
+  },
+  {
+    "word": "young",
+    "cefr": "A1",
+    "pos": "adjective"
+  },
+  {
+    "word": "your",
+    "cefr": "A1",
+    "pos": "determiner"
+  },
+  {
+    "word": "zero",
+    "cefr": "A1",
+    "pos": "number"
+  },
+  {
+    "word": "zoo",
+    "cefr": "A1",
+    "pos": "noun"
+  },
+  {
+    "word": "accept",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "accident",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "actually",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "advertisement",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "afraid",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "after",
+    "cefr": "A2",
+    "pos": "conjunction"
+  },
+  {
+    "word": "again",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "against",
+    "cefr": "A2",
+    "pos": "preposition"
+  },
+  {
+    "word": "age",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "almost",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "already",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "although",
+    "cefr": "A2",
+    "pos": "conjunction"
+  },
+  {
+    "word": "ambulance",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "among",
+    "cefr": "A2",
+    "pos": "preposition"
+  },
+  {
+    "word": "anger",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "ankle",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "another",
+    "cefr": "A2",
+    "pos": "determiner"
+  },
+  {
+    "word": "anxious",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "appear",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "apple",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "appointment",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "architect",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "around",
+    "cefr": "A2",
+    "pos": "preposition"
+  },
+  {
+    "word": "arrive",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "athlete",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "attention",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "audience",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "aunt",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "autumn",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "available",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "avoid",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "bacteria",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "bake",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "balcony",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "ballet",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "band",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "barbecue",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "bark",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "basement",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "basket",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "bat",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "bath",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "battery",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "bay",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "beat",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "bedroom",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "beef",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "behaviour",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "belong",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "bench",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "best",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "better",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "bicycle",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "bill",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "bird",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "bite",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "blanket",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "blind",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "block",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "board",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "boat",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "boil",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "bone",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "borrow",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "bottle",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "bottom",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "bowl",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "branch",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "brave",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "breakfast",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "bridge",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "bright",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "brush",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "budget",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "burn",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "button",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "calm",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "camp",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "can",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "candle",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "capital",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "careful",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "carpet",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "carry",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "castle",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "catch",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "cause",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "ceiling",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "certainly",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "chance",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "channel",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "character",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "chart",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "chase",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "cheap",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "chef",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "cheque",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "chest",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "choose",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "cinema",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "clay",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "cliff",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "climb",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "cloud",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "coach",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "coin",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "collect",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "comfortable",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "compare",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "complete",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "connect",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "contact",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "contest",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "continue",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "conversation",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "cook",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "copy",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "cottage",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "couple",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "cousin",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "cover",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "crash",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "crazy",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "crime",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "crop",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "crowd",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "culture",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "curtain",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "customer",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "cycle",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "dangerous",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "date",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "deaf",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "deal",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "decide",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "deep",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "deer",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "describe",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "desert",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "design",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "diamond",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "direction",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "disappear",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "discover",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "distance",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "doctor",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "double",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "dream",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "drop",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "during",
+    "cefr": "A2",
+    "pos": "preposition"
+  },
+  {
+    "word": "dust",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "education",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "either",
+    "cefr": "A2",
+    "pos": "determiner"
+  },
+  {
+    "word": "election",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "electricity",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "else",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "email",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "empty",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "engine",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "engineer",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "enter",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "especially",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "evening",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "exam",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "exercise",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "expensive",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "experience",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "experiment",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "explain",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "extra",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "fact",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "factory",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "fail",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "fall",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "false",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "famous",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "fantastic",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "farmer",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "fashion",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "favour",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "favourite",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "fence",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "fever",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "fight",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "fill",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "finally",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "flat",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "flood",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "fog",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "fond",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "foreign",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "forest",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "fork",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "forward",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "fountain",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "freeze",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "fresh",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "front",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "fruit",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "fry",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "future",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "gallery",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "gate",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "gentle",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "geography",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "gift",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "glove",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "gold",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "grab",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "grammar",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "grand",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "grandparent",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "half",
+    "cefr": "A2",
+    "pos": "determiner"
+  },
+  {
+    "word": "happen",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "hard",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "hate",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "health",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "heavy",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "hill",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "history",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "hole",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "holiday",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "honest",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "horrible",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "horror",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "humour",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "hunt",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "hurry",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "hurt",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "husband",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "ice",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "ill",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "illness",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "improve",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "include",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "increase",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "independent",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "insect",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "inside",
+    "cefr": "A2",
+    "pos": "preposition"
+  },
+  {
+    "word": "instead",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "internet",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "invite",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "island",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "jar",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "join",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "journey",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "juice",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "jump",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "jungle",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "keen",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "kitchen",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "knife",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "knock",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "knowledge",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "lamp",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "land",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "laugh",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "lawyer",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "lazy",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "lead",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "leather",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "lend",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "less",
+    "cefr": "A2",
+    "pos": "determiner"
+  },
+  {
+    "word": "let",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "library",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "lift",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "lion",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "list",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "local",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "lose",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "loud",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "lovely",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "lucky",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "luggage",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "magazine",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "manager",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "married",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "match",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "matter",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "maybe",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "meal",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "medicine",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "member",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "menu",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "message",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "middle",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "mind",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "mix",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "modern",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "moment",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "monkey",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "moon",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "mountain",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "move",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "mud",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "mum",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "murder",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "museum",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "musician",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "narrow",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "nature",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "nearly",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "neither",
+    "cefr": "A2",
+    "pos": "determiner"
+  },
+  {
+    "word": "nervous",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "nest",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "net",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "never",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "nobody",
+    "cefr": "A2",
+    "pos": "pronoun"
+  },
+  {
+    "word": "noise",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "normal",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "north",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "nothing",
+    "cefr": "A2",
+    "pos": "pronoun"
+  },
+  {
+    "word": "notice",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "nurse",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "nut",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "object",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "office",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "once",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "opportunity",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "order",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "outside",
+    "cefr": "A2",
+    "pos": "preposition"
+  },
+  {
+    "word": "owner",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "paint",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "pair",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "palace",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "paragraph",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "park",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "pass",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "passenger",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "passport",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "past",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "perfect",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "perhaps",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "period",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "person",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "pet",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "pick",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "pile",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "pilot",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "plain",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "planet",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "plastic",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "plenty",
+    "cefr": "A2",
+    "pos": "pronoun"
+  },
+  {
+    "word": "plug",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "pocket",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "pollution",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "pond",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "popular",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "port",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "powerful",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "pray",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "prefer",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "prepare",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "present",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "pretty",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "price",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "print",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "prison",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "private",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "prize",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "probably",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "problem",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "programme",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "promise",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "proud",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "public",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "pull",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "push",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "queue",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "quiet",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "quite",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "race",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "raise",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "rapid",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "raw",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "reach",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "real",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "really",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "receive",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "recently",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "recycle",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "relationship",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "relatives",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "relax",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "religion",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "remain",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "remind",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "rent",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "repair",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "repeat",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "result",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "return",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "rich",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "ride",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "ring",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "river",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "road",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "rob",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "robot",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "roof",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "root",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "rough",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "round",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "rubbish",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "rush",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "safe",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "sail",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "sand",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "sauce",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "save",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "science",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "search",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "season",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "seat",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "second",
+    "cefr": "A2",
+    "pos": "ordinal"
+  },
+  {
+    "word": "secret",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "seem",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "sentence",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "serious",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "several",
+    "cefr": "A2",
+    "pos": "determiner"
+  },
+  {
+    "word": "share",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "shelf",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "shell",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "ship",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "side",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "sign",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "silver",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "simple",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "since",
+    "cefr": "A2",
+    "pos": "preposition"
+  },
+  {
+    "word": "single",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "situation",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "size",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "skin",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "sky",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "sleep",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "slowly",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "smell",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "smile",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "society",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "software",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "soldier",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "sort",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "sound",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "south",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "special",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "speech",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "speed",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "spend",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "spider",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "spring",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "square",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "stadium",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "stairs",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "stamp",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "star",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "steal",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "step",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "stick",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "stone",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "straight",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "strange",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "street",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "strong",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "student",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "stupid",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "subject",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "suggest",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "summer",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "sun",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "surprised",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "sweet",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "swing",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "switch",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "tail",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "talent",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "taste",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "temperature",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "tent",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "terrible",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "text",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "though",
+    "cefr": "A2",
+    "pos": "conjunction"
+  },
+  {
+    "word": "thousand",
+    "cefr": "A2",
+    "pos": "number"
+  },
+  {
+    "word": "throw",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "thunder",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "ticket",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "tidy",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "together",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "tool",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "top",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "total",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "touch",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "tourist",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "towards",
+    "cefr": "A2",
+    "pos": "preposition"
+  },
+  {
+    "word": "traffic",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "trap",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "treasure",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "trip",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "true",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "uncle",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "universe",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "until",
+    "cefr": "A2",
+    "pos": "preposition"
+  },
+  {
+    "word": "upset",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "usually",
+    "cefr": "A2",
+    "pos": "adverb"
+  },
+  {
+    "word": "valley",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "vegetable",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "view",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "village",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "voice",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "volunteer",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "wage",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "wake",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "waste",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "weak",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "wear",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "wedding",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "weekend",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "west",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "wet",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "whole",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "wide",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "wife",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "wild",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "win",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "window",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "wing",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "winter",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "wire",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "wish",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "wonderful",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "wood",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "wool",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "worry",
+    "cefr": "A2",
+    "pos": "verb"
+  },
+  {
+    "word": "worse",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "worth",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "wrong",
+    "cefr": "A2",
+    "pos": "adjective"
+  },
+  {
+    "word": "yard",
+    "cefr": "A2",
+    "pos": "noun"
+  },
+  {
+    "word": "ability",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "abroad",
+    "cefr": "B1",
+    "pos": "adverb"
+  },
+  {
+    "word": "absence",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "achieve",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "acquaint",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "action",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "admire",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "admit",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "adoption",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "advantage",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "advertise",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "affect",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "afford",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "affordable",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "afterwards",
+    "cefr": "B1",
+    "pos": "adverb"
+  },
+  {
+    "word": "aggressive",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "agriculture",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "aim",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "album",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "alert",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "alliance",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "allowance",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "alone",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "altogether",
+    "cefr": "B1",
+    "pos": "adverb"
+  },
+  {
+    "word": "ambition",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "amusing",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "analysis",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "ancient",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "announce",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "annual",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "anxiety",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "apply",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "appropriate",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "approval",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "approximately",
+    "cefr": "B1",
+    "pos": "adverb"
+  },
+  {
+    "word": "argue",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "arrange",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "arrest",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "aspect",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "assist",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "associate",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "atmosphere",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "attach",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "attempt",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "attitude",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "attract",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "attraction",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "authority",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "average",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "aware",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "background",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "balance",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "ban",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "barrier",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "basic",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "basis",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "battle",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "benefit",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "blame",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "bond",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "boom",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "border",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "brief",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "broadcast",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "burden",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "campaign",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "cancel",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "capable",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "capture",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "carbon",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "career",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "cast",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "category",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "celebrate",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "certain",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "challenge",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "charity",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "citizen",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "civil",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "claim",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "climate",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "collapse",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "colleague",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "combine",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "comment",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "commitment",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "common",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "communicate",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "community",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "competition",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "complain",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "concentrate",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "concern",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "conclusion",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "condition",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "confidence",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "confuse",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "conscious",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "consider",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "contain",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "content",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "contract",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "control",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "convenient",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "convince",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "cope",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "creation",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "crisis",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "criticism",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "cross",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "curious",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "current",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "damage",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "data",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "debate",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "decade",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "decision",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "decrease",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "dedicate",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "defend",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "define",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "definition",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "delay",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "deliver",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "demand",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "democracy",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "deny",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "depend",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "depression",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "deserve",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "despite",
+    "cefr": "B1",
+    "pos": "preposition"
+  },
+  {
+    "word": "destroy",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "develop",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "digital",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "diplomacy",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "disappointed",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "discuss",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "disease",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "disorder",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "display",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "distinct",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "divide",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "doubt",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "dramatic",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "earn",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "ease",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "economy",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "edge",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "educate",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "effect",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "effective",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "efficient",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "emergency",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "emotion",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "emphasise",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "employ",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "encourage",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "enemy",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "energy",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "enterprise",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "entire",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "environment",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "equally",
+    "cefr": "B1",
+    "pos": "adverb"
+  },
+  {
+    "word": "equipment",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "escape",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "ethics",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "ethnic",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "event",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "eventually",
+    "cefr": "B1",
+    "pos": "adverb"
+  },
+  {
+    "word": "evidence",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "evolution",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "exact",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "except",
+    "cefr": "B1",
+    "pos": "preposition"
+  },
+  {
+    "word": "exception",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "exclusive",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "expect",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "expert",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "express",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "extensive",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "external",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "extreme",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "facility",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "failure",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "fair",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "faith",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "familiar",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "feature",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "federal",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "feed",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "female",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "field",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "figure",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "financial",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "fire",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "firm",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "fix",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "focus",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "force",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "forever",
+    "cefr": "B1",
+    "pos": "adverb"
+  },
+  {
+    "word": "form",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "formal",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "formation",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "found",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "freedom",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "frequent",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "function",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "fund",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "gap",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "general",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "genuine",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "global",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "goal",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "government",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "guess",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "guidance",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "guide",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "habit",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "handle",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "harm",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "heritage",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "hero",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "hide",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "hire",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "hit",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "household",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "huge",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "human",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "ideal",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "identify",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "identity",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "ignore",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "imagine",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "impact",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "impression",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "income",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "individual",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "industry",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "influence",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "injury",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "inspire",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "institution",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "intense",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "interest",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "internal",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "international",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "introduce",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "invest",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "involve",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "judge",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "lack",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "launch",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "law",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "leader",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "limit",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "link",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "location",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "logical",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "maintain",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "majority",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "male",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "manage",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "manner",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "media",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "method",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "military",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "minimum",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "minority",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "mislead",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "mission",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "moral",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "multiple",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "myth",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "national",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "natural",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "negative",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "normally",
+    "cefr": "B1",
+    "pos": "adverb"
+  },
+  {
+    "word": "novel",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "observe",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "obvious",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "occupation",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "offer",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "opinion",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "option",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "original",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "overall",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "overcome",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "overlap",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "participate",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "particular",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "partner",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "pattern",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "perform",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "permit",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "physical",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "political",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "population",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "position",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "positive",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "potential",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "poverty",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "power",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "presence",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "prevent",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "previous",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "primary",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "principle",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "priority",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "process",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "produce",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "profession",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "profit",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "progress",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "project",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "protect",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "prove",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "provide",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "publish",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "purpose",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "quality",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "quantity",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "random",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "ratio",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "react",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "reaction",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "realistic",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "recognise",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "record",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "recover",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "reduce",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "reflect",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "reform",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "refuse",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "region",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "register",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "regular",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "release",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "relevant",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "replace",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "report",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "represent",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "require",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "research",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "resources",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "respect",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "respond",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "response",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "responsible",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "reveal",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "revolution",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "reward",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "risk",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "role",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "rule",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "rural",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "sacrifice",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "satisfactory",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "scheme",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "section",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "security",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "seek",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "select",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "senior",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "separate",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "serve",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "service",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "set",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "settle",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "shortage",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "signal",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "significant",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "skill",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "solution",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "solve",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "source",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "specific",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "spread",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "state",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "status",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "structure",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "style",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "succeed",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "suffer",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "suitable",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "support",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "suppose",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "survive",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "system",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "target",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "task",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "technology",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "tend",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "tension",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "term",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "theme",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "therefore",
+    "cefr": "B1",
+    "pos": "adverb"
+  },
+  {
+    "word": "threat",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "throughout",
+    "cefr": "B1",
+    "pos": "preposition"
+  },
+  {
+    "word": "trade",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "tradition",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "transfer",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "transport",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "trend",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "trust",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "typical",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "unemployment",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "unique",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "unlikely",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "update",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "urban",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "value",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "variety",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "victim",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "violence",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "violent",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "vision",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "volume",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "vote",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "weapon",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "welfare",
+    "cefr": "B1",
+    "pos": "noun"
+  },
+  {
+    "word": "whether",
+    "cefr": "B1",
+    "pos": "conjunction"
+  },
+  {
+    "word": "willing",
+    "cefr": "B1",
+    "pos": "adjective"
+  },
+  {
+    "word": "within",
+    "cefr": "B1",
+    "pos": "preposition"
+  },
+  {
+    "word": "wonder",
+    "cefr": "B1",
+    "pos": "verb"
+  },
+  {
+    "word": "abandon",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "abolish",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "abstract",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "access",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "accommodate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "accountability",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "accumulate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "accurate",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "acknowledge",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "acquire",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "adapt",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "addiction",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "adequate",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "adjacent",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "adjust",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "administration",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "adopt",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "advocate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "aggregate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "allegation",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "allocate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "alter",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "alternative",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "ambiguous",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "amend",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "amendment",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "amenity",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "analogy",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "analyse",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "anecdote",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "anomaly",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "anonymous",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "anticipate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "apparent",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "appeal",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "appreciate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "approach",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "approve",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "arbitrary",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "arise",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "articulate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "aspire",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "assert",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "assertion",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "assess",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "asset",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "assign",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "assume",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "assumption",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "assure",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "attachment",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "attribute",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "authorization",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "autonomous",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "benchmark",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "bias",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "bypass",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "capacity",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "catalyst",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "cease",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "circumstance",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "clarify",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "coalition",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "cognitive",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "coherence",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "coherent",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "coincide",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "collaborate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "commit",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "commodity",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "compensate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "competence",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "competitive",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "compile",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "complement",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "complex",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "comply",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "component",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "comprehensive",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "comprise",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "concept",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "concession",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "conclude",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "concurrent",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "condone",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "conduct",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "configuration",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "confine",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "confirm",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "conflict",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "conform",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "confront",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "consensus",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "consequence",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "considerable",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "consistent",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "consolidate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "constitute",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "constrain",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "constraint",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "contemplate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "context",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "contradict",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "contrast",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "contribute",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "controversy",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "convert",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "convey",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "conviction",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "coordinate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "corporate",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "correlate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "correlation",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "correspond",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "counterpart",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "create",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "credibility",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "criteria",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "critique",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "crucial",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "cultivate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "cumulative",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "currency",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "deception",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "decisive",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "decline",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "deduce",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "deficit",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "delegate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "demonstrate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "deploy",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "derive",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "designate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "deteriorate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "determine",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "deviate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "devote",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "dialogue",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "differentiate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "dilemma",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "dimension",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "diminish",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "disclaimer",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "disclose",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "discourse",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "discrepancy",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "discrimination",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "dispute",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "disrupt",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "distribute",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "diverse",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "document",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "domain",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "domestic",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "dominant",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "dominate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "draft",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "duration",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "dynamic",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "elaborate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "eliminate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "emerge",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "empirical",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "empower",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "enable",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "encounter",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "endorse",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "endure",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "enforce",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "enhance",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "enormous",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "ensure",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "entity",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "equivalent",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "erode",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "establish",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "estimate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "ethical",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "evaluate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "evolve",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "examine",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "exclude",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "execute",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "exemplify",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "exempt",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "exert",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "exhaustive",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "expand",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "expertise",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "explicit",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "exploit",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "exploitation",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "expose",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "extent",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "facilitate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "factor",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "flexible",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "fluctuate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "fluctuation",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "formulate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "foster",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "fragile",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "framework",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "fundamental",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "furthermore",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "generate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "governance",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "gradual",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "grant",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "guarantee",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "hence",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "hierarchy",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "highlight",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "holistic",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "hypothesis",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "identical",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "ideology",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "illustrate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "implement",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "implicit",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "imply",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "impose",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "incentive",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "incentivize",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "incline",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "inconsistent",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "incorporate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "independence",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "indicate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "induce",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "inequality",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "inevitable",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "infer",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "inflict",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "infrastructure",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "inherent",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "initiate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "innovation",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "insight",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "instance",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "integral",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "integrate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "integrity",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "interact",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "interpret",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "intervene",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "intervention",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "intuitive",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "investigate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "investigation",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "invoke",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "isolate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "justify",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "label",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "legislation",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "legitimate",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "leverage",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "liberal",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "likewise",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "linear",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "literacy",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "magnitude",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "mandate",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "manipulate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "marginal",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "maximize",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "mechanism",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "mediate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "mental",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "methodology",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "migrate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "minimal",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "minimize",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "moderate",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "modify",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "monitor",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "moreover",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "motivate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "mutual",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "narrative",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "neglect",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "neutral",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "nevertheless",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "niche",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "nominate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "nonetheless",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "norm",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "notion",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "objective",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "obligate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "obligation",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "obtain",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "occur",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "omit",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "ongoing",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "opposition",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "optimise",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "optimistic",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "outcome",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "outline",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "output",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "overlook",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "oversee",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "overview",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "paradigm",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "parallel",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "parameter",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "passive",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "perceive",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "perception",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "persist",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "persistence",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "perspective",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "pertinent",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "phase",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "phenomenon",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "plausible",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "polarize",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "policy",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "portfolio",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "pragmatic",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "precede",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "precedent",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "precise",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "precisely",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "predict",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "predominant",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "preliminary",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "preserve",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "presume",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "prevalent",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "prior",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "prioritize",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "proactive",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "proceed",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "proficiency",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "profound",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "prohibit",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "prominent",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "promote",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "prompt",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "proportion",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "propose",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "protocol",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "provisional",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "proximity",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "pursue",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "qualification",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "qualitative",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "quantitative",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "radical",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "rational",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "rationale",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "readily",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "recognition",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "reconcile",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "reconsider",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "recruit",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "redefine",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "redundant",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "refine",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "regulate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "reinforce",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "reinstate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "reject",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "relate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "reluctant",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "rely",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "resilience",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "resolve",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "responsive",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "restore",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "restrain",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "restrict",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "retain",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "revenue",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "revise",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "revoke",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "rigid",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "risky",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "robust",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "scenario",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "scope",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "scrutinize",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "segment",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "selective",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "sensitive",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "sequence",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "shift",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "significance",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "simulate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "simultaneously",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "skeptical",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "solely",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "somewhat",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "sophisticated",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "specify",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "stable",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "static",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "statistical",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "stereotype",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "straightforward",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "strategic",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "strategy",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "subjective",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "subsequent",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "subsidize",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "substantial",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "substitute",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "subtle",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "sufficient",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "summarize",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "supplement",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "suppress",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "suspend",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "sustain",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "symbol",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "synthesize",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "systematic",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "tacit",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "tangible",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "terminate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "theory",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "thereby",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "threshold",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "tolerance",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "topic",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "trace",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "trajectory",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "transform",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "transition",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "transparent",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "trigger",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "turbulent",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "ultimately",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "unanticipated",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "underlying",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "undermine",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "undertake",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "uniform",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "unprecedented",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "urgency",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "utilise",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "utility",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "vague",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "valid",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "validate",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "variable",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "variant",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "verbally",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "verify",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "version",
+    "cefr": "B2",
+    "pos": "noun"
+  },
+  {
+    "word": "vigilant",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "virtually",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "voluntary",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "vulnerable",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "whereas",
+    "cefr": "B2",
+    "pos": "conjunction"
+  },
+  {
+    "word": "whereby",
+    "cefr": "B2",
+    "pos": "adverb"
+  },
+  {
+    "word": "widespread",
+    "cefr": "B2",
+    "pos": "adjective"
+  },
+  {
+    "word": "withdraw",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "yield",
+    "cefr": "B2",
+    "pos": "verb"
+  },
+  {
+    "word": "abate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "aberration",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "abide",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "abstain",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "absurd",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "accentuate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "accolade",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "acquit",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "acrimony",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "adamant",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "adhere",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "advent",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "adversarial",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "advocacy",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "affirmation",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "aggravate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "agile",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "alleviate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "allude",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "altruistic",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "ambivalent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "ameliorate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "amplify",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "anarchy",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "animosity",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "anomalous",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "antagonize",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "antiquated",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "apprehension",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "aptitude",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "archaic",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "ardent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "arduous",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "articulate",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "aspiration",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "assertive",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "assuage",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "astute",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "atrocity",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "attain",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "audacious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "augment",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "avert",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "axiom",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "benevolent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "bolster",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "breach",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "brevity",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "candid",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "capitulate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "cardinal",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "censure",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "circumvent",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "clandestine",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "coerce",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "cogent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "commemorate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "complacent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "complicity",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "concede",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "conciliatory",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "condescending",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "conducive",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "connotation",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "conspicuous",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "contemptuous",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "contentious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "contrite",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "convoluted",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "copious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "corroborate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "counterfeit",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "curtail",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "cynical",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "daunting",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "debilitate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "deceitful",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "decipher",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "deference",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "degenerate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "delicate",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "delineate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "demagogue",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "demise",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "denounce",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "depict",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "deprecate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "deride",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "despondent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "detrimental",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "devious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "dichotomy",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "diffuse",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "digress",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "diligent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "discern",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "disdain",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "dismissive",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "disparity",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "dissent",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "distort",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "diverge",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "doctrine",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "dogmatic",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "dubious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "eccentric",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "eloquent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "eminent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "empiricism",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "encapsulate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "encompass",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "endorse",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "envisage",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "ephemeral",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "equitable",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "eradicate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "erratic",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "escalate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "evade",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "exacerbate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "exalt",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "exorbitant",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "expedite",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "exploit",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "exponent",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "extravagant",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "exuberant",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "facilitate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "fallacious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "fallacy",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "fervent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "flagrant",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "flourish",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "forthright",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "fortify",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "frivolous",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "frugal",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "futile",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "galvanize",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "grandiose",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "gratuitous",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "grievance",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "hamper",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "haphazard",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "herald",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "hindrance",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "homogeneous",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "hypocritical",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "ideological",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "illusory",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "imminent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "impartial",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "impede",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "imperative",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "implicate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "inadvertent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "incite",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "incompatible",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "indifferent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "indignant",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "indispensable",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "induce",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "inefficacy",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "ingenuity",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "innate",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "instigate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "intangible",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "intervene",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "intrinsic",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "irrefutable",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "jeopardize",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "judicious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "lament",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "latent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "laudable",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "lenient",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "lucid",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "magnitude",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "malicious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "manifest",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "meticulous",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "mitigate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "mundane",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "nefarious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "negate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "nuance",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "oblivious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "obscure",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "obsolete",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "omnipotent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "oppressive",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "ostracize",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "outspoken",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "overarching",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "overt",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "paradox",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "partisan",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "patronize",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "permeate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "pernicious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "perpetuate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "pervasive",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "pivotal",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "placate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "polarize",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "potent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "pragmatism",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "precarious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "precipitate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "preconception",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "precursor",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "premise",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "presuppose",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "proponent",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "propriety",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "provocative",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "prudent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "ramification",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "rampant",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "ratify",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "rebuke",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "rebuttal",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "recalcitrant",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "rectify",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "refute",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "reinstate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "relegate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "repercussion",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "repudiate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "resilient",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "reticent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "rhetoric",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "rigorous",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "ruthless",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "salient",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "sanctimonious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "sanction",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "scrutiny",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "shrewd",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "skepticism",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "solicit",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "spurious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "stagnant",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "staunch",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "stigmatize",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "stipulate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "stringent",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "submissive",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "subvert",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "succinct",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "superficial",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "superfluous",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "susceptible",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "sycophant",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "taciturn",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "tenacious",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "tenuous",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "ubiquitous",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "unequivocal",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "unilateral",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "untenable",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "upheaval",
+    "cefr": "C1",
+    "pos": "noun"
+  },
+  {
+    "word": "usurp",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "vacuous",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "validate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "vehement",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "venerate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "viable",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "vindicate",
+    "cefr": "C1",
+    "pos": "verb"
+  },
+  {
+    "word": "volatile",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "zealous",
+    "cefr": "C1",
+    "pos": "adjective"
+  },
+  {
+    "word": "abstruse",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "acerbic",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "acumen",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "adulation",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "aesthetic",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "affable",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "aggrandize",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "alacrity",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "amalgamate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "ambivalence",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "amelioration",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "anachronism",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "anathema",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "antipathy",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "apocryphal",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "apotheosis",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "approbation",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "arcane",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "assiduous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "atavistic",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "auspicious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "avarice",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "banal",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "belligerent",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "benign",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "bequeath",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "blithe",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "bombastic",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "brazen",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "cacophony",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "capitulation",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "capricious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "caustic",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "chicanery",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "circuitous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "clemency",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "cogitate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "commensurate",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "compunction",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "conflagration",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "consternation",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "consummate",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "contiguous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "contrition",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "conundrum",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "convivial",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "corollary",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "culpable",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "dearth",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "debacle",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "deft",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "deleterious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "demagogy",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "depreciate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "derelict",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "despot",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "diffidence",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "dilettante",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "discordant",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "disparage",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "dispassionate",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "dissemble",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "dissonance",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "duplicity",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "ebullient",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "edify",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "effrontery",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "egregious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "elusive",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "embroil",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "emulate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "enervate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "engender",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "enigmatic",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "ennui",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "enumerate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "equanimity",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "equivocate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "erudite",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "esoteric",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "evasive",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "evince",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "excoriate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "exemplary",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "exigent",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "exonerate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "expedient",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "expunge",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "extemporaneous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "facetious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "fastidious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "feckless",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "felicitous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "ferocious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "fervour",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "florid",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "foment",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "forbearance",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "foreboding",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "fortuitous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "garrulous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "germane",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "grandiloquent",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "gregarious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "guile",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "hackneyed",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "harangue",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "harbinger",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "hegemony",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "heterodox",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "hubris",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "iconoclast",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "idiosyncrasy",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "ignominious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "imbue",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "immutable",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "impecunious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "impervious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "implacable",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "impugn",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "impunity",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "inchoate",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "incorrigible",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "inculcate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "ineffable",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "ineluctable",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "inexorable",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "inimical",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "inimitable",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "insidious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "insouciant",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "intractable",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "inveterate",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "irascible",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "laconic",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "languorous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "loquacious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "lugubrious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "magnanimous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "malfeasance",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "malodorous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "mendacious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "mercurial",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "meretricious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "mettlesome",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "misanthrope",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "misnomer",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "mollify",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "morose",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "myriad",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "nadir",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "nebulous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "neologism",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "nepotism",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "nihilism",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "nonchalant",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "obdurate",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "obsequious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "obstreperous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "obtuse",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "odious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "officious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "ominous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "onerous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "opaque",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "opprobrium",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "oscillate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "palliate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "panacea",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "paternalistic",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "paucity",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "penchant",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "penury",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "perfidious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "perfunctory",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "peripatetic",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "pernicious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "perspicacious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "pertinacious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "petulant",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "philistine",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "phlegmatic",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "platitude",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "plausibility",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "polemic",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "pontificate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "portent",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "postulate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "predilection",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "prerogative",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "prestidigitation",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "probity",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "proclivity",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "prodigious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "profligate",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "propitious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "prosaic",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "proscribe",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "pugnacious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "punctilious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "pusillanimous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "quixotic",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "recondite",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "recrimination",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "redolent",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "remonstrate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "renounce",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "reprehensible",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "reprove",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "repugnant",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "rescind",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "resentful",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "resolute",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "reticence",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "rife",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "sacrosanct",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "sagacious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "sanguine",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "sardonic",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "sartorial",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "scathing",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "scrupulous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "sedulous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "serendipity",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "sinister",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "sober",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "solipsism",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "soporific",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "specious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "squalid",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "stolid",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "subservient",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "surreptitious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "sycophancy",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "tangential",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "temerity",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "tendentious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "timorous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "torpid",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "tractable",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "transient",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "trepidation",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "truculent",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "turpitude",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "unassailable",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "uncanny",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "unconscionable",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "unctuous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "undulate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "unfettered",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "ungainly",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "unpalatable",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "unscrupulous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "unwieldy",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "vehemence",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "venal",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "verbose",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "vexatious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "vicarious",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "vilify",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "visceral",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "vitriolic",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "vituperate",
+    "cefr": "C2",
+    "pos": "verb"
+  },
+  {
+    "word": "vociferous",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "wanton",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "wayward",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "whimsical",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "wily",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "winsome",
+    "cefr": "C2",
+    "pos": "adjective"
+  },
+  {
+    "word": "xenophobia",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "zealotry",
+    "cefr": "C2",
+    "pos": "noun"
+  },
+  {
+    "word": "zenith",
+    "cefr": "C2",
+    "pos": "noun"
+  }
+]

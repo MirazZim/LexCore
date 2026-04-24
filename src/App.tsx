@@ -12,6 +12,7 @@ import ReviewPage from "./pages/ReviewPage";
 import ProgressPage from "./pages/ProgressPage";
 import GrammarRulesPage from "./pages/GrammarRulesPage";
 import SettingsPage from "./pages/SettingsPage";
+import DictionaryPage from "./pages/DictionaryPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ function AppRoutes() {
       <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
       <Route path="/grammar" element={<ProtectedRoute><GrammarRulesPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      <Route path="/dictionary" element={<ProtectedRoute><DictionaryPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

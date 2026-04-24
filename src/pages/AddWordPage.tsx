@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -40,7 +40,8 @@ const itemVariant = {
 
 export default function AddWordPage() {
   const navigate = useNavigate();
-  const [word, setWord]                         = useState('');
+  const [searchParams] = useSearchParams();
+  const [word, setWord]                         = useState(() => searchParams.get('word') ?? '');
   const [definition, setDefinition]             = useState('');
   const [exampleSentence, setExampleSentence]   = useState('');
   const [collocations, setCollocations]         = useState<string[]>([]);
