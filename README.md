@@ -414,6 +414,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ### 🔜 Up Next
 
+- [ ] **Add Vocabulary from a existing dictionary where a lot of words are there ** — So when i add the word from that dictionary it directly goest to my add word page input highlight any word on any webpage and save it to LexCore with one click, context sentence auto-captured
 - [ ] **Listening phase** — TTS pronunciation audio on every word card so you hear it while you review it
 - [ ] **Forgetting curve visualizer** — per-word chart showing memory strength over time, so you can see exactly how a word was learned
 - [ ] **Custom decks / topic lists** — group words into decks (IELTS Academic, Business English, Phrasal Verbs) and review them independently
