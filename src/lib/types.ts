@@ -68,3 +68,11 @@ export interface WordWithStats extends Word {
   word_collocations: WordCollocation[];
   semantic_connections: SemanticConnection[];
 }
+
+export interface UserPreferences {
+  user_id: string;
+  request_retention: number;  // 0.70 – 0.97
+  maximum_interval: number;   // days
+  new_cards_per_day: number;
+  updated_at: string;
+}

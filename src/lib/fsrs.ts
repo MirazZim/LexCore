@@ -5,17 +5,14 @@ import {
     State,
     createEmptyCard,
     type Card,
+    type Grade,
 } from 'ts-fsrs';
 
-// FSRS-6 with sensible defaults. Tune `request_retention` if you want
-// longer intervals (lower value) or safer retention (higher value).
-const f = fsrs(
-    generatorParameters({
-        maximum_interval: 365,
-        request_retention: 0.90, // target 90% recall probability at review time
-        enable_fuzz: true,      // adds small jitter so reviews don't all cluster
-    })
-);
+export function createScheduler(params: { request_retention: number; maximum_interval: number }) {
+    return fsrs(generatorParameters({ ...params, enable_fuzz: true }));
+}
+
+const f = createScheduler({ request_retention: 0.90, maximum_interval: 365 });
 
 // DB row shape (subset of WordStats — the FSRS-relevant fields)
 export interface FsrsDbState {
@@ -55,9 +52,14 @@ export function currentRetrievability(card: Card, now: Date = new Date()): numbe
     return f.get_retrievability(card, now, false) as unknown as number;
 }
 
-// Run the scheduler. Returns the new Card and the log entry.
-export function schedule(cardBefore: Card, rating: Rating, now: Date = new Date()) {
-    const result = f.next(cardBefore, now, rating);
+// Run the scheduler. Pass a custom scheduler (from createScheduler) to use per-user params.
+export function schedule(
+    cardBefore: Card,
+    rating: Rating,
+    now: Date = new Date(),
+    scheduler = f,
+) {
+    const result = scheduler.next(cardBefore, now, rating as Grade);
     return { card: result.card, log: result.log };
 }
 

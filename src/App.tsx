@@ -11,6 +11,7 @@ import LibraryPage from "./pages/LibraryPage";
 import ReviewPage from "./pages/ReviewPage";
 import ProgressPage from "./pages/ProgressPage";
 import GrammarRulesPage from "./pages/GrammarRulesPage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ function AppRoutes() {
       <Route path="/review" element={<ProtectedRoute><ReviewPage /></ProtectedRoute>} />
       <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
       <Route path="/grammar" element={<ProtectedRoute><GrammarRulesPage /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

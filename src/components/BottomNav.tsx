@@ -1,6 +1,6 @@
 import { useRef, useEffect, useLayoutEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, PlusCircle, BookOpen, TrendingUp, BookText, Menu, X, LogOut } from 'lucide-react';
+import { Home, PlusCircle, BookOpen, TrendingUp, BookText, Settings, Menu, X, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -11,6 +11,7 @@ const navItems = [
   { path: '/library', icon: BookOpen, label: 'Library' },
   { path: '/progress', icon: TrendingUp, label: 'Progress' },
   { path: '/grammar', icon: BookText, label: 'Grammar' },
+  { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 type BoxStyle = { left: number; top: number; width: number; height: number };

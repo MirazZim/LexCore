@@ -1,8 +1,53 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Word, WordStats, WordContext, WordCollocation, SemanticConnection, ReviewSession } from '@/lib/types';
-import { schedule, dbStateToCard, Rating, type Card } from '@/lib/fsrs';
+import type { Word, WordStats, WordContext, WordCollocation, SemanticConnection, ReviewSession, UserPreferences } from '@/lib/types';
+import { createScheduler, schedule, Rating, type Card } from '@/lib/fsrs';
+
+const PREF_DEFAULTS = {
+  request_retention: 0.90,
+  maximum_interval: 365,
+  new_cards_per_day: 10,
+};
+
+export function useUserPreferences() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['user_preferences', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as UserPreferences) ?? {
+        ...PREF_DEFAULTS,
+        user_id: user!.id,
+        updated_at: new Date().toISOString(),
+      };
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useUpdateUserPreferences() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (prefs: Partial<Pick<UserPreferences, 'request_retention' | 'maximum_interval' | 'new_cards_per_day'>>) => {
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({ user_id: user!.id, ...prefs, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user_preferences'] });
+      queryClient.invalidateQueries({ queryKey: ['due_words'] });
+    },
+  });
+}
 
 export function useWords() {
   const { user } = useAuth();
@@ -123,32 +168,30 @@ export function useReviewSessions() {
 
 export function useDueWords() {
   const { user } = useAuth();
+  const { data: prefs } = useUserPreferences();
+  const newCardsPerDay = prefs?.new_cards_per_day ?? PREF_DEFAULTS.new_cards_per_day;
+
   return useQuery({
-    queryKey: ['due_words', user?.id],
+    queryKey: ['due_words', user?.id, newCardsPerDay],
     queryFn: async () => {
       const now = new Date().toISOString();
-      const { data: stats, error: statsError } = await supabase
-        .from('word_stats')
-        .select('*')
-        .eq('user_id', user!.id)
-        .lte('next_review_at', now)
-        .order('next_review_at', { ascending: true })
-        .limit(20);
-      if (statsError) throw statsError;
-      if (!stats || stats.length === 0) return [];
+
+      const [{ data: reviewStats, error: reviewError }, { data: newStats, error: newError }] = await Promise.all([
+        supabase.from('word_stats').select('*').eq('user_id', user!.id).neq('state', 0).lte('next_review_at', now).order('next_review_at', { ascending: true }),
+        supabase.from('word_stats').select('*').eq('user_id', user!.id).eq('state', 0).lte('next_review_at', now).order('next_review_at', { ascending: true }).limit(newCardsPerDay),
+      ]);
+      if (reviewError) throw reviewError;
+      if (newError) throw newError;
+
+      const stats = [...(reviewStats ?? []), ...(newStats ?? [])];
+      if (stats.length === 0) return [];
 
       const wordIds = stats.map(s => s.word_id);
-      const { data: words, error: wordsError } = await supabase
-        .from('words')
-        .select('*')
-        .in('id', wordIds);
+      const { data: words, error: wordsError } = await supabase.from('words').select('*').in('id', wordIds);
       if (wordsError) throw wordsError;
 
       return stats
-        .map(s => ({
-          word: words!.find(w => w.id === s.word_id) as Word,
-          stats: s as WordStats,
-        }))
+        .map(s => ({ word: words!.find(w => w.id === s.word_id) as Word, stats: s as WordStats }))
         .filter(item => item.word);
     },
     enabled: !!user,
@@ -209,6 +252,7 @@ export function useAddWord() {
 
 export function useUpdateWordStats() {
   const { user } = useAuth();
+  const { data: prefs } = useUserPreferences();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -219,7 +263,11 @@ export function useUpdateWordStats() {
       cardBefore: Card;    // snapshot from current DB state
     }) => {
       const now = new Date();
-      const { card: cardAfter } = schedule(update.cardBefore, update.rating, now);
+      const scheduler = createScheduler({
+        request_retention: prefs?.request_retention ?? PREF_DEFAULTS.request_retention,
+        maximum_interval: prefs?.maximum_interval ?? PREF_DEFAULTS.maximum_interval,
+      });
+      const { card: cardAfter } = schedule(update.cardBefore, update.rating, now, scheduler);
       const isCorrect = update.rating !== Rating.Again;
 
       const { data: current } = await supabase
@@ -336,6 +384,46 @@ export function useDeleteWord() {
       queryClient.invalidateQueries({ queryKey: ['due_words'] });
       queryClient.invalidateQueries({ queryKey: ['word_contexts'] });
       queryClient.invalidateQueries({ queryKey: ['word_collocations'] });
+    },
+  });
+}
+
+export function useUpdateWord() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (wordData: {
+      id: string;
+      word: string;
+      definition: string;
+      register: string;
+      collocations: string[];
+      synonyms: string[];
+    }) => {
+      const { error } = await supabase
+        .from('words')
+        .update({ word: wordData.word, definition: wordData.definition, register: wordData.register })
+        .eq('id', wordData.id);
+      if (error) throw error;
+
+      await supabase.from('word_collocations').delete().eq('word_id', wordData.id);
+      if (wordData.collocations.length > 0) {
+        await supabase.from('word_collocations').insert(
+          wordData.collocations.map(c => ({ word_id: wordData.id, collocation: c }))
+        );
+      }
+
+      await supabase.from('semantic_connections').delete().eq('word_id', wordData.id).eq('connection_type', 'synonym');
+      if (wordData.synonyms.length > 0) {
+        await supabase.from('semantic_connections').insert(
+          wordData.synonyms.map(s => ({ word_id: wordData.id, connected_word: s, connection_type: 'synonym' }))
+        );
+      }
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['words'] });
+      queryClient.invalidateQueries({ queryKey: ['word_collocations', vars.id] });
+      queryClient.invalidateQueries({ queryKey: ['semantic_connections', vars.id] });
     },
   });
 }
