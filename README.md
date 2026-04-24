@@ -36,6 +36,7 @@ The competitive edge: an **AI-powered sentence scoring pipeline** that evaluates
 - 🌙 **Sleep Prep Mode** — Evening review session (8 PM–3 AM) that leverages sleep consolidation.
 - 📚 **Word Library** — Add words with definitions, collocations, synonyms, and emotion anchors. Claude auto-generates content.
 - 📊 **Progress Dashboard** — Streak tracking, 7-day velocity chart, mastered word count, and due-today count.
+- ⚙️ **User Settings** — Per-user FSRS tuning: retention target (70–97%), max interval, and new cards/day cap — all with plain-language "How it works" explanations inline.
 - 🔐 **Auth & RLS** — Row-level security so your data stays yours.
 
 ---
@@ -50,7 +51,7 @@ The competitive edge: an **AI-powered sentence scoring pipeline** that evaluates
 | Styling | Tailwind CSS, shadcn/ui, Framer Motion |
 | Backend | Supabase (PostgreSQL + Auth + RLS) |
 | AI Scoring | OpenRouter (`stepfun/step-3.5-flash`) |
-| Algorithm | FSRS v6 (`ts-fsrs`) — 95% target retention |
+| Algorithm | FSRS v6 (`ts-fsrs`) — user-configurable retention target (default 90%) |
 | Build | Vite, Bun |
 
 ---
@@ -70,6 +71,7 @@ graph TB
             ReviewPage[Review Page]
             ProgressPage[Progress Page]
             GrammarPage[Grammar Rules Page]
+            SettingsPage[Settings Page]
         end
 
         subgraph "Component Layer"
@@ -87,11 +89,11 @@ graph TB
         subgraph "State Management"
             AuthContext[Auth Context]
             QueryClient[React Query Client]
-            CustomHooks[Custom Hooks<br/>useWords, useDueWords, etc.]
+            CustomHooks[Custom Hooks<br/>useWords, useDueWords,<br/>useUserPreferences, etc.]
         end
 
         subgraph "Business Logic"
-            FSRS[FSRS v6 Algorithm<br/>ts-fsrs]
+            FSRS[FSRS v6 Algorithm<br/>ts-fsrs<br/>per-user params]
             Utils[Utilities]
         end
 
@@ -120,6 +122,7 @@ graph TB
 
     BattlePhase --> FSRS
     GenerationPhase --> OpenRouter
+    SettingsPage --> CustomHooks
 
     CustomHooks --> QueryClient
     CustomHooks --> SupabaseClient
@@ -133,6 +136,7 @@ graph TB
     style OpenRouter fill:#ffe1f5
     style Database fill:#f0f0f0
     style AuthContext fill:#e1f5ff
+    style SettingsPage fill:#e1ffe1
 ```
 
 ---
@@ -144,18 +148,23 @@ sequenceDiagram
     participant User
     participant ReviewPage
     participant useDueWords
+    participant useUserPreferences
     participant FSRSAlgorithm
     participant useUpdateWordStats
     participant Database
 
-    ReviewPage->>useDueWords: Fetch due words (max 20)
-    useDueWords->>Database: SELECT words WHERE next_review_at <= NOW()
+    useUserPreferences->>Database: SELECT user_preferences WHERE user_id = me
+    Database-->>useUserPreferences: retention, max_interval, new_cards_per_day
+
+    ReviewPage->>useDueWords: Fetch due words (split: reviews + new cards capped by pref)
+    useDueWords->>Database: SELECT non-new words WHERE next_review_at <= NOW()
+    useDueWords->>Database: SELECT new words WHERE state=0 LIMIT new_cards_per_day
     Database-->>useDueWords: Return due words
     useDueWords-->>ReviewPage: Display words
 
     loop For each word
         User->>ReviewPage: Battle → Context → Collocations → Generation → Synonyms
-        ReviewPage->>FSRSAlgorithm: schedule(card, rating)
+        ReviewPage->>FSRSAlgorithm: schedule(card, rating, userParams)
         FSRSAlgorithm->>FSRSAlgorithm: Compute stability, difficulty, next interval
         FSRSAlgorithm-->>ReviewPage: New card state
         ReviewPage->>useUpdateWordStats: Persist updated stats
@@ -199,10 +208,14 @@ flowchart TD
     style Relearning fill:#ffe1e1
 ```
 
-**Key FSRS parameters** (configured in `src/lib/fsrs.ts`):
-- `request_retention: 0.95` — target 95% recall probability at review time
-- `maximum_interval: 365` days — cap on scheduling gap
-- `enable_fuzz: true` — jitter to prevent review clustering
+**FSRS parameters** are now configurable per-user via the Settings page:
+
+| Parameter | Default | Range | Description |
+|---|---|---|---|
+| `request_retention` | 90% | 70–97% | Target recall probability at review time |
+| `maximum_interval` | 365 days | 30–730 days | Cap on scheduling gap for well-learned words |
+| `new_cards_per_day` | 10 | 1–30 | Max new words introduced per session |
+| `enable_fuzz` | `true` | — | Jitter to prevent review clustering (always on) |
 
 ---
 
@@ -213,6 +226,7 @@ erDiagram
     users ||--o{ words : creates
     users ||--o{ word_stats : has
     users ||--o{ review_sessions : completes
+    users ||--|| user_preferences : configures
 
     words ||--o{ word_stats : tracks
     words ||--o{ word_contexts : has
@@ -223,6 +237,14 @@ erDiagram
         uuid id PK
         string email
         timestamp created_at
+    }
+
+    user_preferences {
+        uuid user_id PK
+        float request_retention
+        int maximum_interval
+        int new_cards_per_day
+        timestamp updated_at
     }
 
     words {
@@ -286,27 +308,6 @@ erDiagram
 
 ---
 
-### Authentication Flow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant AuthPage
-    participant AuthContext
-    participant Supabase
-    participant App
-
-    User->>AuthPage: Enter credentials
-    AuthPage->>AuthContext: signIn(email, password)
-    AuthContext->>Supabase: auth.signInWithPassword()
-    Supabase-->>AuthContext: Session + JWT Token
-    AuthContext-->>App: Update user state
-    App->>App: Redirect to protected routes
-    App-->>User: Show dashboard
-```
-
----
-
 ### Component Hierarchy
 
 ```mermaid
@@ -323,6 +324,7 @@ graph TD
     Routes --> Protected4[Protected: ReviewPage]
     Routes --> Protected5[Protected: ProgressPage]
     Routes --> Protected6[Protected: GrammarRulesPage]
+    Routes --> Protected7[Protected: SettingsPage]
 
     Protected4 --> BattlePhase[BattlePhase]
     Protected4 --> ContextPhase[ContextPhase]
@@ -337,12 +339,14 @@ graph TD
     Protected4 --> AppLayout
     Protected5 --> AppLayout
     Protected6 --> AppLayout
+    Protected7 --> AppLayout
 
     AppLayout --> BottomNav[BottomNav]
 
     style App fill:#e1f5ff
     style AuthProvider fill:#ffe1e1
     style Protected4 fill:#fff4e1
+    style Protected7 fill:#e1ffe1
     style AppLayout fill:#e1ffe1
 ```
 
@@ -379,6 +383,27 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 VITE_OPENROUTER_API_KEY=your_openrouter_api_key
 ```
 
+### Supabase Migration
+
+Run this in your Supabase SQL editor to enable per-user settings:
+
+```sql
+create table user_preferences (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  request_retention float not null default 0.90,
+  maximum_interval int not null default 365,
+  new_cards_per_day int not null default 10,
+  updated_at timestamptz not null default now()
+);
+
+alter table user_preferences enable row level security;
+
+create policy "users manage own prefs"
+  on user_preferences
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+```
+
 ### Run Locally
 
 ```bash
@@ -393,6 +418,8 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## 🗺️ Roadmap
 
+### ✅ Shipped
+
 - [x] FSRS v6 spaced repetition engine (`ts-fsrs`)
 - [x] Battle phase — 4-choice cloze quiz
 - [x] Context phase — example sentence cloze
@@ -404,10 +431,27 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 - [x] Claude-powered auto-generation of definitions and examples
 - [x] Review session tracking and streak system
 - [x] Sleep Prep mode (evening consolidation sessions)
-- [ ] User settings UI (retention target, new cards/day, max interval)
-- [ ] Offline support (PWA)
-- [ ] Export/import vocabulary sets
-- [ ] Native mobile app (React Native)
+- [x] User settings UI — retention target, new cards/day, max interval with inline plain-language help
+
+### 🔜 Up Next
+
+- [ ] **Listening phase** — TTS pronunciation audio on every word card so you hear it while you review it
+- [ ] **Forgetting curve visualizer** — per-word chart showing memory strength over time, so you can see exactly how a word was learned
+- [ ] **Custom decks / topic lists** — group words into decks (IELTS Academic, Business English, Phrasal Verbs) and review them independently
+- [ ] **Daily reminder notifications** — push or email nudge when you have words due, so you never miss a streak day
+- [ ] **Bulk import** — paste a word list or upload a CSV / Anki `.apkg` file to seed your library fast
+- [ ] **Writing journal** — a dedicated page showing every sentence you've ever generated, searchable and filterable by word
+
+### 🔭 Future
+
+- [ ] **Browser extension** — highlight any word on any webpage and save it to LexCore with one click, context sentence auto-captured
+- [ ] **CEFR difficulty tagging** — each word automatically labelled A1–C2 so you can filter your library by level
+- [ ] **Leaderboard & XP** — earn experience points per review session, compete with friends on a weekly leaderboard
+- [ ] **Vocabulary analytics deep-dive** — see your hardest words by lapse count, stability distribution histogram, and predicted review load for the next 30 days
+- [ ] **Multi-language support** — learn vocabulary in languages other than English (Spanish, French, Arabic, etc.)
+- [ ] **Offline support (PWA)** — review words with no internet connection, sync when back online
+- [ ] **Export vocabulary sets** — download your library as CSV, JSON, or Anki deck to use in other tools
+- [ ] **Native mobile app** — React Native port for iOS and Android with background notification support
 
 ---
 
@@ -419,11 +463,18 @@ lexcore/
 │   ├── components/        # Reusable UI components
 │   │   ├── review/        # BattlePhase, ContextPhase, CollocationsPhase, etc.
 │   │   └── ui/            # shadcn/ui components
-│   ├── hooks/             # Custom React hooks (useWords, useDueWords, etc.)
+│   ├── hooks/             # Custom React hooks (useWords, useDueWords, useUserPreferences, etc.)
 │   ├── lib/               # FSRS algorithm (ts-fsrs), Supabase client, utilities
 │   ├── pages/             # Route-level page components
-│   ├── context/           # AuthContext
-│   └── types/             # TypeScript types
+│   │   ├── Index.tsx      # Dashboard
+│   │   ├── ReviewPage.tsx # 6-phase review session
+│   │   ├── LibraryPage.tsx
+│   │   ├── AddWordPage.tsx
+│   │   ├── ProgressPage.tsx
+│   │   ├── GrammarRulesPage.tsx
+│   │   └── SettingsPage.tsx  # Per-user FSRS configuration
+│   ├── contexts/          # AuthContext
+│   └── lib/types.ts       # TypeScript types
 ├── public/
 ├── .env.example
 ├── vite.config.ts
@@ -452,6 +503,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 <div align="center">
 
-Built by [Miraz](https://github.com/your-username) · Powered by neuroscience, not repetition.
+Built by [Miraz](https://github.com/MirazZim) · Powered by neuroscience, not repetition.
 
 </div>
