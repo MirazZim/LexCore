@@ -383,27 +383,6 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 VITE_OPENROUTER_API_KEY=your_openrouter_api_key
 ```
 
-### Supabase Migration
-
-Run this in your Supabase SQL editor to enable per-user settings:
-
-```sql
-create table user_preferences (
-  user_id uuid primary key references auth.users(id) on delete cascade,
-  request_retention float not null default 0.90,
-  maximum_interval int not null default 365,
-  new_cards_per_day int not null default 10,
-  updated_at timestamptz not null default now()
-);
-
-alter table user_preferences enable row level security;
-
-create policy "users manage own prefs"
-  on user_preferences
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
-```
-
 ### Run Locally
 
 ```bash
