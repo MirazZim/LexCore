@@ -2,7 +2,7 @@ import { supabase } from './supabase'
 
 type Message = { role: 'system' | 'user' | 'assistant'; content: string }
 
-export async function callLLM(messages: Message[]): Promise<string> {
+export async function callLLM(messages: Message[], temperature = 0.9): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession()
 
   if (!session) throw new Error('Not authenticated')
@@ -15,7 +15,7 @@ export async function callLLM(messages: Message[]): Promise<string> {
         'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify({ messages, temperature }),
     }
   )
 
@@ -101,19 +101,23 @@ Respond ONLY with this JSON:
 }
 
 // --- Generate example sentences ---
-export async function generateExampleSentences(word: string, definition: string, style: GenerationStyle = 'daily'): Promise<string[]> {
+export async function generateExampleSentences(word: string, definition: string, style: GenerationStyle = 'daily', exclude: string[] = []): Promise<string[]> {
+  const seed = Math.random().toString(36).slice(2, 8)
   const content = await callLLM([
     {
       role: 'system',
       content: `You are a vocabulary teacher. Generate example sentences for English learners.
 Style context: ${styleGuide[style]}
-Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
+Always respond with valid JSON only — no markdown, no backticks, no extra text.
+Each call must produce fresh, distinct sentences — never repeat previously generated ones.`,
     },
     {
       role: 'user',
       content: `Word: ${word}
 Definition: ${definition}
 Style: ${style}
+Variation seed (ensure uniqueness): ${seed}
+${exclude.length > 0 ? `Do NOT reuse or closely paraphrase these sentences: ${exclude.map(s => `"${s}"`).join(', ')}` : ''}
 
 Generate 3 natural example sentences that clearly show the meaning of this word in a ${style} context.
 
@@ -130,19 +134,23 @@ Respond ONLY with this JSON:
 }
 
 // --- Auto-generate collocations ---
-export async function generateCollocations(word: string, definition: string, style: GenerationStyle = 'daily'): Promise<string[]> {
+export async function generateCollocations(word: string, definition: string, style: GenerationStyle = 'daily', exclude: string[] = []): Promise<string[]> {
+  const seed = Math.random().toString(36).slice(2, 8)
   const content = await callLLM([
     {
       role: 'system',
       content: `You are a vocabulary coach. Generate common collocations for English learners.
 Style context: ${styleGuide[style]}
-Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
+Always respond with valid JSON only — no markdown, no backticks, no extra text.
+Each call must produce fresh collocations — never repeat previously generated ones.`,
     },
     {
       role: 'user',
       content: `Word: ${word}
 Definition: ${definition}
 Style: ${style}
+Variation seed (ensure uniqueness): ${seed}
+${exclude.length > 0 ? `Do NOT include any of these already-shown collocations: ${exclude.join(', ')}` : ''}
 
 Generate 5 natural collocations (common phrases or word pairings) for this word in a ${style} context.
 
@@ -159,19 +167,23 @@ Respond ONLY with this JSON:
 }
 
 // --- Auto-generate synonyms ---
-export async function generateSynonyms(word: string, definition: string, style: GenerationStyle = 'daily'): Promise<string[]> {
+export async function generateSynonyms(word: string, definition: string, style: GenerationStyle = 'daily', exclude: string[] = []): Promise<string[]> {
+  const seed = Math.random().toString(36).slice(2, 8)
   const content = await callLLM([
     {
       role: 'system',
       content: `You are a vocabulary coach helping English learners. Generate simple, everyday synonyms.
 Style context: ${styleGuide[style]}
-Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
+Always respond with valid JSON only — no markdown, no backticks, no extra text.
+Each call must produce fresh synonyms — never repeat previously generated ones.`,
     },
     {
       role: 'user',
       content: `Word: ${word}
 Definition: ${definition}
 Style: ${style}
+Variation seed (ensure uniqueness): ${seed}
+${exclude.length > 0 ? `Do NOT include any of these already-shown synonyms: ${exclude.join(', ')}` : ''}
 
 Generate 4-5 synonyms for this word. Each synonym must be very simple, common, and easy to understand — prefer short, familiar words that a learner already knows (e.g., "happy" instead of "elated").
 
@@ -188,22 +200,26 @@ Respond ONLY with this JSON:
 }
 
 // --- Auto-generate definition ---
-export async function generateDefinition(word: string, style: GenerationStyle = 'daily'): Promise<{
+export async function generateDefinition(word: string, style: GenerationStyle = 'daily', excludeDefinition = ''): Promise<{
   definition: string
   emotion_anchor: string
   part_of_speech: string
 }> {
+  const seed = Math.random().toString(36).slice(2, 8)
   const content = await callLLM([
     {
       role: 'system',
       content: `You are a vocabulary coach helping people deeply learn new words.
 Style context: ${styleGuide[style]}
-Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
+Always respond with valid JSON only — no markdown, no backticks, no extra text.
+Each call must produce a fresh definition — never repeat a previously generated one.`,
     },
     {
       role: 'user',
       content: `Word: ${word}
 Style: ${style}
+Variation seed (ensure uniqueness): ${seed}
+${excludeDefinition ? `Do NOT reuse or closely paraphrase this definition: "${excludeDefinition}"` : ''}
 
 Generate a learner-friendly entry for this word suited to a ${style} context.
 
