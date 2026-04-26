@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, Check } from 'lucide-react';
+import { Search, ChevronDown, Check, Shuffle } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import oxfordWordsRaw from '@/data/oxford_words.json';
 import { useWords } from '@/hooks/useWords';
@@ -72,6 +72,40 @@ export default function DictionaryPage() {
         .dict-glass:hover { border-color: rgba(0,255,200,0.25); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { scrollbar-width: none; }
+
+        @keyframes daily-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(0,255,200,0.4), 0 0 16px rgba(0,255,200,0.15); }
+          50%       { box-shadow: 0 0 0 6px rgba(0,255,200,0), 0 0 28px rgba(0,255,200,0.3); }
+        }
+        @keyframes daily-shine {
+          0%   { left: -60%; }
+          100% { left: 130%; }
+        }
+        @keyframes spin-once {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        .daily-btn {
+          position: relative;
+          overflow: hidden;
+          animation: daily-pulse 2.2s ease-in-out infinite;
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .daily-btn:hover {
+          transform: scale(1.06);
+          animation: none;
+          box-shadow: 0 0 0 2px rgba(0,255,200,0.5), 0 0 32px rgba(0,255,200,0.35);
+        }
+        .daily-btn::after {
+          content: '';
+          position: absolute;
+          top: 0; bottom: 0;
+          width: 40%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+          animation: daily-shine 2.8s ease-in-out infinite;
+          pointer-events: none;
+        }
+        .daily-btn:hover .daily-icon { animation: spin-once 0.45s ease forwards; }
       `}</style>
 
       <div
@@ -79,14 +113,24 @@ export default function DictionaryPage() {
         style={{ height: 'calc(100vh - 96px)' }}
       >
         {/* ── Header ─────────────────────────────────────── */}
-        <div className="shrink-0 mb-4">
-          <h1
-            className="text-3xl font-bold text-white leading-none"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        <div className="shrink-0 mb-4 flex items-center justify-between">
+          <div>
+            <h1
+              className="text-3xl font-bold text-white leading-none"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              Dictionary
+            </h1>
+            <p className="text-zinc-500 text-xs mt-1">Oxford 3000 · {filtered.length} words</p>
+          </div>
+          <button
+            onClick={() => navigate('/daily')}
+            className="daily-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider"
+            style={{ background: 'rgba(0,255,200,0.12)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.35)' }}
           >
-            Dictionary
-          </h1>
-          <p className="text-zinc-500 text-xs mt-1">Oxford 3000 · {filtered.length} words</p>
+            <Shuffle className="daily-icon h-3.5 w-3.5 shrink-0" />
+            Discover Today's Words
+          </button>
         </div>
 
         {/* ── CEFR row + POS dropdown ────────────────────── */}

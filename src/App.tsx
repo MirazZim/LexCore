@@ -13,6 +13,7 @@ import ProgressPage from "./pages/ProgressPage";
 import GrammarRulesPage from "./pages/GrammarRulesPage";
 import SettingsPage from "./pages/SettingsPage";
 import DictionaryPage from "./pages/DictionaryPage";
+import DailyShufflePage from "./pages/DailyShufflePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ function AppRoutes() {
       <Route path="/grammar" element={<ProtectedRoute><GrammarRulesPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="/dictionary" element={<ProtectedRoute><DictionaryPage /></ProtectedRoute>} />
+      <Route path="/daily" element={<ProtectedRoute><DailyShufflePage /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

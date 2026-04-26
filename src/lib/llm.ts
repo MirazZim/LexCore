@@ -199,6 +199,44 @@ Respond ONLY with this JSON:
   return parsed.synonyms
 }
 
+// --- POS + CEFR learning intelligence ---
+export async function generatePOSTips(pos: string | null, cefr: string): Promise<{
+  headline: string;
+  why: string;
+  strategy: string;
+  power_insight: string;
+  focus_score: number;
+}> {
+  const seed = Math.random().toString(36).slice(2, 8)
+  const posLabel = pos ?? 'all parts of speech'
+  const content = await callLLM([
+    {
+      role: 'system',
+      content: `You are a dark, analytical vocabulary intelligence system. You give cold, data-driven insights about language learning strategy — no fluff, no encouragement, just sharp analysis. Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
+    },
+    {
+      role: 'user',
+      content: `Part of speech: ${posLabel}
+CEFR level: ${cefr}
+Variation seed: ${seed}
+
+Analyze why a learner should focus on ${posLabel} at the ${cefr} level. Be blunt, specific, and insightful — reference real language acquisition data or patterns where relevant.
+
+Respond ONLY with this JSON:
+{
+  "headline": "a sharp 8-12 word headline that frames why this matters",
+  "why": "2-3 sentences explaining the strategic value of learning ${posLabel} at ${cefr}",
+  "strategy": "2-3 sentences on the most effective method to learn this combination",
+  "power_insight": "one striking, unexpected fact or pattern about ${posLabel} at ${cefr} level that most learners don't know",
+  "focus_score": a number 1-10 rating how critical this POS+CEFR combo is for fluency
+}`,
+    },
+  ], 0.85)
+
+  const clean = content.replace(/```json|```/g, '').trim()
+  return JSON.parse(clean)
+}
+
 // --- Auto-generate definition ---
 export async function generateDefinition(word: string, style: GenerationStyle = 'daily', excludeDefinition = ''): Promise<{
   definition: string
