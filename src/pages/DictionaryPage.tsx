@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, ChevronDown, Check } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import oxfordWordsRaw from '@/data/oxford_words.json';
+import { useWords } from '@/hooks/useWords';
 
 type OxfordWord = { word: string; cefr: string; pos: string };
 const ALL_WORDS = oxfordWordsRaw as OxfordWord[];
@@ -34,6 +35,12 @@ export default function DictionaryPage() {
   const [pos, setPos]         = useState<string | null>(null);
   const [posOpen, setPosOpen] = useState(false);
   const [search, setSearch]   = useState('');
+
+  const { data: libraryWords } = useWords();
+  const librarySet = useMemo(
+    () => new Set((libraryWords ?? []).map(w => w.word.toLowerCase())),
+    [libraryWords]
+  );
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -213,8 +220,28 @@ export default function DictionaryPage() {
                 <button
                   key={`${w.word}-${i}`}
                   onClick={() => navigate(`/add?word=${encodeURIComponent(w.word)}`)}
-                  className="dict-glass rounded-2xl p-4 flex flex-col items-start text-left transition-all"
+                  className="dict-glass rounded-2xl p-4 flex flex-col items-start text-left transition-all relative"
+                  style={{
+                    opacity: librarySet.has(w.word.toLowerCase()) ? 0.55 : 1,
+                    ...(librarySet.has(w.word.toLowerCase()) && {
+                      border: '1px solid rgba(0,255,200,0.45)',
+                      boxShadow: '0 0 10px rgba(0,255,200,0.08)',
+                    }),
+                  }}
                 >
+                  {librarySet.has(w.word.toLowerCase()) && (
+                    <div
+                      className="absolute top-2.5 right-2.5 flex items-center justify-center rounded-full"
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        background: 'rgba(0,255,200,0.15)',
+                        border: '1px solid rgba(0,255,200,0.4)',
+                      }}
+                    >
+                      <Check className="h-2.5 w-2.5" style={{ color: '#00FFC8' }} />
+                    </div>
+                  )}
                   {/* Accent bar */}
                   <div
                     style={{
@@ -228,26 +255,40 @@ export default function DictionaryPage() {
                   {/* Word */}
                   <span
                     className="font-bold text-white text-sm leading-snug break-words w-full"
-                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    style={{
+                      fontFamily: "'Space Grotesk', sans-serif",
+                      textDecoration: librarySet.has(w.word.toLowerCase()) ? 'line-through' : 'none',
+                    }}
                   >
                     {w.word}
                   </span>
                   {/* Badges */}
                   <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
-                    {search && (
+                    {librarySet.has(w.word.toLowerCase()) ? (
                       <span
                         className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
                         style={{ background: 'rgba(0,255,200,0.1)', color: '#00FFC8' }}
                       >
-                        {w.cefr}
+                        already conquered
                       </span>
+                    ) : (
+                      <>
+                        {search && (
+                          <span
+                            className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
+                            style={{ background: 'rgba(0,255,200,0.1)', color: '#00FFC8' }}
+                          >
+                            {w.cefr}
+                          </span>
+                        )}
+                        <span
+                          className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
+                          style={{ background: 'rgba(255,255,255,0.05)', color: '#71717a' }}
+                        >
+                          {w.pos}
+                        </span>
+                      </>
                     )}
-                    <span
-                      className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
-                      style={{ background: 'rgba(255,255,255,0.05)', color: '#71717a' }}
-                    >
-                      {w.pos}
-                    </span>
                   </div>
                 </button>
               ))}
