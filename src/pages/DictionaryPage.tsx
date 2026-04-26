@@ -199,7 +199,7 @@ export default function DictionaryPage() {
         </div>
 
         {/* ── Word list ──────────────────────────────────── */}
-        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide space-y-1.5 pb-4">
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide pb-4">
           {filtered.length === 0 ? (
             <div className="dict-glass rounded-2xl p-12 text-center">
               <p className="text-white font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
@@ -208,36 +208,50 @@ export default function DictionaryPage() {
               <p className="text-zinc-500 text-xs mt-1">Try a different filter or search</p>
             </div>
           ) : (
-            filtered.map((w, i) => (
-              <button
-                key={`${w.word}-${i}`}
-                onClick={() => navigate(`/add?word=${encodeURIComponent(w.word)}`)}
-                className="dict-glass w-full rounded-xl px-4 py-3 flex items-center justify-between transition-colors text-left"
-              >
-                <span
-                  className="font-bold text-white text-sm"
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            <div className="grid grid-cols-3 gap-3">
+              {filtered.map((w, i) => (
+                <button
+                  key={`${w.word}-${i}`}
+                  onClick={() => navigate(`/add?word=${encodeURIComponent(w.word)}`)}
+                  className="dict-glass rounded-2xl p-4 flex flex-col items-start text-left transition-all"
                 >
-                  {w.word}
-                </span>
-                <div className="flex items-center gap-1.5 shrink-0 ml-3">
-                  {search && (
+                  {/* Accent bar */}
+                  <div
+                    style={{
+                      width: '22px',
+                      height: '2px',
+                      background: 'linear-gradient(90deg, #00FFC8, rgba(0,255,200,0.3))',
+                      borderRadius: '1px',
+                      marginBottom: '10px',
+                    }}
+                  />
+                  {/* Word */}
+                  <span
+                    className="font-bold text-white text-sm leading-snug break-words w-full"
+                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  >
+                    {w.word}
+                  </span>
+                  {/* Badges */}
+                  <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+                    {search && (
+                      <span
+                        className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
+                        style={{ background: 'rgba(0,255,200,0.1)', color: '#00FFC8' }}
+                      >
+                        {w.cefr}
+                      </span>
+                    )}
                     <span
                       className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
-                      style={{ background: 'rgba(0,255,200,0.1)', color: '#00FFC8' }}
+                      style={{ background: 'rgba(255,255,255,0.05)', color: '#71717a' }}
                     >
-                      {w.cefr}
+                      {w.pos}
                     </span>
-                  )}
-                  <span
-                    className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
-                    style={{ background: 'rgba(255,255,255,0.05)', color: '#71717a' }}
-                  >
-                    {w.pos}
-                  </span>
-                </div>
-              </button>
-            ))
+                  </div>
+                </button>
+              ))}
+            </div>
           )}
         </div>
       </div>
