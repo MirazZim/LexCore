@@ -38,6 +38,9 @@ The competitive edge: an **AI-powered sentence scoring pipeline** that evaluates
 - 📊 **Progress Dashboard** — Streak tracking, 7-day velocity chart, mastered word count, and due-today count.
 - ⚙️ **User Settings** — Per-user FSRS tuning: retention target (70–97%), max interval, and new cards/day cap — all with plain-language "How it works" explanations inline.
 - 🔐 **Auth & RLS** — Row-level security so your data stays yours.
+- 📖 **Oxford 3000 Dictionary** — Browse all 3000 Oxford words in a 3-column library card grid. Filter by CEFR level, part of speech, and alphabet. Words already in your library are visually marked as conquered (dimmed, strikethrough, teal border + checkmark).
+- 🎲 **Daily Shuffle** — Date-seeded daily word discovery engine. Pick a CEFR level and part of speech, set how many words you want (1–50), and get a fresh randomized batch every day — excluding words you've already conquered. Paginate through the full pool with Prev / Next.
+- 🧠 **AI Intelligence Tips** — On the Daily Shuffle page, tap Tips to get a live AI-generated intelligence report: why learning your chosen POS at your chosen CEFR level matters, the optimal strategy, and a power insight most learners don't know.
 
 ---
 
@@ -325,6 +328,8 @@ graph TD
     Routes --> Protected5[Protected: ProgressPage]
     Routes --> Protected6[Protected: GrammarRulesPage]
     Routes --> Protected7[Protected: SettingsPage]
+    Routes --> Protected8[Protected: DictionaryPage]
+    Routes --> Protected9[Protected: DailyShufflePage]
 
     Protected4 --> BattlePhase[BattlePhase]
     Protected4 --> ContextPhase[ContextPhase]
@@ -411,10 +416,12 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 - [x] Review session tracking and streak system
 - [x] Sleep Prep mode (evening consolidation sessions)
 - [x] User settings UI — retention target, new cards/day, max interval with inline plain-language help
+- [x] Oxford 3000 Dictionary browser — 3-column card grid, CEFR / POS / alphabet filters
+- [x] Conquered word marking in Dictionary — strikethrough, dimmed, teal border, checkmark, "already conquered" badge
+- [x] Daily Shuffle — date-seeded daily word discovery, CEFR + POS filters, adjustable batch size (1–50), pagination
+- [x] AI Intelligence Tips panel on Daily Shuffle — structured insight report per POS + CEFR combo (why it matters, strategy, power insight, focus score)
 
 ### 🔜 Up Next
-
-- [ ] **Add Vocabulary from a existing dictionary where a lot of words are there ** — So when i add the word from that dictionary it directly goest to my add word page input highlight any word on any webpage and save it to LexCore with one click, context sentence auto-captured
 - [ ] **Listening phase** — TTS pronunciation audio on every word card so you hear it while you review it
 - [ ] **Forgetting curve visualizer** — per-word chart showing memory strength over time, so you can see exactly how a word was learned
 - [ ] **Custom decks / topic lists** — group words into decks (IELTS Academic, Business English, Phrasal Verbs) and review them independently
@@ -446,13 +453,15 @@ lexcore/
 │   ├── hooks/             # Custom React hooks (useWords, useDueWords, useUserPreferences, etc.)
 │   ├── lib/               # FSRS algorithm (ts-fsrs), Supabase client, utilities
 │   ├── pages/             # Route-level page components
-│   │   ├── Index.tsx      # Dashboard
-│   │   ├── ReviewPage.tsx # 6-phase review session
+│   │   ├── Index.tsx          # Dashboard
+│   │   ├── ReviewPage.tsx     # 6-phase review session
 │   │   ├── LibraryPage.tsx
 │   │   ├── AddWordPage.tsx
 │   │   ├── ProgressPage.tsx
 │   │   ├── GrammarRulesPage.tsx
-│   │   └── SettingsPage.tsx  # Per-user FSRS configuration
+│   │   ├── DictionaryPage.tsx # Oxford 3000 browser with conquered-word marking
+│   │   ├── DailyShufflePage.tsx # Date-seeded daily word discovery + AI Tips
+│   │   └── SettingsPage.tsx   # Per-user FSRS configuration
 │   ├── contexts/          # AuthContext
 │   └── lib/types.ts       # TypeScript types
 ├── public/
