@@ -223,8 +223,18 @@ export default function AddWordPage() {
         .aw-textarea::placeholder { color: #3f3f46; }
         .aw-textarea:focus { border-color: rgba(0,255,200,.45); background: rgba(0,255,200,.025); }
 
-        @media (min-width: 1024px) {
+        /* Tall desktop: fixed viewport, textareas grow */
+        @media (min-width: 1024px) and (min-height: 701px) {
           .aw-textarea { min-height: 0 !important; flex: 1 !important; }
+        }
+
+        /* Short desktop (e.g. 1100×600): two columns but natural scroll */
+        @media (min-width: 1024px) and (max-height: 700px) {
+          .aw-root { height: auto !important; overflow: visible !important; padding-bottom: 2rem !important; }
+          .aw-motion, .aw-motion > form, .aw-cols, .aw-card-grow {
+            flex: 0 0 auto !important;
+            min-height: auto !important;
+          }
         }
 
         .aw-card {
@@ -262,7 +272,7 @@ export default function AddWordPage() {
         Mobile  : normal scroll, single column
         Desktop : fixed viewport height, 2-column, no scroll
       */}
-      <div className="
+      <div className="aw-root
         px-4 pt-4 pb-32 max-w-lg mx-auto
         lg:pb-5 lg:max-w-6xl lg:h-[calc(100dvh-6rem)] lg:overflow-hidden lg:flex lg:flex-col
       ">
@@ -270,7 +280,7 @@ export default function AddWordPage() {
           variants={container}
           initial="hidden"
           animate="show"
-          className="flex flex-col gap-3 lg:flex-1 lg:min-h-0"
+          className="aw-motion flex flex-col gap-3 lg:flex-1 lg:min-h-0"
         >
 
           {/* ── Header ─────────────────────────────────────── */}
@@ -294,7 +304,7 @@ export default function AddWordPage() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-3 lg:flex-1 lg:min-h-0">
 
             {/* 2-col on desktop, stacked on mobile */}
-            <div className="flex flex-col gap-3 lg:flex-row lg:gap-3 lg:flex-1 lg:min-h-0">
+            <div className="aw-cols flex flex-col gap-3 lg:flex-row lg:gap-3 lg:flex-1 lg:min-h-0">
 
               {/* ── LEFT COLUMN ────────────────────────────── */}
               <div className="flex flex-col gap-3 lg:gap-2 lg:flex-1 lg:min-h-0">
@@ -373,7 +383,7 @@ export default function AddWordPage() {
                 </motion.div>
 
                 {/* Definition */}
-                <motion.div variants={item} className="aw-card flex flex-col gap-3 lg:flex-1 lg:min-h-0">
+                <motion.div variants={item} className="aw-card-grow aw-card flex flex-col gap-3 lg:flex-1 lg:min-h-0">
                   <div className="flex items-center justify-between flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="slabel">Definition</span>
@@ -393,7 +403,7 @@ export default function AddWordPage() {
                 </motion.div>
 
                 {/* Example */}
-                <motion.div variants={item} className="aw-card flex flex-col gap-3 lg:flex-1 lg:min-h-0">
+                <motion.div variants={item} className="aw-card-grow aw-card flex flex-col gap-3 lg:flex-1 lg:min-h-0">
                   <div className="flex items-center justify-between flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="slabel">Example</span>
@@ -418,7 +428,7 @@ export default function AddWordPage() {
               <div className="flex flex-col gap-3 lg:gap-2 lg:flex-1 lg:min-h-0">
 
                 {/* Collocations */}
-                <motion.div variants={item} className="aw-card flex flex-col gap-3 lg:flex-1 lg:min-h-0">
+                <motion.div variants={item} className="aw-card-grow aw-card flex flex-col gap-3 lg:flex-1 lg:min-h-0">
                   <div className="flex items-center justify-between flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="slabel">Collocations</span>
@@ -466,7 +476,7 @@ export default function AddWordPage() {
                 </motion.div>
 
                 {/* Synonyms */}
-                <motion.div variants={item} className="aw-card flex flex-col gap-3 lg:flex-1 lg:min-h-0">
+                <motion.div variants={item} className="aw-card-grow aw-card flex flex-col gap-3 lg:flex-1 lg:min-h-0">
                   <div className="flex items-center justify-between flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="slabel">Synonyms</span>
