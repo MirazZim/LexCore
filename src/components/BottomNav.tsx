@@ -71,7 +71,7 @@ export function BottomNav() {
         {/* Logo pill */}
         <button
           onClick={() => navigate('/')}
-          className={cn('flex items-center h-12 px-5', glassPill, 'hover:bg-white/[0.08] transition-colors')}
+          className={cn('order-2 md:order-none flex items-center h-12 px-5', glassPill, 'hover:bg-white/[0.08] transition-colors')}
         >
           <span className="font-bold text-lg tracking-tight text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
             Lex<span className="text-primary">Core</span>
@@ -142,7 +142,7 @@ export function BottomNav() {
         <button
           onClick={() => setMobileOpen(v => !v)}
           className={cn(
-            'md:hidden flex items-center justify-center h-12 w-12 text-white/80 hover:text-white',
+            'order-1 md:hidden flex items-center justify-center h-12 w-12 text-white/80 hover:text-white',
             glassPill,
             'hover:bg-white/[0.08] transition-colors'
           )}
