@@ -1,17 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
 import type { DueWordItem, WordCollocation } from './types';
 
-interface CollocationPhaseProps {
-  currentItem: DueWordItem;
-  currentIndex: number;
-  collocations: WordCollocation[];
-  onNext: () => void;
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function highlightWord(phrase: string, word: string) {
-  const regex = new RegExp(`(${word})`, 'gi');
+  const regex = new RegExp(`(${escapeRegex(word)})`, 'gi');
   const parts = phrase.split(regex);
   return parts.map((part, i) =>
     regex.test(part)
@@ -20,18 +17,48 @@ function highlightWord(phrase: string, word: string) {
   );
 }
 
+interface CollocationPhaseProps {
+  currentItem: DueWordItem;
+  currentIndex: number;
+  collocations: WordCollocation[];
+  onNext: () => void;
+}
+
 export function CollocationPhase({
   currentItem, currentIndex, collocations, onNext,
 }: CollocationPhaseProps) {
   const [cardIndex, setCardIndex] = useState(0);
   const [allDone, setAllDone] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const [answered, setAnswered] = useState<string | null>(null);
 
+  const targetWord = currentItem.word.word;
   const total = collocations.length;
   const current = collocations[cardIndex];
   const reviewed = allDone ? collocations : collocations.slice(0, cardIndex);
   const isLast = cardIndex === total - 1;
 
+  const targetRegex = useMemo(
+    () => new RegExp(`^${escapeRegex(targetWord)}$`, 'i'),
+    [targetWord],
+  );
+
+  const blankPhrase = useMemo(
+    () => current.collocation.replace(new RegExp(`\\b${escapeRegex(targetWord)}\\b`, 'gi'), '______'),
+    [cardIndex, targetWord],
+  );
+
+  const hasBlank = blankPhrase !== current.collocation;
+  const isCorrect = answered !== null && targetRegex.test(answered.trim());
+
+  const submit = () => {
+    if (!inputValue.trim()) return;
+    setAnswered(inputValue);
+  };
+
   const advance = () => {
+    setAnswered(null);
+    setInputValue('');
     if (isLast) setAllDone(true);
     else setCardIndex(i => i + 1);
   };
@@ -77,7 +104,7 @@ export function CollocationPhase({
           {currentItem.word.word}
         </h2>
         <p className="text-zinc-500 text-xs mt-1">
-          Learn the phrases native speakers pair with this word.
+          Fill in the missing word to complete each phrase.
         </p>
       </div>
 
@@ -116,7 +143,7 @@ export function CollocationPhase({
         )}
       </AnimatePresence>
 
-      {/* Stack + active card — hidden once all done */}
+      {/* Stack + active card */}
       {!allDone && (
         <>
           {/* Stack of reviewed cards */}
@@ -157,7 +184,7 @@ export function CollocationPhase({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-              className="rv-glass rounded-[2rem] p-7 space-y-4"
+              className="rv-glass rounded-[2rem] p-7 space-y-5"
               style={{ border: '1px solid rgba(0,255,200,0.2)' }}
             >
               {/* Progress dots */}
@@ -182,33 +209,81 @@ export function CollocationPhase({
                 </span>
               </div>
 
-              {/* Phrase */}
-              <p className="text-2xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                {highlightWord(current.collocation, currentItem.word.word)}
-              </p>
+              {hasBlank ? (
+                <>
+                  {/* Phrase: blank while unanswered, revealed after */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-3">
+                      Complete the phrase
+                    </p>
+                    <p
+                      className="text-2xl font-bold text-white leading-snug"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
+                      {answered
+                        ? highlightWord(current.collocation, targetWord)
+                        : blankPhrase}
+                    </p>
+                  </div>
 
-              {/* Pattern box */}
-              <div
-                className="rounded-xl p-4"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
-              >
-                <p className="text-[10px] uppercase tracking-widest text-zinc-600 mb-2">Pattern</p>
-                <p className="text-zinc-300 text-sm leading-relaxed">
-                  "… {highlightWord(current.collocation, currentItem.word.word)} …"
-                </p>
-                <p className="text-[10px] text-zinc-600 mt-2">
-                  Use this phrase as a complete unit in your sentences.
-                </p>
-              </div>
-
-              {/* Action button */}
-              <button onClick={advance} className="rv-btn-mint">
-                {isLast ? (
-                  <>See all collocations <ArrowRight className="h-4 w-4" /></>
-                ) : (
-                  <>Next collocation <ArrowRight className="h-4 w-4" /></>
-                )}
-              </button>
+                  {/* Input */}
+                  {!answered ? (
+                    <div className="space-y-3">
+                      <input
+                        className="rv-input"
+                        placeholder="Type the missing word…"
+                        value={inputValue}
+                        onChange={e => setInputValue(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && submit()}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        spellCheck={false}
+                      />
+                      <button
+                        onClick={submit}
+                        disabled={!inputValue.trim()}
+                        className="rv-btn-mint"
+                      >
+                        Check
+                      </button>
+                    </div>
+                  ) : (
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                      <div
+                        className="flex items-center gap-3 rounded-xl px-4 py-3"
+                        style={{
+                          background: isCorrect ? 'rgba(0,255,200,0.08)' : 'rgba(239,68,68,0.08)',
+                          border: `1px solid ${isCorrect ? 'rgba(0,255,200,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                        }}
+                      >
+                        {isCorrect
+                          ? <CheckCircle2 className="h-5 w-5 shrink-0" style={{ color: '#00FFC8' }} />
+                          : <XCircle className="h-5 w-5 shrink-0" style={{ color: '#ef4444' }} />}
+                        <p className="font-bold text-sm" style={{ color: isCorrect ? '#00FFC8' : '#ef4444' }}>
+                          {isCorrect ? 'Correct!' : `Answer: ${targetWord}`}
+                        </p>
+                      </div>
+                      <button onClick={advance} className="rv-btn-mint">
+                        {isLast
+                          ? <>See all collocations <ArrowRight className="h-4 w-4" /></>
+                          : <>Next <ArrowRight className="h-4 w-4" /></>}
+                      </button>
+                    </motion.div>
+                  )}
+                </>
+              ) : (
+                /* Fallback: collocation doesn't contain target word */
+                <>
+                  <p className="text-2xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    {highlightWord(current.collocation, targetWord)}
+                  </p>
+                  <button onClick={advance} className="rv-btn-mint">
+                    {isLast
+                      ? <>See all collocations <ArrowRight className="h-4 w-4" /></>
+                      : <>Next <ArrowRight className="h-4 w-4" /></>}
+                  </button>
+                </>
+              )}
             </motion.div>
           </AnimatePresence>
 
