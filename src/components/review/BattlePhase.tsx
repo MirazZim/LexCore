@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, XCircle, Flame, TrendingUp } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import { Rating } from 'ts-fsrs';
 import { dbStateToCard, currentRetrievability } from '@/lib/fsrs';
 import type { DueWordItem } from './types';
@@ -23,16 +23,16 @@ interface BattlePhaseProps {
   streak: number;
 }
 
-type BattleStep = 'quiz' | 'quiz-result' | 'recall' | 'progress';
+type BattleStep = 'recall' | 'quiz' | 'quiz-result';
 
-export function BattlePhase({ currentItem, currentIndex, revealed, onReveal, onRate, allWords, streak }: BattlePhaseProps) {
-  const [step, setStep] = useState<BattleStep>('quiz');
+export function BattlePhase({ currentItem, currentIndex, onRate, allWords, streak }: BattlePhaseProps) {
+  const [step, setStep] = useState<BattleStep>('recall');
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [bufferedRating, setBufferedRating] = useState<Rating | null>(null);
   const isCorrect = selectedAnswer === currentItem.word.definition;
 
-  // Retrievability % for display — new FSRS equivalent of "ease"
   const retrievabilityPct = useMemo(() => {
-    if (currentItem.stats.state === 0) return 100; // New card
+    if (currentItem.stats.state === 0) return 100;
     const card = dbStateToCard(currentItem.stats);
     return Math.round(currentRetrievability(card) * 100);
   }, [currentItem.stats]);
@@ -47,19 +47,22 @@ export function BattlePhase({ currentItem, currentIndex, revealed, onReveal, onR
     return [correctDef, ...wrong].sort(() => Math.random() - 0.5);
   }, [currentItem.word.id]);
 
+  // Step 1 → 2: blind recall rated, buffer and move to MC
+  const handleRate = (rating: Rating) => {
+    setBufferedRating(rating);
+    setStep('quiz');
+  };
+
+  // Step 2 → 3: MC answer selected
   const handleSelect = (answer: string) => {
     setSelectedAnswer(answer);
     setStep('quiz-result');
   };
 
-  const handleContinueToRecall = () => {
-    setStep('recall');
-    if (isCorrect) onReveal();
-  };
-
-  const handleRate = (rating: Rating) => {
-    setStep('progress');
-    setTimeout(() => onRate(rating), 0);
+  // Step 3 → done: auto-downgrade if overconfident, then commit
+  const handleContinue = () => {
+    const overconfident = !isCorrect && (bufferedRating === Rating.Good || bufferedRating === Rating.Easy);
+    onRate(overconfident ? Rating.Hard : bufferedRating!);
   };
 
   return (
@@ -72,7 +75,56 @@ export function BattlePhase({ currentItem, currentIndex, revealed, onReveal, onR
     >
       <AnimatePresence mode="wait">
 
-        {/* ── Step 1: Multiple-choice quiz ─────────────────────── */}
+        {/* ── Step 1: Blind recall rating ───────────────────────── */}
+        {step === 'recall' && (
+          <motion.div key="recall" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="rv-glass rounded-[2rem] p-8 mt-4">
+              <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 mb-3 text-center">
+                Battle Mode
+              </p>
+              <motion.h2
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="text-5xl font-bold text-center mb-2"
+                style={{ color: '#00FFC8', fontFamily: "'Space Grotesk', sans-serif", textShadow: '0 0 32px rgba(0,255,200,0.25)' }}
+              >
+                {currentItem.word.word}
+              </motion.h2>
+
+              <p className="text-zinc-600 text-xs text-center mb-8">
+                {retrievabilityPct}% recall strength
+              </p>
+
+              <p className="text-[10px] uppercase tracking-widest text-zinc-500 text-center mb-4">
+                How well do you know this?
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {ratingConfig.map((btn, i) => (
+                  <motion.button
+                    key={btn.rating}
+                    onClick={() => handleRate(btn.rating)}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: 0.15 + i * 0.06 }}
+                    className="rounded-xl py-3 text-sm font-bold transition-all active:scale-95"
+                    style={{ background: btn.bg, border: `1px solid ${btn.border}`, color: btn.color }}
+                  >
+                    {btn.label}
+                  </motion.button>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <span className="text-zinc-700 text-xs">🔥</span>
+                <span className="font-bold text-sm text-white">{streak}</span>
+                <span className="text-xs text-zinc-600">streak</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Step 2: Multiple-choice quiz (error correction) ──── */}
         {step === 'quiz' && (
           <motion.div key="quiz" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.35 }}>
             <div className="rv-glass rounded-[2rem] p-7 mt-4">
@@ -160,7 +212,7 @@ export function BattlePhase({ currentItem, currentIndex, revealed, onReveal, onR
           </motion.div>
         )}
 
-        {/* ── Step 2: Quiz result ───────────────────────────────── */}
+        {/* ── Step 3: Quiz result → commit rating → advance ─────── */}
         {step === 'quiz-result' && (
           <motion.div key="quiz-result" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
             <div
@@ -199,83 +251,16 @@ export function BattlePhase({ currentItem, currentIndex, revealed, onReveal, onR
                 </div>
               )}
 
-              <button onClick={handleContinueToRecall} className="rv-btn-mint">
-                Continue to Recall
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* ── Step 3: Recall + rate ─────────────────────────────── */}
-        {step === 'recall' && (
-          <motion.div key="recall" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="rv-glass rounded-[2rem] p-8 mt-4">
-              <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 mb-3 text-center">
-                Battle Mode
-              </p>
-              <h2
-                className="text-5xl font-bold text-center mb-8"
-                style={{ color: '#00FFC8', fontFamily: "'Space Grotesk', sans-serif" }}
-              >
-                {currentItem.word.word}
-              </h2>
-
-              {!revealed ? (
-                <button onClick={onReveal} className="rv-btn-secondary">
-                  Reveal Definition
-                </button>
-              ) : (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                  <p className="text-white text-lg text-center mb-3 leading-relaxed">
-                    {currentItem.word.definition}
-                  </p>
-                  {currentItem.word.example_sentence && (
-                    <p className="text-zinc-500 text-sm text-center italic mb-6">
-                      "{currentItem.word.example_sentence}"
-                    </p>
-                  )}
-
-                  {/* Streak / recall strength strip */}
-                  <div
-                    className="flex items-center justify-center gap-8 py-3 rounded-xl mb-6"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <Flame className="h-4 w-4" style={{ color: '#f97316' }} />
-                      <span className="font-bold text-sm text-white">{streak}</span>
-                      <span className="text-xs text-zinc-500">streak</span>
-                    </div>
-                    <div className="w-px h-4 bg-zinc-700" />
-                    <div className="flex items-center gap-1.5">
-                      <TrendingUp className="h-4 w-4" style={{ color: '#00FFC8' }} />
-                      <span className="font-bold text-sm text-white">
-                        {retrievabilityPct}%
-                      </span>
-                      <span className="text-xs text-zinc-500">recall</span>
-                    </div>
-                  </div>
-
-                  <p className="text-[10px] uppercase tracking-widest text-zinc-500 text-center mb-3">
-                    How well did you recall this?
-                  </p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {ratingConfig.map(btn => (
-                      <button
-                        key={btn.rating}
-                        onClick={() => handleRate(btn.rating)}
-                        className="rounded-xl py-3 text-sm font-bold transition-all active:scale-95"
-                        style={{
-                          background: btn.bg,
-                          border: `1px solid ${btn.border}`,
-                          color: btn.color,
-                        }}
-                      >
-                        {btn.label}
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
+              {/* Show auto-correction notice when it applies */}
+              {!isCorrect && (bufferedRating === Rating.Good || bufferedRating === Rating.Easy) && (
+                <p className="text-[10px] text-zinc-500 text-center mb-4">
+                  Rating adjusted to Hard based on MC result.
+                </p>
               )}
+
+              <button onClick={handleContinue} className="rv-btn-mint">
+                Continue
+              </button>
             </div>
           </motion.div>
         )}
