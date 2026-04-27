@@ -725,6 +725,7 @@ export default function ReviewPage() {
                 currentIndex={currentIndex}
                 totalWords={totalWords}
                 synonyms={synonyms}
+                allWords={allWords}
                 onNext={handleSynonymsNext}
               />
             )}
