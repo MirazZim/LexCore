@@ -1,20 +1,22 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import Index from "./pages/Index";
-import AuthPage from "./pages/AuthPage";
-import AddWordPage from "./pages/AddWordPage";
-import LibraryPage from "./pages/LibraryPage";
-import ReviewPage from "./pages/ReviewPage";
-import ProgressPage from "./pages/ProgressPage";
-import GrammarRulesPage from "./pages/GrammarRulesPage";
-import SettingsPage from "./pages/SettingsPage";
-import DictionaryPage from "./pages/DictionaryPage";
-import DailyShufflePage from "./pages/DailyShufflePage";
-import NotFound from "./pages/NotFound";
+
+const Index = lazy(() => import("./pages/Index"));
+const AuthPage = lazy(() => import("./pages/AuthPage"));
+const AddWordPage = lazy(() => import("./pages/AddWordPage"));
+const LibraryPage = lazy(() => import("./pages/LibraryPage"));
+const ReviewPage = lazy(() => import("./pages/ReviewPage"));
+const ProgressPage = lazy(() => import("./pages/ProgressPage"));
+const GrammarRulesPage = lazy(() => import("./pages/GrammarRulesPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const DictionaryPage = lazy(() => import("./pages/DictionaryPage"));
+const DailyShufflePage = lazy(() => import("./pages/DailyShufflePage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -57,7 +59,9 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AppRoutes />
+          <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
+            <AppRoutes />
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

@@ -11,10 +11,10 @@ import type { GenerationStyle } from '@/lib/llm';
 import type { Register } from '@/lib/types';
 
 const registers: { value: Register; label: string; emoji: string }[] = [
-  { value: 'formal',   label: 'Formal',   emoji: '🎩' },
-  { value: 'casual',   label: 'Casual',   emoji: '👋' },
+  { value: 'formal', label: 'Formal', emoji: '🎩' },
+  { value: 'casual', label: 'Casual', emoji: '👋' },
   { value: 'literary', label: 'Literary', emoji: '📖' },
-  { value: 'slang',    label: 'Slang',    emoji: '🔥' },
+  { value: 'slang', label: 'Slang', emoji: '🔥' },
 ];
 
 const generationStyles: {
@@ -23,40 +23,40 @@ const generationStyles: {
   desc: string;
   icon: React.ElementType;
 }[] = [
-  { value: 'formal', label: 'Formal', desc: 'Business & academic', icon: Briefcase },
-  { value: 'casual', label: 'Casual', desc: 'Friendly talk',       icon: MessageCircle },
-  { value: 'daily',  label: 'Daily',  desc: 'Everyday life',       icon: Sun },
-  { value: 'ielts',  label: 'IELTS',  desc: 'Band 7–9',            icon: GraduationCap },
-];
+    { value: 'formal', label: 'Formal', desc: 'Business & academic', icon: Briefcase },
+    { value: 'casual', label: 'Casual', desc: 'Friendly talk', icon: MessageCircle },
+    { value: 'daily', label: 'Daily', desc: 'Everyday life', icon: Sun },
+    { value: 'ielts', label: 'IELTS', desc: 'Band 7–9', icon: GraduationCap },
+  ];
 
 const container = {
   hidden: { opacity: 0 },
-  show:   { opacity: 1, transition: { staggerChildren: 0.07 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.07 } },
 };
 const item = {
   hidden: { opacity: 0, y: 18 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.38, ease: [0.22, 1, 0.36, 1] as const } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.38, ease: [0.22, 1, 0.36, 1] as const } },
 };
 
 export default function AddWordPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [word, setWord]                         = useState(() => searchParams.get('word') ?? '');
-  const [definition, setDefinition]             = useState('');
-  const [exampleSentence, setExampleSentence]   = useState('');
-  const [collocations, setCollocations]         = useState<string[]>([]);
+  const [word, setWord] = useState(() => searchParams.get('word') ?? '');
+  const [definition, setDefinition] = useState('');
+  const [exampleSentence, setExampleSentence] = useState('');
+  const [collocations, setCollocations] = useState<string[]>([]);
   const [collocationInput, setCollocationInput] = useState('');
-  const [register, setRegister]                 = useState<Register>('formal');
-  const [generationStyle, setGenerationStyle]   = useState<GenerationStyle>('daily');
-  const [suggestedWords, setSuggestedWords]     = useState<string[]>([]);
-  const [loadingWord, setLoadingWord]           = useState(false);
-  const [loadingDefinition, setLoadingDefinition]     = useState(false);
-  const [loadingExample, setLoadingExample]           = useState(false);
+  const [register, setRegister] = useState<Register>('formal');
+  const [generationStyle, setGenerationStyle] = useState<GenerationStyle>('daily');
+  const [suggestedWords, setSuggestedWords] = useState<string[]>([]);
+  const [loadingWord, setLoadingWord] = useState(false);
+  const [loadingDefinition, setLoadingDefinition] = useState(false);
+  const [loadingExample, setLoadingExample] = useState(false);
   const [loadingCollocations, setLoadingCollocations] = useState(false);
-  const [synonyms, setSynonyms]                       = useState<string[]>([]);
-  const [synonymInput, setSynonymInput]               = useState('');
-  const [loadingSynonyms, setLoadingSynonyms]         = useState(false);
-  const [loadingAutofill, setLoadingAutofill]         = useState(false);
+  const [synonyms, setSynonyms] = useState<string[]>([]);
+  const [synonymInput, setSynonymInput] = useState('');
+  const [loadingSynonyms, setLoadingSynonyms] = useState(false);
+  const [loadingAutofill, setLoadingAutofill] = useState(false);
   const addWord = useAddWord();
 
   const handleSuggestWord = async () => {
@@ -90,7 +90,7 @@ export default function AddWordPage() {
   };
 
   const handleAutoExample = async () => {
-    if (!word.trim())       { toast.error('Enter a word first'); return; }
+    if (!word.trim()) { toast.error('Enter a word first'); return; }
     if (!definition.trim()) { toast.error('Add a definition first'); return; }
     setLoadingExample(true);
     try {
@@ -106,7 +106,7 @@ export default function AddWordPage() {
   };
 
   const handleAutoSynonyms = async () => {
-    if (!word.trim())       { toast.error('Enter a word first'); return; }
+    if (!word.trim()) { toast.error('Enter a word first'); return; }
     if (!definition.trim()) { toast.error('Add a definition first'); return; }
     setLoadingSynonyms(true);
     try {
@@ -134,7 +134,7 @@ export default function AddWordPage() {
   };
 
   const handleAutoCollocations = async () => {
-    if (!word.trim())       { toast.error('Enter a word first'); return; }
+    if (!word.trim()) { toast.error('Enter a word first'); return; }
     if (!definition.trim()) { toast.error('Add a definition first'); return; }
     setLoadingCollocations(true);
     try {
@@ -462,15 +462,15 @@ export default function AddWordPage() {
                     {collocations.length === 0
                       ? <span className="text-xs text-zinc-700">Common word pairings will appear here</span>
                       : collocations.map((c, i) => (
-                          <span key={i} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold h-fit"
-                            style={{ background: 'rgba(251,146,60,.1)', border: '1px solid rgba(251,146,60,.22)', color: '#fb923c' }}>
-                            {c}
-                            <button type="button" onClick={() => setCollocations(p => p.filter((_, j) => j !== i))}
-                              className="opacity-40 hover:opacity-100 transition-opacity">
-                              <X className="h-3 w-3" />
-                            </button>
-                          </span>
-                        ))
+                        <span key={i} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold h-fit"
+                          style={{ background: 'rgba(251,146,60,.1)', border: '1px solid rgba(251,146,60,.22)', color: '#fb923c' }}>
+                          {c}
+                          <button type="button" onClick={() => setCollocations(p => p.filter((_, j) => j !== i))}
+                            className="opacity-40 hover:opacity-100 transition-opacity">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))
                     }
                   </div>
                 </motion.div>
@@ -510,15 +510,15 @@ export default function AddWordPage() {
                     {synonyms.length === 0
                       ? <span className="text-xs text-zinc-700">Words with similar meaning will appear here</span>
                       : synonyms.map((s, i) => (
-                          <span key={i} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold h-fit"
-                            style={{ background: 'rgba(139,92,246,.1)', border: '1px solid rgba(139,92,246,.25)', color: '#a78bfa' }}>
-                            {s}
-                            <button type="button" onClick={() => setSynonyms(p => p.filter((_, j) => j !== i))}
-                              className="opacity-40 hover:opacity-100 transition-opacity">
-                              <X className="h-3 w-3" />
-                            </button>
-                          </span>
-                        ))
+                        <span key={i} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold h-fit"
+                          style={{ background: 'rgba(139,92,246,.1)', border: '1px solid rgba(139,92,246,.25)', color: '#a78bfa' }}>
+                          {s}
+                          <button type="button" onClick={() => setSynonyms(p => p.filter((_, j) => j !== i))}
+                            className="opacity-40 hover:opacity-100 transition-opacity">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))
                     }
                   </div>
                 </motion.div>

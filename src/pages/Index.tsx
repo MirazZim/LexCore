@@ -12,11 +12,11 @@ import { seedWordsIfEmpty } from '@/lib/seed-words';
 /* ─── Animation variants ─────────────────────────────────────────── */
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.09 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.04 } },
 };
 const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } },
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } },
 };
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -123,21 +123,6 @@ export default function Dashboard() {
   /* ── Loading skeleton ────────────────────────────────────────────── */
   const isLoading = wordsLoading || statsLoading;
 
-  if (isLoading) {
-    return (
-      <AppLayout>
-        <div className="px-6 pt-8 pb-24 max-w-5xl mx-auto space-y-6">
-          <Skeleton className="h-64 w-full rounded-[2rem] bg-zinc-800/60" />
-          <div className="grid grid-cols-2 gap-4">
-            <Skeleton className="h-48 rounded-[1.5rem] bg-zinc-800/60" />
-            <Skeleton className="h-48 rounded-[1.5rem] bg-zinc-800/60" />
-          </div>
-          <Skeleton className="h-72 w-full rounded-[2rem] bg-zinc-800/60" />
-        </div>
-      </AppLayout>
-    );
-  }
-
   return (
     <AppLayout>
       {/* ── Global styles injected inline (no extra CSS file needed) ── */}
@@ -156,8 +141,7 @@ export default function Dashboard() {
         <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
 
           {/* ── Hero Section ─────────────────────────────────────────── */}
-          <motion.section
-            variants={item}
+          <section
             className="relative overflow-hidden rounded-[2rem] p-10 bg-zinc-900 min-h-[360px] flex flex-col justify-between"
           >
             {/* Background gradient blob */}
@@ -232,9 +216,18 @@ export default function Dashboard() {
                 {isSleepPrepActive ? 'Sleep Prep' : `Sleep Prep in ${sleepCountdown}`}
               </button>
             </div>
-          </motion.section>
+          </section>
 
           {/* ── Main grid ────────────────────────────────────────────── */}
+          {isLoading ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <Skeleton className="h-48 rounded-[1.5rem] bg-zinc-800/60" />
+                <Skeleton className="h-48 rounded-[1.5rem] bg-zinc-800/60" />
+              </div>
+              <Skeleton className="h-72 w-full rounded-[2rem] bg-zinc-800/60" />
+            </div>
+          ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
             {/* Left column */}
@@ -443,6 +436,7 @@ export default function Dashboard() {
               </div>
             </motion.div>
           </div>
+          )}
           {/* end grid */}
 
         </motion.div>

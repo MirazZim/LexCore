@@ -13,9 +13,31 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Read the stored Supabase session synchronously from localStorage so the auth
+// gate never blocks the first render for returning users.
+function readStoredSession(): { session: Session | null; loading: boolean } {
+  try {
+    const projectRef = new URL(import.meta.env.VITE_SUPABASE_URL as string).hostname.split('.')[0];
+    const raw = localStorage.getItem(`sb-${projectRef}-auth-token`);
+    if (!raw) return { session: null, loading: false };
+    const parsed = JSON.parse(raw);
+    // supabase-js v2 stores the Session object directly; v1 used { currentSession }
+    const session: Session = parsed?.currentSession ?? parsed;
+    if (!session?.access_token) return { session: null, loading: false };
+    // If expired, let the async refresh sort it out
+    if (session.expires_at && session.expires_at < Date.now() / 1000) {
+      return { session: null, loading: true };
+    }
+    return { session, loading: false };
+  } catch {
+    return { session: null, loading: true };
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const initial = readStoredSession();
+  const [session, setSession] = useState<Session | null>(initial.session);
+  const [loading, setLoading] = useState(initial.loading);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
