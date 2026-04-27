@@ -141,80 +141,104 @@ export default function Dashboard() {
         <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
 
           {/* ── Hero Section ─────────────────────────────────────────── */}
-          <section
-            className="relative overflow-hidden rounded-[2rem] p-10 bg-zinc-900 min-h-[360px] flex flex-col justify-between"
-          >
-            {/* Background gradient blob */}
+          <section className="relative overflow-hidden rounded-[2.5rem]">
+
+            {/* ── Background layer ── */}
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #080b12 0%, #060608 60%, #0a0612 100%)' }} />
+            {/* Mint orb – top right */}
+            <div className="absolute -top-16 -right-16 w-[520px] h-[520px] pointer-events-none opacity-50"
+              style={{ background: 'radial-gradient(circle, #00FFC8 0%, transparent 60%)' }} />
+            {/* Violet orb – bottom left */}
+            <div className="absolute -bottom-20 -left-12 w-[460px] h-[460px] pointer-events-none opacity-40"
+              style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 60%)' }} />
+            {/* Sky-blue orb – center-left */}
+            <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[360px] h-[360px] pointer-events-none opacity-25"
+              style={{ background: 'radial-gradient(circle, #38bdf8 0%, transparent 60%)' }} />
+
+            {/* ── Glass card ── */}
             <div
-              className="absolute top-0 right-0 w-3/4 h-full opacity-25 pointer-events-none"
+              className="relative z-10 p-7 sm:p-9 lg:p-12"
               style={{
-                background: 'radial-gradient(ellipse at top right, #00FFC8 0%, transparent 70%)',
+                background: 'rgba(255,255,255,0.06)',
+                backdropFilter: 'blur(72px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(72px) saturate(180%)',
+                border: '1px solid rgba(255,255,255,0.14)',
+                borderTop: '1px solid rgba(255,255,255,0.22)',
+                borderRadius: '2.5rem',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12), 0 24px 64px rgba(0,0,0,0.4)',
               }}
-            />
+            >
+              {/* Top badges */}
+              <div className="flex items-center justify-between mb-8 sm:mb-10">
+                <span
+                  className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em]"
+                  style={{ background: 'rgba(0,255,200,0.07)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.18)' }}
+                >
+                  <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-[#00FFC8] animate-pulse" />
+                  System Active
+                </span>
 
-            {/* Top bar */}
-            <div className="relative z-10 flex items-center justify-between">
-              <span
-                className="inline-flex items-center gap-2 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.3em]"
-                style={{ background: 'rgba(0,255,200,0.1)', color: '#00FFC8' }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00FFC8] animate-pulse" />
-                System Active
-              </span>
-
-              {/* Streak badge */}
-              <div
-                className="flex items-center gap-2 px-4 py-2 rounded-full"
-                style={{ background: 'rgba(0,255,200,0.1)' }}
-              >
-                <Flame className="h-4 w-4" style={{ color: '#00FFC8' }} />
-                <span className="font-bold text-sm text-white">{streak} day streak</span>
+                <div
+                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}
+                >
+                  <Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: '#f97316' }} />
+                  <span className="text-white text-[10px] sm:text-xs font-bold">{streak}</span>
+                  <span className="text-zinc-500 text-[10px] sm:text-xs">day streak</span>
+                </div>
               </div>
-            </div>
 
-            {/* Headline */}
-            <div className="relative z-10 mt-8">
+              {/* Headline + CTAs */}
               <h2
-                className="text-5xl lg:text-6xl font-bold text-white leading-none tracking-tight mb-4"
+                className="text-4xl sm:text-5xl xl:text-6xl font-bold text-white leading-[1.06] tracking-tight mb-5"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
                 Good {greeting}.<br />
                 Your edge is{' '}
-                <span style={{ color: '#00FFC8' }}>sharpening.</span>
+                <span
+                  className="bg-clip-text text-transparent"
+                  style={{ backgroundImage: 'linear-gradient(120deg, #00FFC8 0%, #38bdf8 100%)' }}
+                >
+                  sharpening.
+                </span>
               </h2>
-              <p className="text-zinc-400 text-base mb-8 max-w-md">
+
+              <p className="text-zinc-400 text-sm sm:text-base leading-relaxed mb-8 max-w-md">
                 {dueToday > 0
                   ? `You have ${dueToday} word${dueToday > 1 ? 's' : ''} due for review. Don't break the chain.`
                   : "You're all caught up. Add new words to keep growing."}
               </p>
 
-              {/* Primary CTA */}
-              <button
-                onClick={() => navigate('/review')}
-                className="group inline-flex items-center gap-3 px-8 py-4 rounded-full font-bold text-base text-zinc-900 transition-all hover:scale-105 glow-mint"
-                style={{ background: 'linear-gradient(135deg, #2cffca 0%, #00FFC8 100%)' }}
-              >
-                <Brain className="h-5 w-5" />
-                Start Today's Review
-                {dueToday > 0 && (
-                  <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-zinc-900/20">
-                    {dueToday} due
-                  </span>
-                )}
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => navigate('/review')}
+                  className="group inline-flex items-center gap-2.5 px-6 sm:px-7 py-3.5 rounded-full font-bold text-sm text-zinc-900 transition-all hover:scale-[1.03] active:scale-[0.98]"
+                  style={{
+                    background: 'linear-gradient(135deg, #2cffca 0%, #38bdf8 100%)',
+                    boxShadow: '0 0 32px rgba(0,255,200,0.28), 0 4px 20px rgba(56,189,248,0.18)',
+                  }}
+                >
+                  <Brain className="h-4 w-4 shrink-0" />
+                  Start Today's Review
+                  {dueToday > 0 && (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-zinc-900/25">
+                      {dueToday} due
+                    </span>
+                  )}
+                  <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
+                </button>
 
-              {/* Sleep prep button — always visible with countdown */}
-              <button
-                onClick={() => isSleepPrepActive && navigate('/review?mode=sleep_prep')}
-                className="ml-4 inline-flex items-center gap-2 px-6 py-4 rounded-full font-semibold text-sm transition-all"
-                style={isSleepPrepActive
-                  ? { color: '#00FFC8', border: '1px solid rgba(0,255,200,0.3)', background: 'rgba(0,255,200,0.07)' }
-                  : { color: '#52525b', border: '1px solid rgba(255,255,255,0.07)', cursor: 'default' }}
-              >
-                <Moon className="h-4 w-4" />
-                {isSleepPrepActive ? 'Sleep Prep' : `Sleep Prep in ${sleepCountdown}`}
-              </button>
+                <button
+                  onClick={() => isSleepPrepActive && navigate('/review?mode=sleep_prep')}
+                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full text-sm font-medium transition-all"
+                  style={isSleepPrepActive
+                    ? { color: '#00FFC8', border: '1px solid rgba(0,255,200,0.22)', background: 'rgba(0,255,200,0.06)' }
+                    : { color: '#52525b', border: '1px solid rgba(255,255,255,0.07)', cursor: 'default' }}
+                >
+                  <Moon className="h-4 w-4 shrink-0" />
+                  {isSleepPrepActive ? 'Sleep Prep' : `Sleep Prep in ${sleepCountdown}`}
+                </button>
+              </div>
             </div>
           </section>
 
