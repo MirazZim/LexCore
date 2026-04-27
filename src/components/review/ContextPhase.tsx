@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { DueWordItem, WordContext } from './types';
 
 interface ContextPhaseProps {
   currentItem: DueWordItem;
   currentIndex: number;
-  contexts: WordContext[];
+  clozeContext: WordContext | null;
+  clozeLoading: boolean;
   clozeAnswer: string;
   clozeSubmitted: boolean;
   onClozeAnswerChange: (value: string) => void;
@@ -13,10 +15,9 @@ interface ContextPhaseProps {
 }
 
 export function ContextPhase({
-  currentItem, currentIndex, contexts, clozeAnswer, clozeSubmitted,
-  onClozeAnswerChange, onClozeSubmit, onClozeNext,
+  currentItem, currentIndex, clozeContext, clozeLoading,
+  clozeAnswer, clozeSubmitted, onClozeAnswerChange, onClozeSubmit, onClozeNext,
 }: ContextPhaseProps) {
-  const clozeContext = contexts[0];
   const clozeSentence = clozeContext?.sentence.replace(
     new RegExp(currentItem.word.word, 'gi'),
     '______'
@@ -39,7 +40,13 @@ export function ContextPhase({
           Fill in the blank:
         </p>
 
-        {clozeSentence ? (
+        {clozeLoading ? (
+          <div className="space-y-3 py-2">
+            <Skeleton className="h-4 w-full rounded-lg bg-zinc-800/60" />
+            <Skeleton className="h-4 w-4/5 rounded-lg bg-zinc-800/60" />
+            <Skeleton className="h-4 w-3/5 rounded-lg bg-zinc-800/60" />
+          </div>
+        ) : clozeSentence ? (
           <>
             <p
               className="text-zinc-300 text-base leading-relaxed mb-6 p-4 rounded-xl"

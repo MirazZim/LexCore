@@ -237,6 +237,35 @@ Respond ONLY with this JSON:
   return JSON.parse(clean)
 }
 
+// --- Generate a fresh cloze sentence ---
+export async function generateClozeSentence(word: string, definition: string, exclude: string[] = []): Promise<string> {
+  const seed = Math.random().toString(36).slice(2, 8)
+  const content = await callLLM([
+    {
+      role: 'system',
+      content: `You are a vocabulary teacher creating cloze (fill-in-the-blank) exercises. Generate a single natural sentence that uses the target word clearly and unambiguously. Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
+    },
+    {
+      role: 'user',
+      content: `Word: ${word}
+Definition: ${definition}
+Variation seed (for uniqueness): ${seed}
+${exclude.length > 0 ? `Do NOT reuse or closely paraphrase these existing sentences:\n${exclude.map(s => `"${s}"`).join('\n')}` : ''}
+
+Write one natural sentence using "${word}" where the word's meaning is clear from context.
+
+Respond ONLY with this JSON:
+{
+  "sentence": "the generated sentence"
+}`,
+    },
+  ])
+
+  const clean = content.replace(/```json|```/g, '').trim()
+  const parsed = JSON.parse(clean)
+  return parsed.sentence
+}
+
 // --- Auto-generate definition ---
 export async function generateDefinition(word: string, style: GenerationStyle = 'daily', excludeDefinition = ''): Promise<{
   definition: string

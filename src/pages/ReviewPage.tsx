@@ -14,7 +14,7 @@ import { GenerationPhase } from '@/components/review/GenerationPhase';
 import { SummaryPhase } from '@/components/review/SummaryPhase';
 import { SynonymsPhase } from '@/components/review/SynonymsPhase';
 import type { ReviewPhase, ReviewResult, AiFeedback, WordContext, WordCollocation } from '@/components/review/types';
-import { scoreSentence } from '@/lib/llm';
+import { scoreSentence, generateClozeSentence } from '@/lib/llm';
 
 export const RV_STYLES = `
   .rv-glass {
@@ -138,6 +138,9 @@ export default function ReviewPage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(false);
   const [contexts, setContexts] = useState<WordContext[]>([]);
+  const [clozeContext, setClozeContext] = useState<WordContext | null>(null);
+  const [clozeLoading, setClozeLoading] = useState(false);
+  const [lastClozeId, setLastClozeId] = useState<string | null>(null);
   const [collocations, setCollocations] = useState<WordCollocation[]>([]);
   const [synonyms, setSynonyms] = useState<string[]>([]);
   const [sessionWords, setSessionWords] = useState<typeof dueWordsData>([]);
@@ -212,6 +215,8 @@ export default function ReviewPage() {
     setRevealed(false);
     setClozeAnswer('');
     setClozeSubmitted(false);
+    setClozeContext(null);
+    setClozeLoading(false);
   }, [currentIndex]);
 
   if (isLoading || sessionsLoading || !sessionReady) {
@@ -525,6 +530,24 @@ export default function ReviewPage() {
 
     setRevealed(false);
     if (contexts.length > 0) {
+      if (contexts.length >= 2) {
+        const candidates = contexts.filter(c => c.id !== lastClozeId);
+        const pick = candidates[Math.floor(Math.random() * candidates.length)];
+        setLastClozeId(pick.id);
+        setClozeContext(pick);
+      } else {
+        // Single stored context: always generate a fresh sentence so bigram cues don't leak
+        setClozeLoading(true);
+        setClozeContext(null);
+        generateClozeSentence(
+          currentItem.word.word,
+          currentItem.word.definition,
+          contexts.map(c => c.sentence),
+        )
+          .then(sentence => setClozeContext({ id: 'generated', sentence, source_label: 'Generated' }))
+          .catch(() => setClozeContext(contexts[0]))
+          .finally(() => setClozeLoading(false));
+      }
       setPhase('context');
     } else if (collocations.length > 0) {
       setPhase('collocation');
@@ -657,7 +680,8 @@ export default function ReviewPage() {
               <ContextPhase
                 currentItem={currentItem}
                 currentIndex={currentIndex}
-                contexts={contexts}
+                clozeContext={clozeContext}
+                clozeLoading={clozeLoading}
                 clozeAnswer={clozeAnswer}
                 clozeSubmitted={clozeSubmitted}
                 onClozeAnswerChange={setClozeAnswer}
