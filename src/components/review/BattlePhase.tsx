@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { Rating } from 'ts-fsrs';
-import { dbStateToCard, currentRetrievability } from '@/lib/fsrs';
 import type { DueWordItem } from './types';
 import type { Word } from '@/lib/types';
 
@@ -31,19 +30,13 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
   const [bufferedRating, setBufferedRating] = useState<Rating | null>(null);
   const isCorrect = selectedAnswer === currentItem.word.definition;
 
-  const retrievabilityPct = useMemo(() => {
-    if (currentItem.stats.state === 0) return 100;
-    const card = dbStateToCard(currentItem.stats);
-    return Math.round(currentRetrievability(card) * 100);
-  }, [currentItem.stats]);
-
   const choices = useMemo(() => {
     const correctDef = currentItem.word.definition;
     const otherDefs = allWords
       .filter(w => w.id !== currentItem.word.id && w.definition !== correctDef)
       .map(w => w.definition);
-    const wrong = otherDefs.sort(() => Math.random() - 0.5).slice(0, 1);
-    if (wrong.length < 1) wrong.push('No alternative definition available.');
+    const wrong = otherDefs.sort(() => Math.random() - 0.5).slice(0, 2);
+    while (wrong.length < 2) wrong.push('No alternative definition available.');
     return [correctDef, ...wrong].sort(() => Math.random() - 0.5);
   }, [currentItem.word.id]);
 
@@ -93,7 +86,7 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
               </motion.h2>
 
               <p className="text-zinc-600 text-xs text-center mb-8">
-                {retrievabilityPct}% recall strength
+                Honesty makes you stronger. Dishonesty only cheats your memory.
               </p>
 
               <p className="text-[10px] uppercase tracking-widest text-zinc-500 text-center mb-4">
@@ -167,6 +160,15 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
                       hoverBg: 'rgba(110,231,183,0.15)',
                       hoverBorder: 'rgba(110,231,183,0.55)',
                       badgeBg: 'rgba(110,231,183,0.18)',
+                    },
+                    {
+                      label: 'C',
+                      accent: '#fbbf24',
+                      bg: 'rgba(251,191,36,0.08)',
+                      border: 'rgba(251,191,36,0.22)',
+                      hoverBg: 'rgba(251,191,36,0.15)',
+                      hoverBorder: 'rgba(251,191,36,0.55)',
+                      badgeBg: 'rgba(251,191,36,0.18)',
                     },
                   ][i];
                   return (
