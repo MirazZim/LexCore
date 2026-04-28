@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Brain, Clock, Flame, Moon, Sparkles, ArrowRight, MoreHorizontal, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
@@ -8,6 +8,8 @@ import { EaseBadge } from '@/components/EaseBadge';
 import { useWords, useWordStats, useDueWords, useReviewSessions, useCalibration } from '@/hooks/useWords';
 import { useAuth } from '@/contexts/AuthContext';
 import { seedWordsIfEmpty } from '@/lib/seed-words';
+import { getIdentity } from '@/lib/identity';
+import { IdentityJourneyMap } from '@/components/IdentityJourneyMap';
 
 /* ─── Animation variants ─────────────────────────────────────────── */
 const container = {
@@ -80,15 +82,12 @@ export default function Dashboard() {
     const sessionDates = [...new Set(
       reviewSessions.map(s => dateKey(new Date(s.started_at)))
     )].sort().reverse();
-
     const today = new Date();
     const todayKey = dateKey(today);
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayKey = dateKey(yesterday);
-
     if (sessionDates[0] !== todayKey && sessionDates[0] !== yesterdayKey) return 0;
-
     let count = 0;
     const check = new Date(today);
     if (sessionDates[0] !== todayKey) check.setDate(check.getDate() - 1);
@@ -99,7 +98,7 @@ export default function Dashboard() {
     return count;
   })();
 
-  /* ── Velocity chart (last 7 days from real session data) ─────────── */
+  /* ── Velocity chart (last 7 days) ────────────────────────────────── */
   const velocityBars = useMemo(() => {
     const dateKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
     const bars = Array.from({ length: 7 }, (_, i) => {
@@ -115,7 +114,7 @@ export default function Dashboard() {
     return bars.map(b => ({ ...b, heightPx: Math.max(Math.round((b.value / max) * 128), 6) }));
   }, [reviewSessions]);
 
-  /* ── Calibration (from DB) ──────────────────────────────────────── */
+  /* ── Calibration ─────────────────────────────────────────────────── */
   const { data: cal } = useCalibration();
   const sureTotal = cal?.sureTotal ?? 0;
   const sureCorrect = cal?.sureCorrect ?? 0;
@@ -127,12 +126,17 @@ export default function Dashboard() {
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 5);
 
-  /* ── Loading skeleton ────────────────────────────────────────────── */
+  /* ── Identity ───────────────────────────────────────────────────── */
+  const identity     = getIdentity(Math.max(1, streak));
+  const idProgressPct = Math.round(identity.progress * 100);
+  const idDaysToNext  = identity.next ? identity.next.from - identity.daysIn : 0;
+  const [showJourney, setShowJourney] = useState(false);
+
+  /* ── Loading ─────────────────────────────────────────────────────── */
   const isLoading = wordsLoading || statsLoading;
 
   return (
     <AppLayout>
-      {/* ── Global styles injected inline (no extra CSS file needed) ── */}
       <style>{`
         .glass-panel {
           background: rgba(24, 24, 27, 0.55);
@@ -142,27 +146,36 @@ export default function Dashboard() {
         }
         .glow-mint { box-shadow: 0 0 28px rgba(0,255,200,0.25); }
         .bar-hover:hover { background-color: #00FFC8 !important; }
+        .id-card-home {
+          background: linear-gradient(180deg, #0d0a07 0%, #110e0a 100%);
+          border: 1px solid rgba(180,140,55,0.28);
+          box-shadow: inset 0 1px 0 rgba(255,210,100,0.06), 0 20px 50px rgba(0,0,0,0.5), 0 0 40px rgba(140,100,25,0.07);
+        }
+        .id-gold-text {
+          background: linear-gradient(120deg, #c8922a 0%, #f0c96a 55%, #c08828 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .id-gold-bar {
+          background: linear-gradient(90deg, #c8922a 0%, #f0c96a 100%);
+          box-shadow: 0 0 8px rgba(210,155,50,0.4);
+        }
       `}</style>
 
       <div className="px-6 pt-8 pb-28 max-w-5xl mx-auto">
         <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
 
-          {/* ── Hero Section ─────────────────────────────────────────── */}
+          {/* ── Hero ─────────────────────────────────────────────────── */}
           <section className="relative overflow-hidden rounded-[2.5rem]">
-
-            {/* ── Background layer ── */}
             <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #080b12 0%, #060608 60%, #0a0612 100%)' }} />
-            {/* Mint orb – top right */}
             <div className="absolute -top-16 -right-16 w-[520px] h-[520px] pointer-events-none opacity-50"
               style={{ background: 'radial-gradient(circle, #00FFC8 0%, transparent 60%)' }} />
-            {/* Violet orb – bottom left */}
             <div className="absolute -bottom-20 -left-12 w-[460px] h-[460px] pointer-events-none opacity-40"
               style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 60%)' }} />
-            {/* Sky-blue orb – center-left */}
             <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[360px] h-[360px] pointer-events-none opacity-25"
               style={{ background: 'radial-gradient(circle, #38bdf8 0%, transparent 60%)' }} />
 
-            {/* ── Glass card ── */}
             <div
               className="relative z-10 p-7 sm:p-9 lg:p-12"
               style={{
@@ -175,7 +188,6 @@ export default function Dashboard() {
                 boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12), 0 24px 64px rgba(0,0,0,0.4)',
               }}
             >
-              {/* Top badges */}
               <div className="flex items-center justify-between mb-8 sm:mb-10">
                 <span
                   className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em]"
@@ -184,7 +196,6 @@ export default function Dashboard() {
                   <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-[#00FFC8] animate-pulse" />
                   System Active
                 </span>
-
                 <div
                   className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full"
                   style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}
@@ -195,7 +206,6 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Headline + CTAs */}
               <h2
                 className="text-4xl sm:text-5xl xl:text-6xl font-bold text-white leading-[1.06] tracking-tight mb-5"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
@@ -256,244 +266,264 @@ export default function Dashboard() {
                 <Skeleton className="h-48 rounded-[1.5rem] bg-zinc-800/60" />
                 <Skeleton className="h-48 rounded-[1.5rem] bg-zinc-800/60" />
               </div>
+              <Skeleton className="h-64 w-full rounded-[2rem] bg-zinc-800/60" />
               <Skeleton className="h-72 w-full rounded-[2rem] bg-zinc-800/60" />
             </div>
           ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-            {/* Left column */}
-            <div className="lg:col-span-7 space-y-8">
+            {/* 1 · Bento stats — lg row 1 left ─────────────────────── */}
+            <motion.div variants={item} className="lg:col-span-7 grid grid-cols-2 gap-4">
 
-              {/* ── Bento stats ──────────────────────────────────────── */}
-              <motion.div variants={item} className="grid grid-cols-2 gap-4">
+              <div className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors">
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Total Words</span>
+                  <BookOpen className="h-4 w-4 text-zinc-600" />
+                </div>
+                <div>
+                  <span className="text-5xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    {totalWords}
+                  </span>
+                  <p className="text-[#00FFC8] text-xs mt-1">+{dueToday} due today</p>
+                </div>
+              </div>
 
-                {/* Total Words */}
-                <div className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors col-span-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Total Words</span>
-                    <BookOpen className="h-4 w-4 text-zinc-600" />
-                  </div>
-                  <div>
+              <div className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors">
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Due Today</span>
+                  <Clock className="h-4 w-4 text-zinc-600" />
+                </div>
+                <div>
+                  <span className="text-5xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    {dueToday}
+                  </span>
+                  <p className="text-zinc-500 text-xs mt-1">cards pending</p>
+                </div>
+              </div>
+
+              <div className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors">
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Mastered</span>
+                  <Sparkles className="h-4 w-4 text-zinc-600" />
+                </div>
+                <div>
+                  <div className="flex items-end gap-2">
                     <span className="text-5xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                      {totalWords}
+                      {mastered}
                     </span>
-                    <p className="text-[#00FFC8] text-xs mt-1">+{dueToday} due today</p>
+                    <span className="text-zinc-500 text-sm mb-1.5">/ {totalWords} words</span>
+                  </div>
+                  <div className="mt-3 h-1 w-full rounded-full bg-zinc-800 overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${masteredPct}%`, background: '#00FFC8' }} />
                   </div>
                 </div>
+              </div>
 
-                {/* Due Today */}
-                <div className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors col-span-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Due Today</span>
-                    <Clock className="h-4 w-4 text-zinc-600" />
-                  </div>
-                  <div>
-                    <span className="text-5xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                      {dueToday}
-                    </span>
-                    <p className="text-zinc-500 text-xs mt-1">cards pending</p>
-                  </div>
+              <div className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors">
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Gut Check Score</span>
+                  <Target className="h-4 w-4 text-zinc-600" />
                 </div>
-
-                {/* Mastered */}
-                <div className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors col-span-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Mastered</span>
-                    <Sparkles className="h-4 w-4 text-zinc-600" />
-                  </div>
-                  <div>
-                    <div className="flex items-end gap-2">
-                      <span className="text-5xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                        {mastered}
+                <div>
+                  {sureTotal >= 5 ? (
+                    <>
+                      <span className="text-5xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif", color: calibrationColor }}>
+                        {calibrationPct}%
                       </span>
-                      <span className="text-zinc-500 text-sm mb-1.5">/ {totalWords} words</span>
-                    </div>
-                    {/* Progress bar */}
-                    <div className="mt-3 h-1 w-full rounded-full bg-zinc-800 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${masteredPct}%`, background: '#00FFC8' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-                {/* Calibration */}
-                <div className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors col-span-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Gut Check Score</span>
-                    <Target className="h-4 w-4 text-zinc-600" />
-                  </div>
-                  <div>
-                    {sureTotal >= 5 ? (
-                      <>
-                        <span className="text-5xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif", color: calibrationColor }}>
-                          {calibrationPct}%
-                        </span>
-                        <p className="text-zinc-500 text-xs mt-1">{sureCorrect}/{sureTotal} "sure" correct</p>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-5xl font-bold text-zinc-700" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>—</span>
-                        <p className="text-zinc-600 text-xs mt-1">{sureTotal}/5 bets to unlock</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* ── Daily Velocity chart ──────────────────────────────── */}
-              <motion.div variants={item} className="glass-panel p-8 rounded-[2rem]">
-                <div className="flex justify-between items-center mb-8">
-                  <div>
-                    <h3 className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                      Daily Velocity
-                    </h3>
-                    <p className="text-sm text-zinc-500 mt-0.5">Words reviewed over 7 days</p>
-                  </div>
-                  <MoreHorizontal className="h-5 w-5 text-zinc-600" />
-                </div>
-
-                {/* Chart area */}
-                <div className="relative">
-                  {/* Subtle grid lines */}
-                  <div className="absolute left-0 right-0 top-0 bottom-8 flex flex-col justify-between pointer-events-none">
-                    {[0, 1, 2, 3].map(i => (
-                      <div key={i} className="w-full border-t border-white/[0.04]" />
-                    ))}
-                  </div>
-
-                  {/* Bars */}
-                  <div className="flex items-end justify-between gap-1.5" style={{ height: 148 }}>
-                    {velocityBars.map(({ day, heightPx, value, active }) => (
-                      <div key={day} className="flex-1 flex flex-col items-center gap-1.5 group">
-                        <span
-                          className="text-[11px] font-bold tabular-nums transition-all duration-300"
-                          style={{
-                            color: active ? '#00FFC8' : value > 0 ? 'rgba(255,255,255,0.55)' : 'transparent',
-                            textShadow: active ? '0 0 8px rgba(0,255,200,0.6)' : 'none',
-                          }}
-                        >
-                          {value > 0 ? value : ' '}
-                        </span>
-                        <div
-                          className="w-full rounded-xl transition-all duration-500 cursor-pointer"
-                          style={{
-                            height: heightPx,
-                            background: active
-                              ? 'linear-gradient(180deg, #00FFC8 0%, #00C4A0 100%)'
-                              : value > 0
-                                ? 'linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.25) 100%)'
-                                : 'rgba(255,255,255,0.05)',
-                            boxShadow: active
-                              ? '0 0 24px rgba(0,255,200,0.35), 0 4px 12px rgba(0,255,200,0.2)'
-                              : 'none',
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Day labels */}
-                  <div className="flex justify-between mt-3">
-                    {velocityBars.map(({ day, active, value }) => (
-                      <span
-                        key={day}
-                        className="flex-1 text-center text-[10px] uppercase tracking-widest font-bold transition-colors duration-200"
-                        style={{
-                          color: active ? '#00FFC8' : value > 0 ? '#71717a' : '#3f3f46',
-                        }}
-                      >
-                        {day}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Right column – Recent Words ──────────────────────────── */}
-            <motion.div variants={item} className="lg:col-span-5">
-              <div className="glass-panel p-8 rounded-[2rem] h-full">
-                <div className="flex justify-between items-center mb-7">
-                  <h3 className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                    Recent Acquisitions
-                  </h3>
-                  <button
-                    onClick={() => navigate('/library')}
-                    className="text-[10px] font-bold uppercase tracking-widest hover:underline transition-colors"
-                    style={{ color: '#00FFC8' }}
-                  >
-                    View All
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {recentWords.length === 0 ? (
-                    <div className="text-center py-12 text-zinc-600">
-                      <p className="text-sm">No words yet. Add your first word!</p>
-                    </div>
+                      <p className="text-zinc-500 text-xs mt-1">{sureCorrect}/{sureTotal} &ldquo;sure&rdquo; correct</p>
+                    </>
                   ) : (
-                    recentWords.map((word) => {
-                      const stats = wordStats.find(s => s.word_id === word.id);
-                      const mastery = stats ? Math.min(Math.round((stats.stability / 30) * 100), 100) : 0;
-                      const isStar = !!(stats && stats.state === 2 && stats.stability >= 21);
-
-                      return (
-                        <div
-                          key={word.id}
-                          onClick={() => navigate(`/library?word=${word.id}`)}
-                          className="p-5 rounded-2xl cursor-pointer transition-all duration-200 group"
-                          style={{
-                            background: 'rgba(255,255,255,0.03)',
-                            border: '1px solid rgba(255,255,255,0.06)',
-                          }}
-                          onMouseEnter={e => {
-                            (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0,255,200,0.25)';
-                          }}
-                          onMouseLeave={e => {
-                            (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.06)';
-                          }}
-                        >
-                          <div className="flex justify-between items-start mb-1.5">
-                            <h4
-                              className="text-xl font-bold text-white leading-tight"
-                              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                            >
-                              {word.word}
-                            </h4>
-                            <div className="flex items-center gap-2 shrink-0 ml-3">
-                              {stats && <EaseBadge difficulty={stats.difficulty} />}
-                              <span style={{ color: isStar ? '#00FFC8' : '#3f3f46', fontSize: 16 }}>★</span>
-                            </div>
-                          </div>
-
-                          <p className="text-zinc-500 text-xs leading-relaxed mb-3 line-clamp-1">
-                            {word.definition}
-                          </p>
-
-                          {/* Mastery bar */}
-                          <div className="flex items-center gap-3">
-                            <div className="flex-1 h-[3px] rounded-full bg-zinc-800 overflow-hidden">
-                              <div
-                                className="h-full rounded-full transition-all duration-700"
-                                style={{ width: `${mastery}%`, background: '#00FFC8' }}
-                              />
-                            </div>
-                            <span className="text-[10px] text-zinc-600 font-bold">{mastery}%</span>
-                          </div>
-                        </div>
-                      );
-                    })
+                    <>
+                      <span className="text-5xl font-bold text-zinc-700" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>—</span>
+                      <p className="text-zinc-600 text-xs mt-1">{sureTotal}/5 bets to unlock</p>
+                    </>
                   )}
                 </div>
               </div>
             </motion.div>
+
+            {/* 2 · Identity card — lg row 1 right | mobile: after bento */}
+            <motion.div variants={item} className="lg:col-span-5">
+              <div
+                className="id-card-home rounded-[2rem] overflow-hidden cursor-pointer"
+                onClick={() => setShowJourney(true)}
+                style={{ transition: 'box-shadow 0.2s' }}
+                onMouseEnter={e => ((e.currentTarget as HTMLDivElement).style.boxShadow = 'inset 0 1px 0 rgba(255,210,100,0.10), 0 20px 50px rgba(0,0,0,0.5), 0 0 60px rgba(180,130,30,0.18)')}
+                onMouseLeave={e => ((e.currentTarget as HTMLDivElement).style.boxShadow = '')}
+              >
+                <div className="w-full flex items-center justify-center" style={{ height: 220, background: '#0c0907' }}>
+                  <img
+                    src={identity.current.image}
+                    alt={identity.current.name}
+                    style={{ display: 'block', maxHeight: '100%', maxWidth: '100%', width: 'auto', height: 'auto', objectFit: 'contain' }}
+                  />
+                </div>
+                <div style={{ borderTop: '1px solid rgba(180,140,55,0.16)', padding: '1.25rem 1.75rem' }}>
+                  <div className="flex items-baseline justify-between mb-3">
+                    <span className="id-gold-text text-xl font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                      {identity.current.name}
+                    </span>
+                    <span className="text-zinc-500 text-xs tabular-nums">Day {identity.daysIn}</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <div className="id-gold-bar h-full rounded-full transition-all duration-700" style={{ width: `${idProgressPct}%` }} />
+                  </div>
+                  <p className="mt-2 text-[11px] font-medium" style={{ color: 'rgba(192,148,60,0.7)' }}>
+                    {identity.next
+                      ? `${idDaysToNext} day${idDaysToNext === 1 ? '' : 's'} to ${identity.next.name} · keep your streak`
+                      : "You've reached the highest title"}
+                  </p>
+                  <p className="mt-2.5 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.15)' }}>
+                    Tap to explore journey →
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 3 · Daily Velocity — lg row 2 left ───────────────────── */}
+            <motion.div variants={item} className="lg:col-span-7 glass-panel p-8 rounded-[2rem]">
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <h3 className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    Daily Velocity
+                  </h3>
+                  <p className="text-sm text-zinc-500 mt-0.5">Words reviewed over 7 days</p>
+                </div>
+                <MoreHorizontal className="h-5 w-5 text-zinc-600" />
+              </div>
+
+              <div className="relative">
+                <div className="absolute left-0 right-0 top-0 bottom-8 flex flex-col justify-between pointer-events-none">
+                  {[0, 1, 2, 3].map(i => (
+                    <div key={i} className="w-full border-t border-white/[0.04]" />
+                  ))}
+                </div>
+
+                <div className="flex items-end justify-between gap-1.5" style={{ height: 148 }}>
+                  {velocityBars.map(({ day, heightPx, value, active }) => (
+                    <div key={day} className="flex-1 flex flex-col items-center gap-1.5 group">
+                      <span
+                        className="text-[11px] font-bold tabular-nums transition-all duration-300"
+                        style={{
+                          color: active ? '#00FFC8' : value > 0 ? 'rgba(255,255,255,0.55)' : 'transparent',
+                          textShadow: active ? '0 0 8px rgba(0,255,200,0.6)' : 'none',
+                        }}
+                      >
+                        {value > 0 ? value : ' '}
+                      </span>
+                      <div
+                        className="w-full rounded-xl transition-all duration-500 cursor-pointer bar-hover"
+                        style={{
+                          height: heightPx,
+                          background: active
+                            ? 'linear-gradient(180deg, #00FFC8 0%, #00C4A0 100%)'
+                            : value > 0
+                              ? 'linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.25) 100%)'
+                              : 'rgba(255,255,255,0.05)',
+                          boxShadow: active ? '0 0 24px rgba(0,255,200,0.35), 0 4px 12px rgba(0,255,200,0.2)' : 'none',
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-between mt-3">
+                  {velocityBars.map(({ day, active, value }) => (
+                    <span
+                      key={day}
+                      className="flex-1 text-center text-[10px] uppercase tracking-widest font-bold transition-colors duration-200"
+                      style={{ color: active ? '#00FFC8' : value > 0 ? '#71717a' : '#3f3f46' }}
+                    >
+                      {day}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 4 · Recent Acquisitions — lg row 2 right ──────────────── */}
+            <motion.div variants={item} className="lg:col-span-5 glass-panel p-8 rounded-[2rem]">
+              <div className="flex justify-between items-center mb-7">
+                <h3 className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  Recent Acquisitions
+                </h3>
+                <button
+                  onClick={() => navigate('/library')}
+                  className="text-[10px] font-bold uppercase tracking-widest hover:underline transition-colors"
+                  style={{ color: '#00FFC8' }}
+                >
+                  View All
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {recentWords.length === 0 ? (
+                  <div className="text-center py-12 text-zinc-600">
+                    <p className="text-sm">No words yet. Add your first word!</p>
+                  </div>
+                ) : (
+                  recentWords.map((word) => {
+                    const stats = wordStats.find(s => s.word_id === word.id);
+                    const mastery = stats ? Math.min(Math.round((stats.stability / 30) * 100), 100) : 0;
+                    const isStar = !!(stats && stats.state === 2 && stats.stability >= 21);
+
+                    return (
+                      <div
+                        key={word.id}
+                        onClick={() => navigate(`/library?word=${word.id}`)}
+                        className="p-5 rounded-2xl cursor-pointer transition-all duration-200"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0,255,200,0.25)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.06)'; }}
+                      >
+                        <div className="flex justify-between items-start mb-1.5">
+                          <h4
+                            className="text-xl font-bold text-white leading-tight"
+                            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                          >
+                            {word.word}
+                          </h4>
+                          <div className="flex items-center gap-2 shrink-0 ml-3">
+                            {stats && <EaseBadge difficulty={stats.difficulty} />}
+                            <span style={{ color: isStar ? '#00FFC8' : '#3f3f46', fontSize: 16 }}>★</span>
+                          </div>
+                        </div>
+
+                        <p className="text-zinc-500 text-xs leading-relaxed mb-3 line-clamp-1">
+                          {word.definition}
+                        </p>
+
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 h-[3px] rounded-full bg-zinc-800 overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{ width: `${mastery}%`, background: '#00FFC8' }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-zinc-600 font-bold">{mastery}%</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </motion.div>
+
           </div>
           )}
           {/* end grid */}
 
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {showJourney && (
+          <IdentityJourneyMap
+            currentDay={Math.max(1, streak)}
+            onClose={() => setShowJourney(false)}
+          />
+        )}
+      </AnimatePresence>
     </AppLayout>
   );
 }

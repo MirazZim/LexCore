@@ -36,21 +36,13 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
     ? Math.round((Date.now() - new Date(sessionStartedAt).getTime()) / 1000 / results.length)
     : 0;
 
-  const dateKey   = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-  const activeDays = new Set([
-    ...reviewSessions.map(s => dateKey(new Date(s.started_at))),
-    dateKey(new Date()), // current session always counts
-  ]).size;
-  const identity    = getIdentity(activeDays);
-  const progressPct = identity ? Math.round(identity.progress * 100) : 0;
-  const daysToNext  = identity?.next ? identity.next.from - identity.daysIn : 0;
-
   const streak = useMemo(() => {
-    if (reviewSessions.length === 0) return 0;
     const dateKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-    const sessionDates = [...new Set(
-      reviewSessions.map(s => dateKey(new Date(s.started_at)))
-    )].sort().reverse();
+    // Always include today — the session was just completed even if the DB save hasn't reflected yet
+    const sessionDates = [...new Set([
+      ...reviewSessions.map(s => dateKey(new Date(s.started_at))),
+      dateKey(new Date()),
+    ])].sort().reverse();
     const today        = new Date();
     const todayKey     = dateKey(today);
     const yesterday    = new Date(today);
@@ -66,6 +58,10 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
     }
     return count;
   }, [reviewSessions]);
+
+  const identity    = getIdentity(Math.max(1, streak));
+  const progressPct = Math.round(identity.progress * 100);
+  const daysToNext  = identity.next ? identity.next.from - identity.daysIn : 0;
 
   useEffect(() => {
     if (!savedRef.current) {
