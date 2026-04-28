@@ -6,7 +6,7 @@ const IDENTITIES = [
   { id: 'apprentice',    title: 'Apprentice',    dayStart: 1,   dayEnd: 7,   image: '/Apprentice.webp'      },
   { id: 'scribe',        title: 'Scribe',        dayStart: 8,   dayEnd: 20,  image: '/Scribe.webp'          },
   { id: 'scholar',       title: 'Scholar',       dayStart: 21,  dayEnd: 45,  image: '/Scholar.webp'         },
-  { id: 'rhetorician',   title: 'Rhetorician',   dayStart: 46,  dayEnd: 75,  image: '/Rhetorician%20.webp'  },
+  { id: 'rhetorician',   title: 'Rhetorician',   dayStart: 46,  dayEnd: 75,  image: '/Rhetorician.webp'     },
   { id: 'lexicographer', title: 'Lexicographer', dayStart: 76,  dayEnd: 120, image: '/Lexicographer.webp'   },
   { id: 'philologist',   title: 'Philologist',   dayStart: 121, dayEnd: 200, image: '/Philologist.webp'     },
   { id: 'etymologist',   title: 'Etymologist',   dayStart: 201, dayEnd: 365, image: '/Etymologist.webp'     },

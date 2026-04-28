@@ -10,7 +10,7 @@ export const TITLES: Title[] = [
   { name: 'Apprentice',    image: '/Apprentice.webp',       from: 1,   to: 7    },
   { name: 'Scribe',        image: '/Scribe.webp',           from: 8,   to: 20   },
   { name: 'Scholar',       image: '/Scholar.webp',          from: 21,  to: 45   },
-  { name: 'Rhetorician',   image: '/Rhetorician%20.webp',   from: 46,  to: 75   },
+  { name: 'Rhetorician',   image: '/Rhetorician.webp',      from: 46,  to: 75   },
   { name: 'Lexicographer', image: '/Lexicographer.webp',    from: 76,  to: 120  },
   { name: 'Philologist',   image: '/Philologist.webp',      from: 121, to: 200  },
   { name: 'Etymologist',   image: '/Etymologist.webp',      from: 201, to: 365  },
