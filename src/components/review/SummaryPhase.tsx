@@ -57,19 +57,30 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
 
         {/* Title */}
         <motion.div variants={item} className="text-center pt-4">
-          <div
-            className="inline-flex items-center gap-2 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.3em] mb-4"
-            style={{ background: 'rgba(0,255,200,0.1)', color: '#00FFC8' }}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 16 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.3em] mb-5"
+            style={{ background: 'rgba(0,255,200,0.1)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.2)' }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#00FFC8] animate-pulse" />
             Session Complete
-          </div>
-          <h1
-            className="text-4xl font-bold text-white"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          </motion.div>
+          <motion.h1
+            initial={{ opacity: 0, y: 16, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 180, damping: 18, delay: 0.08 }}
+            className="text-5xl font-bold"
+            style={{
+              fontFamily: "'Space Grotesk', sans-serif",
+              background: 'linear-gradient(120deg, #00FFC8 0%, #38bdf8 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
           >
-            Well done!
-          </h1>
+            Well done.
+          </motion.h1>
         </motion.div>
 
         {/* Stats bento */}
@@ -78,8 +89,14 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
             { label: 'Reviewed', value: results.length, color: '#fff' },
             { label: 'Accuracy', value: `${accuracy}%`, color: '#00FFC8' },
             { label: 'XP Earned', value: xpEarned, color: '#f97316' },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="rv-glass rounded-2xl p-5 flex flex-col items-center gap-1">
+          ].map(({ label, value, color }, i) => (
+            <motion.div
+              key={label}
+              initial={{ opacity: 0, scale: 0.7, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 220, damping: 18, delay: 0.15 + i * 0.08 }}
+              className="rv-glass rounded-2xl p-5 flex flex-col items-center gap-1"
+            >
               <span
                 className="text-3xl font-bold"
                 style={{ color, fontFamily: "'Space Grotesk', sans-serif" }}
@@ -87,7 +104,7 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
                 {value}
               </span>
               <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">{label}</span>
-            </div>
+            </motion.div>
           ))}
         </motion.div>
 

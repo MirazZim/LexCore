@@ -509,7 +509,7 @@ export default function ReviewPage() {
     );
   }
 
-  const handleRate = async (rating: Rating) => {
+  const handleRate = async (rating: Rating, confidence: 'sure' | 'unsure' | null) => {
     if (!currentItem) return;
 
     const cardBefore = dbStateToCard(currentItem.stats);
@@ -519,6 +519,7 @@ export default function ReviewPage() {
       wordId: currentItem.word.id,
       rating,
       cardBefore,
+      confidence,
     });
 
     setResults(prev => [...prev, {

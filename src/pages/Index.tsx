@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Brain, Clock, Flame, Moon, Sparkles, ArrowRight, MoreHorizontal } from 'lucide-react';
+import { BookOpen, Brain, Clock, Flame, Moon, Sparkles, ArrowRight, MoreHorizontal, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EaseBadge } from '@/components/EaseBadge';
-import { useWords, useWordStats, useDueWords, useReviewSessions } from '@/hooks/useWords';
+import { useWords, useWordStats, useDueWords, useReviewSessions, useCalibration } from '@/hooks/useWords';
 import { useAuth } from '@/contexts/AuthContext';
 import { seedWordsIfEmpty } from '@/lib/seed-words';
 
@@ -16,7 +16,7 @@ const container = {
 };
 const item = {
   hidden: { opacity: 0, y: 10 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
 };
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -114,6 +114,13 @@ export default function Dashboard() {
     const max = Math.max(...bars.map(b => b.value), 1);
     return bars.map(b => ({ ...b, heightPx: Math.max(Math.round((b.value / max) * 128), 6) }));
   }, [reviewSessions]);
+
+  /* ── Calibration (from DB) ──────────────────────────────────────── */
+  const { data: cal } = useCalibration();
+  const sureTotal = cal?.sureTotal ?? 0;
+  const sureCorrect = cal?.sureCorrect ?? 0;
+  const calibrationPct = sureTotal > 0 ? Math.round((sureCorrect / sureTotal) * 100) : 0;
+  const calibrationColor = calibrationPct >= 70 ? '#00FFC8' : calibrationPct >= 50 ? '#fbbf24' : '#ef4444';
 
   /* ── Recent words ────────────────────────────────────────────────── */
   const recentWords = [...words]
@@ -258,7 +265,7 @@ export default function Dashboard() {
             <div className="lg:col-span-7 space-y-8">
 
               {/* ── Bento stats ──────────────────────────────────────── */}
-              <motion.div variants={item} className="grid grid-cols-3 gap-4">
+              <motion.div variants={item} className="grid grid-cols-2 gap-4">
 
                 {/* Total Words */}
                 <div className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors col-span-1">
@@ -308,6 +315,28 @@ export default function Dashboard() {
                         style={{ width: `${masteredPct}%`, background: '#00FFC8' }}
                       />
                     </div>
+                  </div>
+                </div>
+                {/* Calibration */}
+                <div className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors col-span-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Gut Check Score</span>
+                    <Target className="h-4 w-4 text-zinc-600" />
+                  </div>
+                  <div>
+                    {sureTotal >= 5 ? (
+                      <>
+                        <span className="text-5xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif", color: calibrationColor }}>
+                          {calibrationPct}%
+                        </span>
+                        <p className="text-zinc-500 text-xs mt-1">{sureCorrect}/{sureTotal} "sure" correct</p>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-5xl font-bold text-zinc-700" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>—</span>
+                        <p className="text-zinc-600 text-xs mt-1">{sureTotal}/5 bets to unlock</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </motion.div>

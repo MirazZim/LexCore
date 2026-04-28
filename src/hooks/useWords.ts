@@ -259,8 +259,9 @@ export function useUpdateWordStats() {
     mutationFn: async (update: {
       wordStatsId: string;
       wordId: string;
-      rating: Rating;      // 1..4
-      cardBefore: Card;    // snapshot from current DB state
+      rating: Rating;
+      cardBefore: Card;
+      confidence?: 'sure' | 'unsure' | null;
     }) => {
       const now = new Date();
       const scheduler = createScheduler({
@@ -310,6 +311,7 @@ export function useUpdateWordStats() {
           stability_after: cardAfter.stability,
           difficulty_after: cardAfter.difficulty,
           scheduled_days_after: cardAfter.scheduled_days,
+          confidence: update.confidence ?? null,
         });
       if (logError) throw logError;
     },
@@ -345,6 +347,29 @@ export function useSaveReviewSession() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['review_sessions'] });
+    },
+  });
+}
+
+export function useCalibration() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['calibration', user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('review_events')
+        .select('confidence, rating')
+        .eq('user_id', user!.id)
+        .not('confidence', 'is', null);
+      if (error) throw error;
+      let sureTotal = 0, sureCorrect = 0, guessTotal = 0, guessCorrect = 0;
+      for (const e of data ?? []) {
+        const correct = e.rating !== 1;
+        if (e.confidence === 'sure') { sureTotal++; if (correct) sureCorrect++; }
+        else { guessTotal++; if (correct) guessCorrect++; }
+      }
+      return { sureTotal, sureCorrect, guessTotal, guessCorrect };
     },
   });
 }

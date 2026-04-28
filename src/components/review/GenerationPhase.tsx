@@ -309,15 +309,29 @@ export function GenerationPhase({
         transition={{ duration: 0.3 }}
       >
         <div className="rv-glass rounded-[2rem] p-8 mt-4">
-          <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 mb-2">
-            Generation Lab
-          </p>
-          <h2
-            className="text-3xl font-bold mb-1"
-            style={{ color: '#00FFC8', fontFamily: "'Space Grotesk', sans-serif" }}
+          <div className="mb-5">
+            <span
+              className="text-[9px] uppercase tracking-[0.25em] font-bold px-2.5 py-1 rounded-full"
+              style={{ background: 'rgba(251,191,36,0.07)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.18)' }}
+            >
+              ✍ Generation Lab
+            </span>
+          </div>
+          <motion.h2
+            initial={{ opacity: 0, scale: 0.82, filter: 'blur(8px)' }}
+            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            transition={{ type: 'spring', stiffness: 180, damping: 18, delay: 0.06 }}
+            className="font-bold leading-none select-none mb-2"
+            style={{
+              fontSize: 'clamp(2.2rem, 7vw, 3.2rem)',
+              color: '#fbbf24',
+              fontFamily: "'Space Grotesk', sans-serif",
+              textShadow: '0 0 32px rgba(251,191,36,0.22)',
+              letterSpacing: '-0.01em',
+            }}
           >
             {currentItem.word.word}
-          </h2>
+          </motion.h2>
           <p className="text-zinc-400 text-sm mb-6">{currentItem.word.definition}</p>
 
           {/* Connector buttons */}
@@ -380,9 +394,9 @@ export function GenerationPhase({
 
               {aiFeedback && verdict && (
                 <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ opacity: 0, scale: 0.95, y: 16 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                   className="rounded-xl p-5 space-y-3"
                   style={{ background: verdict.bg, border: `1px solid ${verdict.border}` }}
                 >
@@ -393,12 +407,15 @@ export function GenerationPhase({
                     >
                       {verdict.label}
                     </span>
-                    <span
-                      className="text-2xl font-bold"
+                    <motion.span
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: 'spring', stiffness: 260, damping: 14, delay: 0.1 }}
+                      className="text-3xl font-bold"
                       style={{ color: verdict.color, fontFamily: "'Space Grotesk', sans-serif" }}
                     >
                       {aiFeedback.score}<span className="text-base text-zinc-500">/10</span>
-                    </span>
+                    </motion.span>
                   </div>
                   <p className="text-sm text-zinc-300">
                     <span className="font-semibold" style={{ color: '#00FFC8' }}>What worked: </span>
