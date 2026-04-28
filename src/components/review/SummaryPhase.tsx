@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { useSaveReviewSession } from '@/hooks/useWords';
+import { Flame } from 'lucide-react';
+import { useSaveReviewSession, useReviewSessions } from '@/hooks/useWords';
 import { RV_STYLES } from '@/pages/ReviewPage';
+import { getIdentity } from '@/lib/identity';
 import type { ReviewResult } from './types';
 
 interface SummaryPhaseProps {
@@ -11,177 +12,265 @@ interface SummaryPhaseProps {
   sessionStartedAt: string;
 }
 
-const container = {
-  hidden: { opacity: 0 },
-  show:   { opacity: 1, transition: { staggerChildren: 0.1 } },
-};
-const item = {
-  hidden: { opacity: 0, y: 16 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.4 } },
-};
-
-const qualityDist = (results: ReviewResult[]) => [
-  { name: 'Again', count: results.filter(r => r.quality === 0).length, fill: '#ef4444' },
-  { name: 'Hard',  count: results.filter(r => r.quality === 2).length, fill: '#f97316' },
-  { name: 'Good',  count: results.filter(r => r.quality === 4).length, fill: '#3b82f6' },
-  { name: 'Easy',  count: results.filter(r => r.quality === 5).length, fill: '#00FFC8' },
+const QUALITY_LABELS = [
+  { quality: 0, label: 'Again', color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
+  { quality: 2, label: 'Hard',  color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
+  { quality: 4, label: 'Good',  color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
+  { quality: 5, label: 'Easy',  color: '#00FFC8', bg: 'rgba(0,255,200,0.12)' },
 ];
 
+const fade = (delay = 0) => ({
+  hidden: { opacity: 0, y: 16 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const, delay } },
+});
+
 export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
-  const navigate = useNavigate();
+  const navigate    = useNavigate();
   const saveSession = useSaveReviewSession();
-  const savedRef = useRef(false);
+  const savedRef    = useRef(false);
+  const { data: reviewSessions = [] } = useReviewSessions();
 
   const correctCount = results.filter(r => r.correct).length;
-  const accuracy = results.length > 0 ? Math.round((correctCount / results.length) * 100) : 0;
-  const xpEarned = correctCount * 10;
-  const dist = qualityDist(results);
+  const accuracy     = results.length > 0 ? Math.round((correctCount / results.length) * 100) : 0;
+  const avgTimeSec   = results.length > 0
+    ? Math.round((Date.now() - new Date(sessionStartedAt).getTime()) / 1000 / results.length)
+    : 0;
+
+  const dateKey   = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  const activeDays = new Set([
+    ...reviewSessions.map(s => dateKey(new Date(s.started_at))),
+    dateKey(new Date()), // current session always counts
+  ]).size;
+  const identity    = getIdentity(activeDays);
+  const progressPct = identity ? Math.round(identity.progress * 100) : 0;
+  const daysToNext  = identity?.next ? identity.next.from - identity.daysIn : 0;
+
+  const streak = useMemo(() => {
+    if (reviewSessions.length === 0) return 0;
+    const dateKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    const sessionDates = [...new Set(
+      reviewSessions.map(s => dateKey(new Date(s.started_at)))
+    )].sort().reverse();
+    const today        = new Date();
+    const todayKey     = dateKey(today);
+    const yesterday    = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = dateKey(yesterday);
+    if (sessionDates[0] !== todayKey && sessionDates[0] !== yesterdayKey) return 0;
+    let count = 0;
+    const check = new Date(today);
+    if (sessionDates[0] !== todayKey) check.setDate(check.getDate() - 1);
+    for (let i = 0; i < 365; i++) {
+      if (sessionDates.includes(dateKey(check))) { count++; check.setDate(check.getDate() - 1); }
+      else break;
+    }
+    return count;
+  }, [reviewSessions]);
 
   useEffect(() => {
     if (!savedRef.current) {
       savedRef.current = true;
       saveSession.mutate({
-        started_at: sessionStartedAt,
+        started_at:     sessionStartedAt,
         words_reviewed: results.length,
-        words_correct: correctCount,
-        session_type: 'battle',
+        words_correct:  correctCount,
+        session_type:   'battle',
       });
     }
   }, []);
 
   return (
-    <div className="min-h-screen px-4 pt-8 pb-24 max-w-lg mx-auto">
+    <div className="min-h-screen pb-28" style={{ background: '#07060a' }}>
       <style>{RV_STYLES}</style>
+      <style>{`
+        .id-card {
+          background: linear-gradient(180deg, #0d0a07 0%, #110e0a 100%);
+          border: 1px solid rgba(180,140,55,0.32);
+          box-shadow:
+            inset 0 1px 0 rgba(255,210,100,0.07),
+            0 32px 80px rgba(0,0,0,0.7),
+            0 0 60px rgba(150,110,30,0.1);
+        }
+        .id-divider { border-top: 1px solid rgba(180,140,55,0.18); }
+        .gold-text {
+          background: linear-gradient(120deg, #c8922a 0%, #f0c96a 55%, #c08828 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .gold-bar {
+          background: linear-gradient(90deg, #c8922a 0%, #f0c96a 100%);
+          box-shadow: 0 0 10px rgba(210,155,50,0.45);
+        }
+      `}</style>
 
-      <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0 } } }}
+        className="max-w-lg mx-auto px-4 pt-10 space-y-6"
+      >
 
-        {/* Title */}
-        <motion.div variants={item} className="text-center pt-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 16 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.3em] mb-5"
-            style={{ background: 'rgba(0,255,200,0.1)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.2)' }}
+        {/* ── 1. Hero Header ─────────────────────────────────────────── */}
+        <motion.div variants={fade(0)} className="text-center">
+          <div
+            className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.3em] mb-4"
+            style={{ background: 'rgba(0,255,200,0.07)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.16)' }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#00FFC8] animate-pulse" />
             Session Complete
-          </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: 16, scale: 0.92 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ type: 'spring', stiffness: 180, damping: 18, delay: 0.08 }}
-            className="text-5xl font-bold"
-            style={{
-              fontFamily: "'Space Grotesk', sans-serif",
-              background: 'linear-gradient(120deg, #00FFC8 0%, #38bdf8 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
+          </div>
+          <h1
+            className="text-[2.6rem] font-bold text-white leading-[1.1] tracking-tight"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
-            Well done.
-          </motion.h1>
+            You&apos;re becoming<br />someone.
+          </h1>
+          <p className="mt-3 text-zinc-500 text-sm">
+            Day {identity?.daysIn ?? 1} of your journey
+          </p>
         </motion.div>
 
-        {/* Stats bento */}
-        <motion.div variants={item} className="grid grid-cols-3 gap-3">
-          {[
-            { label: 'Reviewed', value: results.length, color: '#fff' },
-            { label: 'Accuracy', value: `${accuracy}%`, color: '#00FFC8' },
-            { label: 'XP Earned', value: xpEarned, color: '#f97316' },
-          ].map(({ label, value, color }, i) => (
-            <motion.div
-              key={label}
-              initial={{ opacity: 0, scale: 0.7, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 220, damping: 18, delay: 0.15 + i * 0.08 }}
-              className="rv-glass rounded-2xl p-5 flex flex-col items-center gap-1"
+        {/* ── 2. Identity Card ───────────────────────────────────────── */}
+        {identity && (
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 28, scale: 0.96 },
+              show:   { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay: 0.08 } },
+            }}
+            className="id-card rounded-[2rem] overflow-hidden"
+          >
+            {/* Fresco image — full illustration, no crop */}
+            <div
+              className="w-full flex items-center justify-center"
+              style={{ height: 320, background: '#0c0907' }}
             >
-              <span
-                className="text-3xl font-bold"
-                style={{ color, fontFamily: "'Space Grotesk', sans-serif" }}
-              >
-                {value}
-              </span>
-              <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">{label}</span>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Quality distribution chart */}
-        <motion.div variants={item} className="rv-glass rounded-[2rem] p-7">
-          <h3 className="text-base font-bold text-white mb-5" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            Quality Distribution
-          </h3>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={dist} barCategoryGap="35%">
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize: 11, fill: '#52525b', fontWeight: 700 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                allowDecimals={false}
-                tick={{ fontSize: 11, fill: '#52525b' }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(24,24,27,0.95)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: '0.75rem',
-                  color: '#fff',
+              <img
+                src={identity.current.image}
+                alt={identity.current.name}
+                style={{
+                  display:    'block',
+                  maxHeight:  '100%',
+                  maxWidth:   '100%',
+                  width:      'auto',
+                  height:     'auto',
+                  objectFit:  'contain',
                 }}
-                cursor={{ fill: 'rgba(255,255,255,0.04)' }}
               />
-              <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                {dist.map((entry, idx) => (
-                  <Cell key={idx} fill={entry.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </motion.div>
+            </div>
 
-        {/* Word-by-word list */}
-        {results.length > 0 && (
-          <motion.div variants={item} className="rv-glass rounded-[2rem] p-7">
-            <h3 className="text-base font-bold text-white mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              Words Reviewed
-            </h3>
-            <div className="space-y-2">
-              {results.map((r, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between py-2 px-1"
-                  style={{ borderBottom: i < results.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}
+            {/* Title + progress */}
+            <div className="id-divider px-7 py-6">
+              <div className="flex items-baseline justify-between mb-4">
+                <span
+                  className="gold-text text-[1.65rem] font-bold tracking-tight"
+                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                 >
-                  <span className="text-white font-medium">{r.word}</span>
-                  <span
-                    className="text-xs font-bold px-2 py-0.5 rounded-full"
-                    style={
-                      r.quality === 5
-                        ? { background: 'rgba(0,255,200,0.1)', color: '#00FFC8' }
-                        : r.quality === 4
-                        ? { background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }
-                        : r.quality === 2
-                        ? { background: 'rgba(249,115,22,0.1)', color: '#f97316' }
-                        : { background: 'rgba(239,68,68,0.1)', color: '#ef4444' }
-                    }
-                  >
-                    {r.quality === 5 ? 'Easy' : r.quality === 4 ? 'Good' : r.quality === 2 ? 'Hard' : 'Again'}
-                  </span>
-                </div>
-              ))}
+                  {identity.current.name}
+                </span>
+                <span className="text-zinc-500 text-sm font-medium tabular-nums">
+                  Day {identity.daysIn}
+                </span>
+              </div>
+
+              <div
+                className="h-1.5 w-full rounded-full overflow-hidden"
+                style={{ background: 'rgba(255,255,255,0.05)' }}
+              >
+                <div
+                  className="gold-bar h-full rounded-full transition-all duration-700"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+
+              <p
+                className="mt-2.5 text-[11px] font-semibold tracking-wide"
+                style={{ color: 'rgba(192,148,60,0.75)' }}
+              >
+                {identity.next
+                  ? `${daysToNext} day${daysToNext === 1 ? '' : 's'} to ${identity.next.name}`
+                  : "You've reached the highest title"}
+              </p>
             </div>
           </motion.div>
         )}
 
-        {/* CTA */}
-        <motion.div variants={item}>
+        {/* ── 3. Stats row ──────────────────────────────────────────── */}
+        <motion.div variants={fade(0.18)} className="flex gap-3">
+          {[
+            { label: 'Words Reviewed', value: String(results.length) },
+            { label: 'Accuracy',       value: `${accuracy}%`         },
+            { label: 'Avg Time',       value: `${avgTimeSec}s`       },
+          ].map(({ label, value }) => (
+            <div
+              key={label}
+              className="flex-1 flex flex-col items-center gap-1 py-4 rounded-2xl"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <span
+                className="text-2xl font-bold text-white"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                {value}
+              </span>
+              <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-600">{label}</span>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* ── 4. Quality distribution ───────────────────────────────── */}
+        <motion.div
+          variants={fade(0.26)}
+          className="rounded-[1.5rem] px-6 py-5"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-600 mb-4">
+            Rating Breakdown
+          </p>
+          <div className="flex gap-2">
+            {QUALITY_LABELS.map(({ quality, label, color, bg }) => {
+              const count = results.filter(r => r.quality === quality).length;
+              return (
+                <div
+                  key={quality}
+                  className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl"
+                  style={{
+                    background: count > 0 ? bg : 'rgba(255,255,255,0.02)',
+                    border: `1px solid ${count > 0 ? color + '33' : 'rgba(255,255,255,0.04)'}`,
+                  }}
+                >
+                  <span
+                    className="text-xl font-bold"
+                    style={{ fontFamily: "'Space Grotesk', sans-serif", color: count > 0 ? color : '#3f3f46' }}
+                  >
+                    {count}
+                  </span>
+                  <span
+                    className="text-[9px] uppercase tracking-wider font-bold"
+                    style={{ color: count > 0 ? color : '#3f3f46' }}
+                  >
+                    {label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* ── 5. Streak ─────────────────────────────────────────────── */}
+        {streak > 0 && (
+          <motion.div
+            variants={fade(0.34)}
+            className="flex items-center justify-center gap-2"
+          >
+            <Flame className="h-4 w-4 shrink-0" style={{ color: '#f97316' }} />
+            <span className="text-sm font-bold text-white">{streak}</span>
+            <span className="text-sm text-zinc-500">day streak</span>
+          </motion.div>
+        )}
+
+        {/* ── CTA ───────────────────────────────────────────────────── */}
+        <motion.div variants={fade(0.42)}>
           <button
             onClick={() => navigate('/')}
             disabled={saveSession.isPending}
