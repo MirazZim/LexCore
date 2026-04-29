@@ -4,9 +4,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ArrowLeft, X, Sparkles, Loader2, Briefcase, MessageCircle, Sun, GraduationCap, BookPlus, RotateCcw, Zap } from 'lucide-react';
+import { ArrowLeft, X, Sparkles, Loader2, Briefcase, MessageCircle, Sun, GraduationCap, BookPlus, RotateCcw, Zap, Brain } from 'lucide-react';
 import { useAddWord } from '@/hooks/useWords';
-import { generateDefinition, generateExampleSentences, generateCollocations, generateWord, generateSynonyms } from '@/lib/llm';
+import { generateDefinition, generateExampleSentences, generateCollocations, generateWord, generateSynonyms, generateMemoryTrick } from '@/lib/llm';
 import type { GenerationStyle } from '@/lib/llm';
 import type { Register } from '@/lib/types';
 
@@ -56,6 +56,9 @@ export default function AddWordPage() {
   const [synonyms, setSynonyms] = useState<string[]>([]);
   const [synonymInput, setSynonymInput] = useState('');
   const [loadingSynonyms, setLoadingSynonyms] = useState(false);
+  type MemoryTrick = { technique: string; breakdown: string; clarification: string };
+  const [memoryTrick, setMemoryTrick] = useState<MemoryTrick | null>(null);
+  const [loadingMemoryTrick, setLoadingMemoryTrick] = useState(false);
   const [loadingAutofill, setLoadingAutofill] = useState(false);
   const addWord = useAddWord();
 
@@ -116,18 +119,30 @@ export default function AddWordPage() {
     finally { setLoadingSynonyms(false); }
   };
 
+  const handleAutoMemoryTrick = async () => {
+    if (!word.trim()) { toast.error('Enter a word first'); return; }
+    if (!definition.trim()) { toast.error('Add a definition first'); return; }
+    setLoadingMemoryTrick(true);
+    try {
+      setMemoryTrick(await generateMemoryTrick(word.trim(), definition.trim()));
+      toast.success('Memory trick generated!');
+    } catch { toast.error('Failed to generate memory trick'); }
+    finally { setLoadingMemoryTrick(false); }
+  };
+
   const handleAutofillAll = async () => {
     if (!word.trim()) { toast.error('Enter a word first'); return; }
     setLoadingAutofill(true);
     try {
       const result = await generateDefinition(word.trim(), generationStyle);
       setDefinition(result.definition);
-      const [sentences, syns, cols] = await Promise.all([
+      const [sentences, syns, cols, trick] = await Promise.all([
         generateExampleSentences(word.trim(), result.definition, generationStyle),
         generateSynonyms(word.trim(), result.definition, generationStyle),
         generateCollocations(word.trim(), result.definition, generationStyle),
+        generateMemoryTrick(word.trim(), result.definition),
       ]);
-      setExampleSentence(sentences[0]); setSynonyms(syns); setCollocations(cols);
+      setExampleSentence(sentences[0]); setSynonyms(syns); setCollocations(cols); setMemoryTrick(trick);
       toast.success('All fields filled!');
     } catch { toast.error('Autofill failed'); }
     finally { setLoadingAutofill(false); }
@@ -157,12 +172,13 @@ export default function AddWordPage() {
       await addWord.mutateAsync({
         word: word.trim(), definition: definition.trim(),
         example_sentence: exampleSentence.trim() || undefined,
+        emotion_anchor: memoryTrick ? `${memoryTrick.breakdown}\n${memoryTrick.clarification}` : undefined,
         register, collocations, synonyms,
       });
       toast.success(`"${word}" added to your library!`, {
         action: { label: 'Go to Library', onClick: () => navigate('/library') },
       });
-      setWord(''); setDefinition(''); setExampleSentence('');
+      setWord(''); setDefinition(''); setExampleSentence(''); setMemoryTrick(null);
       setCollocations([]); setCollocationInput('');
       setSynonyms([]); setSynonymInput(''); setSuggestedWords([]);
     } catch (err: unknown) {
@@ -400,6 +416,71 @@ export default function AddWordPage() {
                   </div>
                   <textarea className="aw-textarea" placeholder="What does this word mean?"
                     value={definition} onChange={e => setDefinition(e.target.value)} required />
+                </motion.div>
+
+                {/* Memory Trick */}
+                <motion.div variants={item} className="aw-card flex flex-col gap-3 flex-shrink-0">
+                  <div className="flex items-center justify-between flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                      <Brain className="h-3.5 w-3.5" style={{ color: '#fbbf24' }} />
+                      <span className="slabel">Memory Trick</span>
+                      {memoryTrick && (() => {
+                        const labels: Record<string, { label: string; icon: string }> = {
+                          phonetic_split:  { label: 'Phonetic Split',  icon: '🔤' },
+                          root_hook:       { label: 'Root Hook',       icon: '🌱' },
+                          sound_alike:     { label: 'Sound-Alike',     icon: '🔊' },
+                          micro_story:     { label: 'Micro Story',     icon: '📖' },
+                          formula:         { label: 'Formula',         icon: '⚡' },
+                          contrast_anchor: { label: 'Contrast',        icon: '↔️' },
+                          analogy_bridge:  { label: 'Analogy',         icon: '🔗' },
+                        };
+                        const t = labels[memoryTrick.technique];
+                        return t ? (
+                          <span className="text-[9px] px-2 py-0.5 rounded-full font-bold"
+                            style={{ background: 'rgba(251,191,36,.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,.2)' }}>
+                            {t.icon} {t.label}
+                          </span>
+                        ) : null;
+                      })()}
+                    </div>
+                    <button type="button" onClick={handleAutoMemoryTrick}
+                      disabled={loadingMemoryTrick || loadingAutofill || !word.trim() || !definition.trim()} className="retry-btn">
+                      {loadingMemoryTrick ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
+                      {loadingMemoryTrick ? 'Creating…' : memoryTrick ? 'Try Again' : 'Generate'}
+                    </button>
+                  </div>
+
+                  {/* Loading skeleton */}
+                  {loadingMemoryTrick && (
+                    <div className="rounded-xl p-3 flex flex-col gap-2 animate-pulse"
+                      style={{ background: 'rgba(251,191,36,.04)', border: '1.5px solid rgba(251,191,36,.12)', minHeight: 76 }}>
+                      <div className="h-3 rounded-full" style={{ background: 'rgba(251,191,36,.15)', width: '72%' }} />
+                      <div className="h-3 rounded-full" style={{ background: 'rgba(251,191,36,.08)', width: '88%' }} />
+                    </div>
+                  )}
+
+                  {/* Empty state */}
+                  {!loadingMemoryTrick && !memoryTrick && (
+                    <div className="rounded-xl flex items-center justify-center"
+                      style={{ minHeight: 76, background: 'rgba(255,255,255,.015)', border: '1.5px dashed rgba(255,255,255,.06)' }}>
+                      <span className="text-xs text-center px-4" style={{ color: '#3f3f46' }}>
+                        Hit <span style={{ color: '#52525b' }}>Generate</span> after adding a definition
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Content */}
+                  {!loadingMemoryTrick && memoryTrick && (
+                    <div className="rounded-xl p-3 flex flex-col gap-1.5"
+                      style={{ background: 'rgba(251,191,36,.05)', border: '1.5px solid rgba(251,191,36,.2)' }}>
+                      <p className="text-sm font-semibold leading-snug" style={{ color: '#fde68a' }}>
+                        {memoryTrick.breakdown}
+                      </p>
+                      <p className="text-xs leading-snug" style={{ color: '#71717a' }}>
+                        {memoryTrick.clarification}
+                      </p>
+                    </div>
+                  )}
                 </motion.div>
 
                 {/* Example */}

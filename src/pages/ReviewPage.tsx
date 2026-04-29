@@ -13,6 +13,7 @@ import { CollocationPhase } from '@/components/review/CollocationPhase';
 import { GenerationPhase } from '@/components/review/GenerationPhase';
 import { SummaryPhase } from '@/components/review/SummaryPhase';
 import { SynonymsPhase } from '@/components/review/SynonymsPhase';
+import { MemoryTrickPhase } from '@/components/review/MemoryTrickPhase';
 import type { ReviewPhase, ReviewResult, AiFeedback, WordContext, WordCollocation } from '@/components/review/types';
 import { scoreSentence, generateClozeSentence } from '@/lib/llm';
 
@@ -526,10 +527,12 @@ export default function ReviewPage() {
       wordId: currentItem.word.id,
       word: currentItem.word.word,
       quality: rating,
-      correct: rating !== Rating.Again, // FSRS: anything above Again counts as successful
+      correct: rating !== Rating.Again,
     }]);
 
     setRevealed(false);
+
+    // Pre-load cloze in the background so it's ready when the learner continues past the trick phase
     if (contexts.length > 0) {
       if (contexts.length >= 2) {
         const candidates = contexts.filter(c => c.id !== lastClozeId);
@@ -549,6 +552,12 @@ export default function ReviewPage() {
           .catch(() => setClozeContext(contexts[0]))
           .finally(() => setClozeLoading(false));
       }
+    }
+
+    // Show memory trick first (if the word has one), then proceed to context/collocation/generation
+    if (currentItem.word.emotion_anchor) {
+      setPhase('memory_trick');
+    } else if (contexts.length > 0) {
       setPhase('context');
     } else if (collocations.length > 0) {
       setPhase('collocation');
@@ -556,6 +565,17 @@ export default function ReviewPage() {
       setPhase('generation');
     }
   };
+
+  const handleMemoryTrickNext = () => {
+    if (contexts.length > 0) {
+      setPhase('context');
+    } else if (collocations.length > 0) {
+      setPhase('collocation');
+    } else {
+      setPhase('generation');
+    }
+  };
+
   const handleClozeSubmit = () => setClozeSubmitted(true);
 
   const handleClozeNext = () => {
@@ -674,6 +694,14 @@ export default function ReviewPage() {
                 onRate={handleRate}
                 allWords={allWords}
                 streak={streak}
+              />
+            )}
+
+            {phase === 'memory_trick' && currentItem && (
+              <MemoryTrickPhase
+                currentItem={currentItem}
+                currentIndex={currentIndex}
+                onNext={handleMemoryTrickNext}
               />
             )}
 

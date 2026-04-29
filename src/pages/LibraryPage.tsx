@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect, type ReactNode } from 'react';
 import { motion, type Variants } from 'framer-motion';
-import { Search, Plus, Trash2, AlertTriangle, BookOpen, Clock, Sparkles, Quote, Pencil, X, Loader2 } from 'lucide-react';
+import { Search, Plus, Trash2, AlertTriangle, BookOpen, Clock, Sparkles, Pencil, X, Loader2, Brain, Lightbulb } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { EaseBadge } from '@/components/EaseBadge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useWords, useWordStats, useWordContexts, useWordCollocations, useSemanticConnections, useDeleteWord, useUpdateWord } from '@/hooks/useWords';
+import { generateMemoryTrick } from '@/lib/llm';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { currentRetrievability, dbStateToCard } from '@/lib/fsrs';
@@ -128,6 +129,8 @@ export default function LibraryPage() {
   const [editSynonyms, setEditSynonyms] = useState<string[]>([]);
   const [editCollocationInput, setEditCollocationInput] = useState('');
   const [editSynonymInput, setEditSynonymInput] = useState('');
+  const [editMemoryTrick, setEditMemoryTrick] = useState('');
+  const [loadingEditTrick, setLoadingEditTrick] = useState(false);
   const now = useMemo(() => new Date(), []);
 
   useEffect(() => {
@@ -162,9 +165,24 @@ export default function LibraryPage() {
     setEditRegister(selectedWord.register);
     setEditCollocations(selectedCollocations.map(c => c.collocation));
     setEditSynonyms(selectedConnections.filter(c => c.connection_type === 'synonym').map(c => c.connected_word));
+    setEditMemoryTrick(selectedWord.emotion_anchor ?? '');
     setEditCollocationInput('');
     setEditSynonymInput('');
     setIsEditing(true);
+  };
+
+  const handleGenerateEditTrick = async () => {
+    if (!editWord.trim() || !editDefinition.trim()) return;
+    setLoadingEditTrick(true);
+    try {
+      const result = await generateMemoryTrick(editWord.trim(), editDefinition.trim());
+      setEditMemoryTrick(`${result.breakdown}\n${result.clarification}`);
+      toast.success('Memory trick generated!');
+    } catch {
+      toast.error('Failed to generate memory trick');
+    } finally {
+      setLoadingEditTrick(false);
+    }
   };
 
   const handleUpdate = async () => {
@@ -177,6 +195,7 @@ export default function LibraryPage() {
         register: editRegister,
         collocations: editCollocations,
         synonyms: editSynonyms,
+        emotion_anchor: editMemoryTrick.trim() || null,
       });
       toast.success('Word updated');
       setIsEditing(false);
@@ -540,6 +559,66 @@ export default function LibraryPage() {
                         />
                       </div>
 
+                      {/* Memory Trick */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <Brain className="h-3 w-3" style={{ color: '#fbbf24' }} />
+                            <label className="text-[10px] uppercase tracking-widest font-bold" style={{ color: '#a16207' }}>Memory Trick</label>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleGenerateEditTrick}
+                            disabled={loadingEditTrick || !editWord.trim() || !editDefinition.trim()}
+                            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full transition-all disabled:opacity-30"
+                            style={{ background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.2)' }}
+                          >
+                            {loadingEditTrick ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                            {loadingEditTrick ? 'Generating…' : editMemoryTrick ? 'Regenerate' : 'Generate'}
+                          </button>
+                        </div>
+
+                        {loadingEditTrick && (
+                          <div className="rounded-xl p-3 flex flex-col gap-2 animate-pulse"
+                            style={{ background: 'rgba(251,191,36,0.04)', border: '1.5px solid rgba(251,191,36,0.1)', minHeight: 68 }}>
+                            <div className="h-2.5 rounded-full" style={{ background: 'rgba(251,191,36,0.15)', width: '72%' }} />
+                            <div className="h-2.5 rounded-full" style={{ background: 'rgba(251,191,36,0.08)', width: '88%' }} />
+                          </div>
+                        )}
+
+                        {!loadingEditTrick && editMemoryTrick && (() => {
+                          const nl = editMemoryTrick.indexOf('\n');
+                          const bd = nl !== -1 ? editMemoryTrick.slice(0, nl) : editMemoryTrick;
+                          const cl = nl !== -1 ? editMemoryTrick.slice(nl + 1) : '';
+                          return (
+                            <div className="rounded-xl p-3 space-y-1.5"
+                              style={{ background: 'rgba(251,191,36,0.06)', border: '1.5px solid rgba(251,191,36,0.22)' }}>
+                              <p className="text-sm font-semibold leading-snug" style={{ color: '#fde68a' }}>{bd}</p>
+                              {cl && <p className="text-xs leading-relaxed" style={{ color: '#71717a' }}>{cl}</p>}
+                              <button
+                                type="button"
+                                onClick={() => setEditMemoryTrick('')}
+                                className="text-[10px] font-bold transition-colors"
+                                style={{ color: '#52525b' }}
+                                onMouseOver={e => (e.currentTarget.style.color = '#f87171')}
+                                onMouseOut={e => (e.currentTarget.style.color = '#52525b')}
+                              >
+                                Clear
+                              </button>
+                            </div>
+                          );
+                        })()}
+
+                        {!loadingEditTrick && !editMemoryTrick && (
+                          <div className="rounded-xl flex items-center justify-center"
+                            style={{ minHeight: 64, background: 'rgba(255,255,255,0.02)', border: '1.5px dashed rgba(255,255,255,0.06)' }}>
+                            <span className="text-xs" style={{ color: '#3f3f46' }}>
+                              Hit Generate to create an AI memory trick
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Register */}
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">Register</label>
@@ -657,18 +736,31 @@ export default function LibraryPage() {
                         </p>
                       </div>
 
-                      {/* Emotion anchor — evocative pull quote */}
-                      {selectedWord.emotion_anchor && (
-                        <figure className="relative rounded-2xl bg-gradient-to-br from-[#00FFC8]/[0.06] via-transparent to-transparent border border-white/5 p-6">
-                          <Quote className="absolute top-5 left-5 h-4 w-4 text-[#00FFC8]/40" />
-                          <blockquote className="text-base italic text-zinc-100 leading-relaxed pl-8">
-                            {selectedWord.emotion_anchor}
-                          </blockquote>
-                          <figcaption className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#00FFC8]/70 mt-3 pl-8">
-                            The feeling
-                          </figcaption>
-                        </figure>
-                      )}
+                      {/* Memory Trick */}
+                      {selectedWord.emotion_anchor && (() => {
+                        const raw = selectedWord.emotion_anchor;
+                        const nl = raw.indexOf('\n');
+                        const bd = nl !== -1 ? raw.slice(0, nl) : raw;
+                        const cl = nl !== -1 ? raw.slice(nl + 1) : '';
+                        return (
+                          <div className="rounded-2xl p-5 space-y-2.5"
+                            style={{ background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.18)' }}>
+                            <div className="flex items-center gap-2">
+                              <Brain className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#fbbf24' }} />
+                              <span className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: '#fbbf24' }}>
+                                Memory Trick
+                              </span>
+                            </div>
+                            <div className="flex items-start gap-2 pl-1">
+                              <Lightbulb className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" style={{ color: '#fbbf24' }} />
+                              <p className="text-sm font-semibold leading-snug" style={{ color: '#fde68a' }}>{bd}</p>
+                            </div>
+                            {cl && (
+                              <p className="text-xs leading-relaxed pl-6" style={{ color: '#71717a' }}>{cl}</p>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {/* In the wild — examples as scenes with the word highlighted */}
                       {selectedContexts.length > 0 && (

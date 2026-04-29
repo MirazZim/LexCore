@@ -266,6 +266,92 @@ Respond ONLY with this JSON:
   return parsed.sentence
 }
 
+// --- Generate a memory trick (structured mnemonic with 7 techniques) ---
+export async function generateMemoryTrick(word: string, definition: string): Promise<{
+  technique: string;
+  breakdown: string;
+  clarification: string;
+}> {
+  const seed = Math.random().toString(36).slice(2, 8)
+  const content = await callLLM([
+    {
+      role: 'system',
+      content: `You are an expert vocabulary mnemonics coach. For every word you ALWAYS find the best memory trick using exactly one of these 7 techniques. Your goal: make the word's meaning impossible to forget.
+
+TECHNIQUE 1 — phonetic_split
+Break the word into 2–3 parts that look or sound like familiar everyday words. Use "+" for the split and "→" to show the connection to the meaning.
+✅ adept → "a + dept → like a department expert — totally skilled at their job 🎯"
+✅ eloquent → "el + o + quent → like 'a queen speaking' — expresses ideas beautifully"
+✅ relevant → "re + levan → re-elevates the topic — brings it back to what matters"
+
+TECHNIQUE 2 — root_hook
+Use a recognizable Latin, Greek, French, or Old English root, prefix, or suffix.
+✅ benevolent → "bene (like benefit, beneficial) + vol (wanting) → wanting good things for others 💚"
+✅ malevolent → "male (like malware, malfunction) + vol → actively wanting harm for others"
+✅ credible → "cred (like credit, credentials) → worthy of being believed 🔑"
+
+TECHNIQUE 3 — sound_alike
+Find a familiar word that sounds similar and build a sharp, memorable link or contrast.
+✅ arid → "sounds like 'a-rid' — rid of ALL moisture, bone dry ☀️"
+✅ fiscal → "sounds like 'physical' — the physical body of your money situation"
+✅ morose → "sounds like 'more-ose' — MORE than just sad, deeply gloomy"
+
+TECHNIQUE 4 — micro_story
+A single vivid sentence: a real character + specific action that perfectly encodes the meaning.
+✅ ostentatious → "He parks a gold Ferrari at his kid's school just so everyone stares 👀"
+✅ lethargic → "After a huge meal you sink into the sofa — heavy, slow, can't lift a finger"
+✅ meticulous → "The surgeon checks every millimeter three times before making a single cut"
+
+TECHNIQUE 5 — formula
+Express the word as a simple equation or logical structure.
+✅ ambivalent → "ambivalent = 'yes' + 'no' running in the same brain simultaneously ⚡"
+✅ procrastinate → "procrastinate = task + (tomorrow × ∞)"
+✅ bittersweet → "bittersweet = joy + sadness, inseparable"
+
+TECHNIQUE 6 — contrast_anchor
+Define sharply by what the word is NOT — the contrast locks in the exact meaning.
+✅ taciturn → "NOT shy — they simply choose not to talk 🤐"
+✅ frugal → "NOT broke — they have money, they just refuse to waste it"
+✅ assertive → "NOT aggressive — they speak up firmly without attacking anyone"
+
+TECHNIQUE 7 — analogy_bridge
+"Like [something familiar] but [the exact distinction that makes this word specific]."
+✅ renovate → "Like cleaning your house — except you're replacing walls, not just wiping them 🔨"
+✅ mentor → "Like a teacher — but personal, they chose YOU and guide you one-on-one"
+✅ collaborate → "Like working — but every decision is made together, not handed down"
+
+---
+After the trick line always add a clarification in this format:
+"👉 [One natural sentence that uses the word correctly in context.]"
+
+Selection rules:
+- Try phonetic_split first. Only skip it if the split would MISLEAD the meaning — accuracy beats cleverness
+- The trick MUST match the given definition exactly — never invent or bend a meaning to fit a trick
+- Breakdown ≤ 18 words. Clarification ≤ 16 words. One emoji in the breakdown, max.
+
+Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
+    },
+    {
+      role: 'user',
+      content: `Word: ${word}
+Definition: ${definition}
+Variation seed: ${seed}
+
+Choose the best technique for "${word}" and create a trick that perfectly matches the definition above.
+
+Respond ONLY with this JSON:
+{
+  "technique": "phonetic_split | root_hook | sound_alike | micro_story | formula | contrast_anchor | analogy_bridge",
+  "breakdown": "the mnemonic line (the actual trick)",
+  "clarification": "👉 natural sentence using the word in context"
+}`,
+    },
+  ], 0.85)
+
+  const clean = content.replace(/```json|```/g, '').trim()
+  return JSON.parse(clean)
+}
+
 // --- Auto-generate definition ---
 export async function generateDefinition(word: string, style: GenerationStyle = 'daily', excludeDefinition = ''): Promise<{
   definition: string

@@ -207,6 +207,7 @@ export function useAddWord() {
       word: string;
       definition: string;
       example_sentence?: string;
+      emotion_anchor?: string;
       register: string;
       collocations?: string[];
       synonyms?: string[];
@@ -218,6 +219,7 @@ export function useAddWord() {
           word: wordData.word,
           definition: wordData.definition,
           example_sentence: wordData.example_sentence || null,
+          emotion_anchor: wordData.emotion_anchor || null,
           source: 'user',
           register: wordData.register,
           frequency_band: 3,
@@ -424,10 +426,16 @@ export function useUpdateWord() {
       register: string;
       collocations: string[];
       synonyms: string[];
+      emotion_anchor?: string | null;
     }) => {
       const { error } = await supabase
         .from('words')
-        .update({ word: wordData.word, definition: wordData.definition, register: wordData.register })
+        .update({
+          word: wordData.word,
+          definition: wordData.definition,
+          register: wordData.register,
+          emotion_anchor: wordData.emotion_anchor ?? null,
+        })
         .eq('id', wordData.id);
       if (error) throw error;
 
