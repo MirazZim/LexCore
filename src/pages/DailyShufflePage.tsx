@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, Check, Shuffle, ArrowRight, Trophy, Brain, X, Zap, Minus, Plus } from 'lucide-react';
+import { ChevronDown, Check, ArrowRight, Trophy, Brain, X, Zap, Minus, Plus } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import oxfordWordsRaw from '@/data/oxford_words.json';
 import { useWords } from '@/hooks/useWords';
@@ -50,10 +50,20 @@ const inactiveStyle = {
 
 export default function DailyShufflePage() {
   const navigate = useNavigate();
-  const [cefr, setCefr]         = useState<CefrLevel>('B1');
-  const [pos, setPos]           = useState<string | null>(null);
-  const [posOpen, setPosOpen]   = useState(false);
-  const [page, setPage]         = useState(0);
+  const [cefr, setCefrRaw]       = useState<CefrLevel>(() => (sessionStorage.getItem('daily_cefr') as CefrLevel) ?? 'B1');
+  const [pos, setPosRaw]         = useState<string | null>(() => sessionStorage.getItem('daily_pos'));
+  const [posOpen, setPosOpen]    = useState(false);
+  const [page, setPageRaw]       = useState<number>(() => parseInt(sessionStorage.getItem('daily_page') ?? '0', 10));
+
+  const setCefr  = (v: CefrLevel)   => { sessionStorage.setItem('daily_cefr', v); setCefrRaw(v); };
+  const setPos   = (v: string | null) => { v ? sessionStorage.setItem('daily_pos', v) : sessionStorage.removeItem('daily_pos'); setPosRaw(v); };
+  const setPage  = (updater: number | ((p: number) => number)) => {
+    setPageRaw(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      sessionStorage.setItem('daily_page', String(next));
+      return next;
+    });
+  };
   const [shuffleLimit, setShuffleLimit] = useState<number>(() => {
     const stored = localStorage.getItem('lexcore_shuffle_limit');
     return stored ? Math.max(1, Math.min(50, parseInt(stored, 10))) : 5;
@@ -82,14 +92,21 @@ export default function DailyShufflePage() {
     return seededShuffle(pool, TODAY_SEED);
   }, [cefr, pos]);
 
-  // Exclude already-conquered words
+  // Total unconquered count (for header display)
   const remaining = useMemo(
     () => shuffledPool.filter(w => !librarySet.has(w.word.toLowerCase())),
     [shuffledPool, librarySet]
   );
 
-  const dailyWords = remaining.slice(page * shuffleLimit, page * shuffleLimit + shuffleLimit);
-  const hasMore    = (page + 1) * shuffleLimit < remaining.length;
+  // Slice the fixed page batch first, then filter conquered — so the batch stays
+  // stable and shrinks as words are added (instead of sliding in new words).
+  const dailyWords = useMemo(
+    () => shuffledPool
+      .slice(page * shuffleLimit, (page + 1) * shuffleLimit)
+      .filter(w => !librarySet.has(w.word.toLowerCase())),
+    [shuffledPool, page, shuffleLimit, librarySet]
+  );
+  const hasMore = (page + 1) * shuffleLimit < shuffledPool.length;
 
   type Tips = { headline: string; why: string; strategy: string; power_insight: string; focus_score: number };
   const [tipsOpen,    setTipsOpen]    = useState(false);
@@ -288,7 +305,7 @@ export default function DailyShufflePage() {
               {dailyWords.map((w, i) => (
                 <button
                   key={`${w.word}-${i}`}
-                  onClick={() => navigate(`/add?word=${encodeURIComponent(w.word)}`)}
+                  onClick={() => navigate(`/add?word=${encodeURIComponent(w.word)}&from=daily&left=${dailyWords.length - 1}`)}
                   className="ds-glass w-full rounded-2xl px-6 py-5 flex items-center justify-between text-left transition-all group"
                 >
                   <div className="flex items-center gap-5">

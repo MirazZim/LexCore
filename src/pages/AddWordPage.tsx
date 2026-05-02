@@ -175,9 +175,23 @@ export default function AddWordPage() {
         emotion_anchor: memoryTrick ? `${memoryTrick.breakdown}\n${memoryTrick.clarification}` : undefined,
         register, collocations, synonyms,
       });
-      toast.success(`"${word}" added to your library!`, {
-        action: { label: 'Go to Library', onClick: () => navigate('/library') },
-      });
+      const fromDaily = searchParams.get('from') === 'daily';
+      const left = parseInt(searchParams.get('left') ?? '0', 10);
+      if (fromDaily && left > 0) {
+        toast.success(`"${word}" conquered!`, {
+          description: `${left} word${left === 1 ? '' : 's'} left in today's list.`,
+          action: { label: "Back to Discover →", onClick: () => navigate('/daily') },
+        });
+      } else if (fromDaily) {
+        toast.success(`"${word}" conquered!`, {
+          description: "You've finished today's list!",
+          action: { label: "Back to Discover →", onClick: () => navigate('/daily') },
+        });
+      } else {
+        toast.success(`"${word}" added to your library!`, {
+          action: { label: 'Go to Library', onClick: () => navigate('/library') },
+        });
+      }
       setWord(''); setDefinition(''); setExampleSentence(''); setMemoryTrick(null);
       setCollocations([]); setCollocationInput('');
       setSynonyms([]); setSynonymInput(''); setSuggestedWords([]);

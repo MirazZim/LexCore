@@ -30,11 +30,15 @@ export default function DictionaryPage() {
   const navigate    = useNavigate();
   const alphabetRef = useRef<HTMLDivElement>(null);
 
-  const [cefr, setCefr]       = useState<CefrLevel>('A1');
-  const [letter, setLetter]   = useState<string | null>(null);
-  const [pos, setPos]         = useState<string | null>(null);
-  const [posOpen, setPosOpen] = useState(false);
-  const [search, setSearch]   = useState('');
+  const [cefr, setCefrRaw]       = useState<CefrLevel>(() => (sessionStorage.getItem('dict_cefr') as CefrLevel) ?? 'A1');
+  const [letter, setLetterRaw]   = useState<string | null>(() => sessionStorage.getItem('dict_letter'));
+  const [pos, setPosRaw]         = useState<string | null>(() => sessionStorage.getItem('dict_pos'));
+  const [posOpen, setPosOpen]    = useState(false);
+  const [search, setSearch]      = useState('');
+
+  const setCefr = (v: CefrLevel) => { sessionStorage.setItem('dict_cefr', v); setCefrRaw(v); };
+  const setLetter = (v: string | null) => { v ? sessionStorage.setItem('dict_letter', v) : sessionStorage.removeItem('dict_letter'); setLetterRaw(v); };
+  const setPos = (v: string | null) => { v ? sessionStorage.setItem('dict_pos', v) : sessionStorage.removeItem('dict_pos'); setPosRaw(v); };
 
   const { data: libraryWords } = useWords();
   const librarySet = useMemo(

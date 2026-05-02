@@ -1,10 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import type { DueWordItem, WordCollocation } from './types';
-
-const WIN_PHRASES  = ['Nailed it.', 'Natural.', 'Sharp.', 'Locked in.', 'Crisp.'];
-const LOSS_PHRASES = ['Not quite.', 'Study the phrase.', 'Almost.', 'Try again.'];
 
 function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -32,12 +29,6 @@ export function CollocationPhase({
 }: CollocationPhaseProps) {
   const [cardIndex, setCardIndex] = useState(0);
   const [allDone, setAllDone] = useState(false);
-  const [inputValue, setInputValue] = useState('');
-  const [answered, setAnswered] = useState<string | null>(null);
-
-  // Pick phrases once per component mount
-  const [winPhrase]  = useState(() => WIN_PHRASES[Math.floor(Math.random()  * WIN_PHRASES.length)]);
-  const [lossPhrase] = useState(() => LOSS_PHRASES[Math.floor(Math.random() * LOSS_PHRASES.length)]);
 
   const targetWord = currentItem.word.word;
   const total = collocations.length;
@@ -45,44 +36,19 @@ export function CollocationPhase({
   const reviewed = allDone ? collocations : collocations.slice(0, cardIndex);
   const isLast = cardIndex === total - 1;
 
-  const targetRegex = useMemo(
-    () => new RegExp(`^${escapeRegex(targetWord)}$`, 'i'),
-    [targetWord],
-  );
-
-  const blankPhrase = useMemo(
-    () => current.collocation.replace(new RegExp(`\\b${escapeRegex(targetWord)}\\b`, 'gi'), '______'),
-    [current.collocation, targetWord],
-  );
-
-  const hasBlank = blankPhrase !== current.collocation;
-  const isCorrect = answered !== null && targetRegex.test(answered.trim());
-
-  const submit = () => {
-    if (!inputValue.trim()) return;
-    setAnswered(inputValue);
-  };
-
   const advance = () => {
-    setAnswered(null);
-    setInputValue('');
     if (isLast) setAllDone(true);
     else setCardIndex(i => i + 1);
   };
 
-  // Enter-to-advance after answer is shown
   useEffect(() => {
-    if (answered === null) return;
+    if (allDone) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key !== 'Enter') return;
-      setAnswered(null);
-      setInputValue('');
-      if (isLast) setAllDone(true);
-      else setCardIndex(i => i + 1);
+      if (e.key === 'Enter') advance();
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [answered, isLast]);
+  }, [isLast, allDone]);
 
   if (total === 0) {
     return (
@@ -113,7 +79,7 @@ export function CollocationPhase({
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       className="mt-4 space-y-3"
     >
-      {/* ── Header card — persistent word ──────────────────────────── */}
+      {/* ── Header card ──────────────────────────────────────────────── */}
       <div className="rv-glass rounded-[2rem] px-8 py-6">
         <div className="mb-4">
           <span
@@ -138,10 +104,10 @@ export function CollocationPhase({
         >
           {currentItem.word.word}
         </motion.h2>
-        <p className="text-zinc-500 text-xs mt-2">Fill in the missing word to complete each phrase.</p>
+        <p className="text-zinc-500 text-xs mt-2">Read each phrase carefully.</p>
       </div>
 
-      {/* ── All-done summary ───────────────────────────────────────── */}
+      {/* ── All-done summary ─────────────────────────────────────────── */}
       <AnimatePresence>
         {allDone && (
           <motion.div
@@ -181,7 +147,7 @@ export function CollocationPhase({
         )}
       </AnimatePresence>
 
-      {/* ── Active card stack ──────────────────────────────────────── */}
+      {/* ── Active card stack ─────────────────────────────────────────── */}
       {!allDone && (
         <>
           {/* Reviewed stack */}
@@ -233,114 +199,13 @@ export function CollocationPhase({
                 <span className="ml-auto text-[10px] font-bold text-zinc-600">{cardIndex + 1} / {total}</span>
               </div>
 
-              {hasBlank ? (
-                <>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-3">Complete the phrase</p>
-                    <p className="text-2xl font-bold text-white leading-snug" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                      {answered ? highlightWord(current.collocation, targetWord) : blankPhrase}
-                    </p>
-                  </div>
+              <p className="text-2xl font-bold leading-snug" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                {highlightWord(current.collocation, targetWord)}
+              </p>
 
-                  {!answered ? (
-                    <div className="space-y-3">
-                      <input
-                        className="rv-input"
-                        placeholder="Type the missing word…"
-                        value={inputValue}
-                        onChange={e => setInputValue(e.target.value)}
-                        onKeyUp={e => e.key === 'Enter' && submit()}
-                        autoComplete="off"
-                        autoCorrect="off"
-                        spellCheck={false}
-                        autoFocus
-                      />
-                      <button onClick={submit} disabled={!inputValue.trim()} className="rv-btn-mint">
-                        Check
-                      </button>
-                    </div>
-                  ) : (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.97 }}
-                      animate={{
-                        opacity: 1,
-                        scale: 1,
-                        x: isCorrect ? 0 : [0, -9, 9, -7, 7, -4, 4, 0],
-                      }}
-                      transition={{
-                        opacity: { duration: 0.22 },
-                        scale:   { duration: 0.22 },
-                        x:       isCorrect ? {} : { duration: 0.45, ease: 'easeInOut' },
-                      }}
-                      className="space-y-4"
-                    >
-                      <div className="text-center">
-                        <motion.div
-                          initial={{ scale: 0.35, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ type: 'spring', stiffness: 280, damping: 16, delay: 0.04 }}
-                          className="inline-block mb-2"
-                        >
-                          {isCorrect
-                            ? <CheckCircle2 className="h-12 w-12 mx-auto" style={{ color: '#00FFC8' }} />
-                            : <XCircle     className="h-12 w-12 mx-auto" style={{ color: '#ef4444' }} />
-                          }
-                        </motion.div>
-                        <motion.p
-                          initial={{ opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.14, duration: 0.2 }}
-                          className="text-lg font-bold"
-                          style={{ color: isCorrect ? '#00FFC8' : '#ef4444', fontFamily: "'Space Grotesk', sans-serif" }}
-                        >
-                          {isCorrect ? winPhrase : lossPhrase}
-                        </motion.p>
-                      </div>
-
-                      {!isCorrect && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.22, duration: 0.22 }}
-                          className="rounded-2xl p-4 space-y-2"
-                          style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.14)' }}
-                        >
-                          <div>
-                            <p className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1">Your answer</p>
-                            <p className="text-sm line-through font-medium" style={{ color: '#ef4444' }}>{answered}</p>
-                          </div>
-                          <div className="h-px" style={{ background: 'rgba(255,255,255,0.05)' }} />
-                          <div>
-                            <p className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1">The word</p>
-                            <p className="text-sm font-semibold" style={{ color: '#00FFC8' }}>{targetWord}</p>
-                          </div>
-                        </motion.div>
-                      )}
-
-                      <motion.button
-                        onClick={advance}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: isCorrect ? 0.2 : 0.46, duration: 0.22 }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.97 }}
-                        className="rv-btn-mint"
-                      >
-                        {isLast ? <>See all collocations <ArrowRight className="h-4 w-4" /></> : <>Next <ArrowRight className="h-4 w-4" /></>}
-                      </motion.button>
-                    </motion.div>
-                  )}
-                </>
-              ) : (
-                <>
-                  <p className="text-2xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                    {highlightWord(current.collocation, targetWord)}
-                  </p>
-                  <button onClick={advance} autoFocus className="rv-btn-mint">
-                    {isLast ? <>See all collocations <ArrowRight className="h-4 w-4" /></> : <>Next <ArrowRight className="h-4 w-4" /></>}
-                  </button>
-                </>
-              )}
+              <button onClick={advance} autoFocus className="rv-btn-mint">
+                {isLast ? <>See all collocations <ArrowRight className="h-4 w-4" /></> : <>Next <ArrowRight className="h-4 w-4" /></>}
+              </button>
             </motion.div>
           </AnimatePresence>
 
