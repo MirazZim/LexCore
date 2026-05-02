@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { memeToast } from '@/lib/meme-toast';
 import { ArrowLeft, X, Sparkles, Loader2, Briefcase, MessageCircle, Sun, GraduationCap, BookPlus, RotateCcw, Zap, Brain } from 'lucide-react';
 import { useAddWord } from '@/hooks/useWords';
 import { generateDefinition, generateExampleSentences, generateCollocations, generateWord, generateSynonyms, generateMemoryTrick } from '@/lib/llm';
@@ -67,7 +68,7 @@ export default function AddWordPage() {
     try {
       const suggested = await generateWord(word.trim(), generationStyle, suggestedWords);
       setWord(suggested); setSuggestedWords(p => [...p, suggested]);
-      toast.success('Word suggested!');
+      memeToast.wordSuggested();
     } catch { toast.error('Failed to suggest word'); }
     finally { setLoadingWord(false); }
   };
@@ -77,7 +78,7 @@ export default function AddWordPage() {
     try {
       const suggested = await generateWord(word.trim(), style, suggestedWords);
       setWord(suggested); setSuggestedWords(p => [...p, suggested]);
-      toast.success('Word suggested!');
+      memeToast.wordSuggested();
     } catch { toast.error('Failed to suggest word'); }
     finally { setLoadingWord(false); }
   };
@@ -87,7 +88,7 @@ export default function AddWordPage() {
     setLoadingDefinition(true);
     try {
       const r = await generateDefinition(word.trim(), generationStyle, definition);
-      setDefinition(r.definition); toast.success('Definition generated!');
+      setDefinition(r.definition); memeToast.definitionGenerated();
     } catch { toast.error('Failed to generate definition'); }
     finally { setLoadingDefinition(false); }
   };
@@ -98,7 +99,7 @@ export default function AddWordPage() {
     setLoadingExample(true);
     try {
       const s = await generateExampleSentences(word.trim(), definition.trim(), generationStyle, exampleSentence ? [exampleSentence] : []);
-      setExampleSentence(s[0]); toast.success('Example generated!');
+      setExampleSentence(s[0]); memeToast.exampleGenerated();
     } catch { toast.error('Failed to generate example'); }
     finally { setLoadingExample(false); }
   };
@@ -114,7 +115,7 @@ export default function AddWordPage() {
     setLoadingSynonyms(true);
     try {
       setSynonyms(await generateSynonyms(word.trim(), definition.trim(), generationStyle, synonyms));
-      toast.success('Synonyms generated!');
+      memeToast.synonymsGenerated();
     } catch { toast.error('Failed to generate synonyms'); }
     finally { setLoadingSynonyms(false); }
   };
@@ -125,7 +126,7 @@ export default function AddWordPage() {
     setLoadingMemoryTrick(true);
     try {
       setMemoryTrick(await generateMemoryTrick(word.trim(), definition.trim()));
-      toast.success('Memory trick generated!');
+      memeToast.memoryTrickGenerated();
     } catch { toast.error('Failed to generate memory trick'); }
     finally { setLoadingMemoryTrick(false); }
   };
@@ -143,7 +144,7 @@ export default function AddWordPage() {
         generateMemoryTrick(word.trim(), result.definition),
       ]);
       setExampleSentence(sentences[0]); setSynonyms(syns); setCollocations(cols); setMemoryTrick(trick);
-      toast.success('All fields filled!');
+      memeToast.autofillComplete();
     } catch { toast.error('Autofill failed'); }
     finally { setLoadingAutofill(false); }
   };
@@ -155,7 +156,7 @@ export default function AddWordPage() {
     try {
       const results = await generateCollocations(word.trim(), definition.trim(), generationStyle, collocations);
       setCollocations(p => [...p, ...results.filter(c => !p.includes(c))]);
-      toast.success('Collocations generated!');
+      memeToast.collocationsGenerated();
     } catch { toast.error('Failed to generate collocations'); }
     finally { setLoadingCollocations(false); }
   };
@@ -177,20 +178,10 @@ export default function AddWordPage() {
       });
       const fromDaily = searchParams.get('from') === 'daily';
       const left = parseInt(searchParams.get('left') ?? '0', 10);
-      if (fromDaily && left > 0) {
-        toast.success(`"${word}" conquered!`, {
-          description: `${left} word${left === 1 ? '' : 's'} left in today's list.`,
-          action: { label: "Back to Discover →", onClick: () => navigate('/daily') },
-        });
-      } else if (fromDaily) {
-        toast.success(`"${word}" conquered!`, {
-          description: "You've finished today's list!",
-          action: { label: "Back to Discover →", onClick: () => navigate('/daily') },
-        });
+      if (fromDaily) {
+        memeToast.wordConquered(word, left, { label: "Back to Discover →", onClick: () => navigate('/daily') });
       } else {
-        toast.success(`"${word}" added to your library!`, {
-          action: { label: 'Go to Library', onClick: () => navigate('/library') },
-        });
+        memeToast.wordSaved(word, { label: 'Go to Library', onClick: () => navigate('/library') });
       }
       setWord(''); setDefinition(''); setExampleSentence(''); setMemoryTrick(null);
       setCollocations([]); setCollocationInput('');

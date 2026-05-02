@@ -6,6 +6,7 @@ import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { useUserPreferences, useUpdateUserPreferences } from '@/hooks/useWords';
 import { toast } from 'sonner';
+import { memeToast } from '@/lib/meme-toast';
 
 const container = {
   hidden: { opacity: 0 },
@@ -125,7 +126,7 @@ export default function SettingsPage() {
     updatePrefs.mutate(
       { request_retention: retention, maximum_interval: maxInterval, new_cards_per_day: newCardsPerDay },
       {
-        onSuccess: () => { toast.success('Settings saved'); setDirty(false); },
+        onSuccess: () => { memeToast.settingsSaved(); setDirty(false); },
         onError: () => toast.error('Failed to save settings'),
       }
     );

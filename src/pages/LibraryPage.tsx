@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useWords, useWordStats, useWordContexts, useWordCollocations, useSemanticConnections, useDeleteWord, useUpdateWord } from '@/hooks/useWords';
 import { generateMemoryTrick } from '@/lib/llm';
 import { toast } from 'sonner';
+import { memeToast } from '@/lib/meme-toast';
 import { cn } from '@/lib/utils';
 import { currentRetrievability, dbStateToCard } from '@/lib/fsrs';
 import type { Register } from '@/lib/types';
@@ -150,7 +151,7 @@ export default function LibraryPage() {
     if (!selectedWordId) return;
     try {
       await deleteWord.mutateAsync(selectedWordId);
-      toast.success('Word deleted');
+      memeToast.wordDeleted();
       setSelectedWordId(null);
       setConfirmDelete(false);
     } catch {
@@ -177,7 +178,7 @@ export default function LibraryPage() {
     try {
       const result = await generateMemoryTrick(editWord.trim(), editDefinition.trim());
       setEditMemoryTrick(`${result.breakdown}\n${result.clarification}`);
-      toast.success('Memory trick generated!');
+      memeToast.memoryTrickGenerated();
     } catch {
       toast.error('Failed to generate memory trick');
     } finally {
@@ -197,7 +198,7 @@ export default function LibraryPage() {
         synonyms: editSynonyms,
         emotion_anchor: editMemoryTrick.trim() || null,
       });
-      toast.success('Word updated');
+      memeToast.wordUpdated();
       setIsEditing(false);
     } catch {
       toast.error('Failed to update word');

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/contexts/AuthContext';
 import { seedWordsIfEmpty } from '@/lib/seed-words';
 import { toast } from 'sonner';
+import { memeToast } from '@/lib/meme-toast';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -30,7 +31,7 @@ export default function AuthPage() {
     try {
       if (isLogin) {
         await signIn(email, password);
-        toast.success('Welcome back!');
+        memeToast.signIn();
       } else {
         await signUp(email, password);
         toast.success('Account created! Check your email to confirm.');

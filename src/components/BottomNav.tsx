@@ -4,6 +4,7 @@ import { Home, PlusCircle, BookOpen, TrendingUp, BookText, Settings, Menu, X, Lo
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { memeToast } from '@/lib/meme-toast';
 
 const navItems = [
   { path: '/', icon: Home, label: 'Home' },
@@ -57,7 +58,7 @@ export function BottomNav() {
   const handleLogout = async () => {
     try {
       await signOut();
-      toast.success('Signed out');
+      memeToast.signOut();
     } catch {
       toast.error('Failed to sign out');
     }
