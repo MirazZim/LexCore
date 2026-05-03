@@ -7,7 +7,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { memeToast } from '@/lib/meme-toast';
-import { ArrowLeft, X, Sparkles, Loader2, Briefcase, MessageCircle, Sun, GraduationCap, BookPlus, RotateCcw, Zap, Brain } from 'lucide-react';
+import { ArrowLeft, X, Sparkles, Loader2, Briefcase, MessageCircle, Sun, GraduationCap, BookPlus, RotateCcw, Zap, Brain, BookOpen } from 'lucide-react';
 import { useAddWord } from '@/hooks/useWords';
 import { generateDefinition, generateExampleSentences, generateCollocations, generateWord, generateSynonyms, generateMemoryTrick } from '@/lib/llm';
 import type { GenerationStyle } from '@/lib/llm';
@@ -343,28 +343,36 @@ export default function AddWordPage() {
               <p className="text-zinc-600 text-xs mt-0.5">Build your vocabulary</p>
             </div>
 
-            {/* Daily discovery goal */}
-            <div className="flex flex-col items-end gap-1 shrink-0">
-              {discoveryCount >= dailyGoal ? (
-                <span className="text-[10px] font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(0,255,200,0.1)', color: '#00FFC8' }}>
-                  Goal complete ✦
+            {/* Daily discovery goal — tapping navigates to the Daily page */}
+            <button
+              type="button"
+              onClick={() => navigate('/daily')}
+              className="shrink-0 flex items-center gap-2.5 px-3 py-2 rounded-2xl transition-all hover:scale-[1.03] active:scale-[.97]"
+              style={{
+                background: discoveryCount >= dailyGoal
+                  ? 'rgba(0,255,200,0.08)'
+                  : 'rgba(255,255,255,0.04)',
+                border: discoveryCount >= dailyGoal
+                  ? '1px solid rgba(0,255,200,0.25)'
+                  : '1px solid rgba(255,255,255,0.07)',
+              }}
+            >
+              <BookOpen className="h-3.5 w-3.5 shrink-0" style={{ color: discoveryCount >= dailyGoal ? '#00FFC8' : '#52525b' }} />
+              <div className="flex flex-col gap-1 items-start">
+                <span className="text-[10px] font-bold leading-none" style={{ color: discoveryCount >= dailyGoal ? '#00FFC8' : '#a1a1aa' }}>
+                  {discoveryCount >= dailyGoal ? 'Goal complete ✦' : `${dailyGoal - discoveryCount} left today`}
                 </span>
-              ) : (
-                <span className="text-[10px] font-bold text-zinc-400">
-                  {dailyGoal - discoveryCount} left today
-                </span>
-              )}
-              <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min((discoveryCount / dailyGoal) * 100, 100)}%`,
-                    background: discoveryCount >= dailyGoal ? '#00FFC8' : 'linear-gradient(90deg,#a78bfa,#00FFC8)',
-                  }}
-                />
+                <div className="w-20 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min((discoveryCount / dailyGoal) * 100, 100)}%`,
+                      background: discoveryCount >= dailyGoal ? '#00FFC8' : 'linear-gradient(90deg,#a78bfa,#00FFC8)',
+                    }}
+                  />
+                </div>
               </div>
-              <span className="text-[9px] text-zinc-600">{discoveryCount}/{dailyGoal} discovered</span>
-            </div>
+            </button>
           </motion.div>
 
           {/* ── Form ───────────────────────────────────────── */}
