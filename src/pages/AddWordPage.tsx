@@ -1,4 +1,6 @@
 import { useState } from 'react';
+
+import { getDiscoveryCount, getDiscoveryGoal, bumpDiscovery } from '@/lib/daily-discovery';
 import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
@@ -62,6 +64,8 @@ export default function AddWordPage() {
   const [loadingMemoryTrick, setLoadingMemoryTrick] = useState(false);
   const [loadingAutofill, setLoadingAutofill] = useState(false);
   const addWord = useAddWord();
+  const [discoveryCount, setDiscoveryCount] = useState(() => getDiscoveryCount());
+  const dailyGoal = getDiscoveryGoal();
 
   const handleSuggestWord = async () => {
     setLoadingWord(true);
@@ -177,15 +181,34 @@ export default function AddWordPage() {
         register, collocations, synonyms,
       });
       const fromDaily = searchParams.get('from') === 'daily';
-      const left = parseInt(searchParams.get('left') ?? '0', 10);
+      setDiscoveryCount(bumpDiscovery());
+
+      // Reset shared form state
+      const resetForm = (nextWord = '') => {
+        setWord(nextWord);
+        setDefinition(''); setExampleSentence(''); setMemoryTrick(null);
+        setCollocations([]); setCollocationInput('');
+        setSynonyms([]); setSynonymInput(''); setSuggestedWords([]);
+      };
+
       if (fromDaily) {
-        memeToast.wordConquered(word, left, { label: "Back to Discover →", onClick: () => navigate('/daily') });
+        const queueRaw = sessionStorage.getItem('daily_queue');
+        const queue: string[] = queueRaw ? JSON.parse(queueRaw) : [];
+        if (queue.length > 0) {
+          const [nextWord, ...rest] = queue;
+          sessionStorage.setItem('daily_queue', JSON.stringify(rest));
+          navigate(`/add?word=${encodeURIComponent(nextWord)}&from=daily&left=${rest.length}`, { replace: true });
+          resetForm(nextWord);
+          memeToast.wordConquered(word, queue.length, { label: `Next: ${nextWord} →`, onClick: () => {} });
+        } else {
+          sessionStorage.removeItem('daily_queue');
+          resetForm();
+          memeToast.wordConquered(word, 0, { label: 'Back to Discover →', onClick: () => navigate('/daily') });
+        }
       } else {
         memeToast.wordSaved(word, { label: 'Go to Library', onClick: () => navigate('/library') });
+        resetForm();
       }
-      setWord(''); setDefinition(''); setExampleSentence(''); setMemoryTrick(null);
-      setCollocations([]); setCollocationInput('');
-      setSynonyms([]); setSynonymInput(''); setSuggestedWords([]);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to save word');
     }
@@ -313,11 +336,34 @@ export default function AddWordPage() {
             >
               <ArrowLeft className="h-4 w-4 text-zinc-400" />
             </button>
-            <div>
+            <div className="flex-1">
               <h1 className="text-2xl font-bold text-white leading-none tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 Add Word
               </h1>
               <p className="text-zinc-600 text-xs mt-0.5">Build your vocabulary</p>
+            </div>
+
+            {/* Daily discovery goal */}
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              {discoveryCount >= dailyGoal ? (
+                <span className="text-[10px] font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(0,255,200,0.1)', color: '#00FFC8' }}>
+                  Goal complete ✦
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold text-zinc-400">
+                  {dailyGoal - discoveryCount} left today
+                </span>
+              )}
+              <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min((discoveryCount / dailyGoal) * 100, 100)}%`,
+                    background: discoveryCount >= dailyGoal ? '#00FFC8' : 'linear-gradient(90deg,#a78bfa,#00FFC8)',
+                  }}
+                />
+              </div>
+              <span className="text-[9px] text-zinc-600">{discoveryCount}/{dailyGoal} discovered</span>
             </div>
           </motion.div>
 

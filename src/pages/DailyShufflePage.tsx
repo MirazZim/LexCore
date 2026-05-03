@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { getDiscoveryCount } from '@/lib/daily-discovery';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Check, ArrowRight, Trophy, Brain, X, Zap, Minus, Plus } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
@@ -108,6 +109,13 @@ export default function DailyShufflePage() {
   );
   const hasMore = (page + 1) * shuffleLimit < shuffledPool.length;
 
+  const [discoveryCount, setDiscoveryCount] = useState(() => getDiscoveryCount());
+  useEffect(() => {
+    const refresh = () => setDiscoveryCount(getDiscoveryCount());
+    document.addEventListener('visibilitychange', refresh);
+    return () => document.removeEventListener('visibilitychange', refresh);
+  }, []);
+
   type Tips = { headline: string; why: string; strategy: string; power_insight: string; focus_score: number };
   const [tipsOpen,    setTipsOpen]    = useState(false);
   const [tipsLoading, setTipsLoading] = useState(false);
@@ -188,8 +196,22 @@ export default function DailyShufflePage() {
               Tips
             </button>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-3">
             <p className="text-zinc-500 text-xs">{DATE_LABEL} · {remaining.length} left</p>
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min((discoveryCount / shuffleLimit) * 100, 100)}%`,
+                    background: discoveryCount >= shuffleLimit ? '#00FFC8' : 'linear-gradient(90deg,#a78bfa,#00FFC8)',
+                  }}
+                />
+              </div>
+              <span className="text-[10px] font-bold tabular-nums" style={{ color: discoveryCount >= shuffleLimit ? '#00FFC8' : '#71717a' }}>
+                {discoveryCount >= shuffleLimit ? 'Goal complete ✦' : `${discoveryCount}/${shuffleLimit} discovered`}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -305,7 +327,11 @@ export default function DailyShufflePage() {
               {dailyWords.map((w, i) => (
                 <button
                   key={`${w.word}-${i}`}
-                  onClick={() => navigate(`/add?word=${encodeURIComponent(w.word)}&from=daily&left=${dailyWords.length - 1}`)}
+                  onClick={() => {
+                    const remaining = dailyWords.slice(i + 1).map(x => x.word);
+                    sessionStorage.setItem('daily_queue', JSON.stringify(remaining));
+                    navigate(`/add?word=${encodeURIComponent(w.word)}&from=daily&left=${remaining.length}`);
+                  }}
                   className="ds-glass w-full rounded-2xl px-6 py-5 flex items-center justify-between text-left transition-all group"
                 >
                   <div className="flex items-center gap-5">
