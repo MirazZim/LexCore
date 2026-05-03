@@ -4,7 +4,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Moon, CheckCircle2, Flame, X, Brain, Zap, Clock3 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Rating } from 'ts-fsrs';
-import { dbStateToCard } from '@/lib/fsrs';
+import { dbStateToCard, getReviewTier, currentRetrievability } from '@/lib/fsrs';
 import { useDueWords, useUpdateWordStats, useSaveWordContext, useWords, useWordStats, useReviewSessions } from '@/hooks/useWords';
 import { supabase } from '@/lib/supabase';
 import { BattlePhase } from '@/components/review/BattlePhase';
@@ -16,6 +16,9 @@ import { SynonymsPhase } from '@/components/review/SynonymsPhase';
 import { MemoryTrickPhase } from '@/components/review/MemoryTrickPhase';
 import type { ReviewPhase, ReviewResult, AiFeedback, WordContext, WordCollocation } from '@/components/review/types';
 import { scoreSentence, generateClozeSentence } from '@/lib/llm';
+import { getTopicOfDay } from '@/lib/topic-of-day';
+import { getRoastMode, setRoastMode } from '@/lib/local-prefs';
+import { matureNeedsGeneration, markGenerated } from '@/lib/generation-log';
 
 export const RV_STYLES = `
   .rv-glass {
@@ -150,6 +153,7 @@ export default function ReviewPage() {
   const [activeConnector, setActiveConnector] = useState<string | null>(null);
   const [sleepCountdown, setSleepCountdown] = useState('');
   const [isSleepPrepActive, setIsSleepPrepActive] = useState(false);
+  const [roastMode, setRoast] = useState<boolean>(() => getRoastMode());
 
   useEffect(() => {
     const tick = () => {
@@ -510,6 +514,43 @@ export default function ReviewPage() {
     );
   }
 
+  const currentTier = currentItem
+    ? getReviewTier(
+        currentItem.stats,
+        currentRetrievability(dbStateToCard(currentItem.stats)),
+      )
+    : 'new';
+
+  const advancePastGeneration = () => {
+    if (synonyms.length > 0) {
+      setPhase('synonyms');
+    } else if (currentIndex + 1 >= totalWords) {
+      setPhase('summary');
+    } else {
+      setCurrentIndex(prev => prev + 1);
+      setPhase('battle');
+    }
+  };
+
+  const skipGenerationAndAdvance = () => {
+    if (contexts.length > 0) {
+      setPhase('mature_examples');
+    } else {
+      advancePastGeneration();
+    }
+  };
+
+  const handleMatureExamplesNext = () => advancePastGeneration();
+
+  const resolveGenerationPhase = (wordId: string, tier: typeof currentTier) => {
+    if (tier === 'mature' && !matureNeedsGeneration(wordId)) {
+      skipGenerationAndAdvance();
+    } else {
+      setPhase('generation');
+    }
+  };
+
+
   const handleRate = async (rating: Rating, confidence: 'sure' | 'unsure' | null) => {
     if (!currentItem) return;
 
@@ -562,7 +603,7 @@ export default function ReviewPage() {
     } else if (collocations.length > 0) {
       setPhase('collocation');
     } else {
-      setPhase('generation');
+      resolveGenerationPhase(currentItem.word.id, currentTier);
     }
   };
 
@@ -572,7 +613,7 @@ export default function ReviewPage() {
     } else if (collocations.length > 0) {
       setPhase('collocation');
     } else {
-      setPhase('generation');
+      resolveGenerationPhase(currentItem!.word.id, currentTier);
     }
   };
 
@@ -581,10 +622,14 @@ export default function ReviewPage() {
   const handleClozeNext = () => {
     setClozeAnswer('');
     setClozeSubmitted(false);
-    setPhase(collocations.length > 0 ? 'collocation' : 'generation');
+    if (collocations.length > 0) {
+      setPhase('collocation');
+    } else {
+      resolveGenerationPhase(currentItem!.word.id, currentTier);
+    }
   };
 
-  const handleCollocationNext = () => setPhase('generation');
+  const handleCollocationNext = () => resolveGenerationPhase(currentItem!.word.id, currentTier);
 
   const handleSynonymsNext = () => {
     setGenerationText('');
@@ -608,6 +653,23 @@ export default function ReviewPage() {
     setAiError(false);
   };
 
+  const topic = getTopicOfDay();
+  const handleToggleRoast = () => {
+    setRoast(prev => {
+      const next = !prev;
+      setRoastMode(next);
+      return next;
+    });
+  };
+
+  const priorSentence = (() => {
+    if (!currentItem) return null;
+    const mine = contexts
+      .filter(c => c.source_label === 'My sentence' && c.sentence?.trim())
+      .sort((a, b) => (a.id < b.id ? 1 : -1));
+    return mine[0]?.sentence ?? null;
+  })();
+
   const handleGenerationSave = async () => {
     if (!currentItem) return;
     setGenerationSaved(true);
@@ -618,12 +680,39 @@ export default function ReviewPage() {
         currentItem.word.word,
         currentItem.word.definition,
         generationText.trim(),
+        { roast: roastMode, topic: topic.prompt },
       );
       setAiFeedback(parsed);
     } catch {
       setAiError(true);
     } finally {
       setAiLoading(false);
+    }
+  };
+
+  // Mature path: persist the sentence and advance immediately, no AI roundtrip.
+  const handleGenerationQuickSave = async () => {
+    if (!currentItem) return;
+    await saveContext.mutateAsync({
+      word_id: currentItem.word.id,
+      sentence: generationText.trim(),
+      source_label: 'My sentence',
+    });
+    markGenerated(currentItem.word.id);
+    if (synonyms.length > 0) {
+      setPhase('synonyms');
+    } else {
+      setGenerationText('');
+      setGenerationSaved(false);
+      setAiFeedback(null);
+      setAiLoading(false);
+      setAiError(false);
+      if (currentIndex + 1 >= totalWords) {
+        setPhase('summary');
+      } else {
+        setCurrentIndex(prev => prev + 1);
+        setPhase('battle');
+      }
     }
   };
 
@@ -634,6 +723,7 @@ export default function ReviewPage() {
       sentence: generationText.trim(),
       source_label: 'My sentence',
     });
+    markGenerated(currentItem.word.id);
     if (synonyms.length > 0) {
       setPhase('synonyms');
     } else {
@@ -728,6 +818,56 @@ export default function ReviewPage() {
               />
             )}
 
+            {phase === 'mature_examples' && currentItem && (
+              <motion.div
+                key="mature_examples"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -24 }}
+                className="space-y-4"
+              >
+                <div className="text-center mb-2">
+                  <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>
+                    Mature · Quick Review
+                  </span>
+                </div>
+                <div className="text-center mb-4">
+                  <h2 className="text-2xl font-bold text-white">{currentItem.word.word}</h2>
+                  <p className="text-zinc-400 text-sm mt-1">{currentItem.word.definition}</p>
+                </div>
+                <div className="space-y-3">
+                  {contexts.slice(0, 3).map((ctx, i) => {
+                    const target = currentItem.word.word;
+                    const parts = ctx.sentence.split(new RegExp(`(${target})`, 'gi'));
+                    const isMatch = (s: string) => s.toLowerCase() === target.toLowerCase();
+                    return (
+                      <div
+                        key={ctx.id}
+                        className="rounded-2xl p-4"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+                      >
+                        <p className="text-xs text-zinc-500 mb-1">Example {i + 1}</p>
+                        <p className="text-white text-sm leading-relaxed">
+                          {parts.map((part, j) =>
+                            isMatch(part)
+                              ? <span key={j} style={{ color: '#a78bfa', fontWeight: 700 }}>{part}</span>
+                              : part
+                          )}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={handleMatureExamplesNext}
+                  className="w-full py-3 rounded-2xl font-bold text-sm mt-2"
+                  style={{ background: 'linear-gradient(135deg, #2cffca, #00c896)', color: '#0a0a0a' }}
+                >
+                  Got it →
+                </button>
+              </motion.div>
+            )}
+
             {phase === 'generation' && currentItem && (
               <GenerationPhase
                 currentItem={currentItem}
@@ -743,8 +883,14 @@ export default function ReviewPage() {
                 onConnectorChange={setActiveConnector}
                 onGenerationTextChange={setGenerationText}
                 onSave={handleGenerationSave}
+                onSaveQuick={handleGenerationQuickSave}
                 onNextWord={handleNextWord}
                 onRetry={handleGenerationRetry}
+                tier={currentTier}
+                topic={topic}
+                priorSentence={priorSentence}
+                roastMode={roastMode}
+                onToggleRoast={handleToggleRoast}
               />
             )}
 

@@ -43,6 +43,7 @@ export function dbStateToCard(db: FsrsDbState): Card {
         lapses: db.lapses,
         state: db.state as State,
         last_review: db.last_reviewed_at ? new Date(db.last_reviewed_at) : undefined,
+        learning_steps: 0,
     };
 }
 
@@ -65,3 +66,23 @@ export function schedule(
 
 export { Rating, State };
 export type { Card };
+
+export type ReviewTier = 'new' | 'learning' | 'mature' | 'leech';
+
+// Decide the production-phase intensity for a card.
+// Leech beats everything else: persistent failure pattern needs a different lever.
+export function getReviewTier(
+    stats: Pick<FsrsDbState, 'state' | 'lapses' | 'repetitions'> & { stability?: number },
+    retrievability?: number,
+): ReviewTier {
+    if (stats.lapses >= 4) return 'leech';
+    if (stats.state === State.New) return 'new';
+    if (
+        stats.state === State.Review &&
+        stats.repetitions >= 5 &&
+        (retrievability ?? 1) >= 0.95
+    ) {
+        return 'mature';
+    }
+    return 'learning';
+}

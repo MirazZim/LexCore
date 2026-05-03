@@ -1,6 +1,11 @@
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, RotateCcw, X } from 'lucide-react';
+import { Loader2, RotateCcw, Sparkles, Trophy, X, Zap } from 'lucide-react';
 import type { DueWordItem, AiFeedback } from './types';
+import type { ReviewTier } from '@/lib/fsrs';
+import type { DailyTopic } from '@/lib/topic-of-day';
+import { mintTrophy } from '@/lib/trophies';
+import { getWordPos } from '@/lib/word-pos';
 
 interface GenerationPhaseProps {
   currentItem: DueWordItem;
@@ -16,8 +21,15 @@ interface GenerationPhaseProps {
   onConnectorChange: (id: string | null) => void;
   onGenerationTextChange: (value: string) => void;
   onSave: () => void;
+  onSaveQuick: () => void;        // mature path: save sentence, skip AI roundtrip
   onNextWord: () => void;
   onRetry: () => void;
+  // New context for tiered + topic-aware production
+  tier: ReviewTier;
+  topic: DailyTopic;
+  priorSentence: string | null;
+  roastMode: boolean;
+  onToggleRoast: () => void;
 }
 
 export const CONNECTORS = [
@@ -290,13 +302,51 @@ export function GenerationPhase({
   currentItem, currentIndex, totalWords, generationText, generationSaved,
   aiFeedback, aiLoading, aiError, isSaving,
   activeConnector, onConnectorChange,
-  onGenerationTextChange, onSave, onNextWord, onRetry,
+  onGenerationTextChange, onSave, onSaveQuick, onNextWord, onRetry,
+  tier, topic, priorSentence, roastMode, onToggleRoast,
 }: GenerationPhaseProps) {
   const verdict = aiFeedback
     ? verdictConfig[aiFeedback.verdict as keyof typeof verdictConfig] ?? verdictConfig.close
     : null;
 
   const activeData = CONNECTORS.find(c => c.id === activeConnector) ?? null;
+
+  // Mint a trophy on a 10/10 score. Fires once per saved sentence.
+  const mintedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!aiFeedback || aiFeedback.score < 9) return;
+    const key = `${currentItem.word.id}::${generationText.trim()}`;
+    if (mintedRef.current === key) return;
+    mintedRef.current = key;
+    mintTrophy({
+      word: currentItem.word.word,
+      wordId: currentItem.word.id,
+      sentence: generationText.trim(),
+      topic: topic.title,
+    });
+  }, [aiFeedback, currentItem.word.id, currentItem.word.word, generationText, topic.title]);
+
+  // Reset mint guard between words so the next word can mint
+  useEffect(() => { mintedRef.current = null; }, [currentItem.word.id]);
+
+  // Tier-driven copy
+  const promptText = (() => {
+    switch (tier) {
+      case 'new':      return 'Write your own sentence using this word:';
+      case 'learning': return 'Write a short phrase or sentence using this word:';
+      case 'mature':   return 'Quick check — write a sentence. AI scoring is optional at this level.';
+      case 'leech':    return "You've slipped on this word before. Rewrite your old sentence — better this time.";
+    }
+  })();
+
+  const placeholder = tier === 'learning'
+    ? 'A few words is enough…'
+    : tier === 'leech'
+      ? 'Rewrite it sharper…'
+      : 'Type your sentence…';
+
+  const showRemix = (tier === 'learning' || tier === 'mature' || tier === 'leech') && !!priorSentence;
+  const trophyMinted = !!aiFeedback && aiFeedback.score >= 9;
 
   return (
     <>
@@ -309,29 +359,84 @@ export function GenerationPhase({
         transition={{ duration: 0.3 }}
       >
         <div className="rv-glass rounded-[2rem] p-8 mt-4">
-          <div className="mb-5">
+          <div className="mb-5 flex flex-wrap items-center gap-2">
             <span
               className="text-[9px] uppercase tracking-[0.25em] font-bold px-2.5 py-1 rounded-full"
               style={{ background: 'rgba(251,191,36,0.07)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.18)' }}
             >
               ✍ Generation Lab
             </span>
+            {tier !== 'new' && (
+              <span
+                className="text-[9px] uppercase tracking-[0.2em] font-bold px-2.5 py-1 rounded-full"
+                style={
+                  tier === 'leech'
+                    ? { background: 'rgba(239,68,68,0.08)',  color: '#ef4444', border: '1px solid rgba(239,68,68,0.22)' }
+                    : tier === 'mature'
+                    ? { background: 'rgba(0,255,200,0.07)',  color: '#00FFC8', border: '1px solid rgba(0,255,200,0.18)' }
+                    : { background: 'rgba(56,189,248,0.07)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.18)' }
+                }
+              >
+                {tier === 'leech' ? '⚠ Leech' : tier === 'mature' ? '◆ Mature' : '◇ Learning'}
+              </span>
+            )}
+            <button
+              onClick={onToggleRoast}
+              className="text-[9px] uppercase tracking-[0.2em] font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1 transition-all active:scale-95"
+              style={
+                roastMode
+                  ? { background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.35)' }
+                  : { background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.10)' }
+              }
+              aria-pressed={roastMode}
+              title={roastMode ? 'Roast Mode: ON — tap to soften' : 'Roast Mode: OFF — tap for brutal feedback'}
+            >
+              <Zap className="h-3 w-3" /> Roast {roastMode ? 'on' : 'off'}
+            </button>
           </div>
-          <motion.h2
-            initial={{ opacity: 0, scale: 0.82, filter: 'blur(8px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            transition={{ type: 'spring', stiffness: 180, damping: 18, delay: 0.06 }}
-            className="font-bold leading-none select-none mb-2"
-            style={{
-              fontSize: 'clamp(2.2rem, 7vw, 3.2rem)',
-              color: '#fbbf24',
-              fontFamily: "'Space Grotesk', sans-serif",
-              textShadow: '0 0 32px rgba(251,191,36,0.22)',
-              letterSpacing: '-0.01em',
-            }}
+
+          {/* Topic of the day banner */}
+          <div
+            className="mb-5 rounded-xl px-4 py-2.5 flex items-center gap-2.5"
+            style={{ background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.18)' }}
           >
-            {currentItem.word.word}
-          </motion.h2>
+            <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: '#38bdf8' }} />
+            <p className="text-[11px] text-zinc-400 leading-snug">
+              <span className="text-[10px] uppercase tracking-widest font-bold mr-1.5" style={{ color: '#38bdf8' }}>Today's topic</span>
+              <span className="text-zinc-200 font-semibold">{topic.title}</span>
+              <span className="text-zinc-500"> · weave today's words around {topic.prompt}.</span>
+            </p>
+          </div>
+          <div className="flex items-baseline gap-3 mb-2">
+            <motion.h2
+              initial={{ opacity: 0, scale: 0.82, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              transition={{ type: 'spring', stiffness: 180, damping: 18, delay: 0.06 }}
+              className="font-bold leading-none select-none"
+              style={{
+                fontSize: 'clamp(2.2rem, 7vw, 3.2rem)',
+                color: '#fbbf24',
+                fontFamily: "'Space Grotesk', sans-serif",
+                textShadow: '0 0 32px rgba(251,191,36,0.22)',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              {currentItem.word.word}
+            </motion.h2>
+            {(() => {
+              const pos = getWordPos(currentItem.word.word);
+              if (!pos) return null;
+              return (
+                <span
+                  className="text-xs font-semibold italic shrink-0"
+                  style={{ color: pos.source === 'oxford' ? '#a78bfa' : '#71717a' }}
+                  title={pos.source === 'inferred' ? `inferred from word form` : `Oxford 3000`}
+                >
+                  {pos.abbr}
+                </span>
+              );
+            })()}
+          </div>
           <p className="text-zinc-400 text-sm mb-6">{currentItem.word.definition}</p>
 
           {/* Connector buttons */}
@@ -355,25 +460,67 @@ export function GenerationPhase({
             </div>
           </div>
 
-          <p className="text-white font-semibold mb-3">Write your own sentence using this word:</p>
+          <p className="text-white font-semibold mb-3">{promptText}</p>
+
+          {/* Remix scaffold: surface the user's previous sentence so they can rewrite it better */}
+          {!generationSaved && showRemix && priorSentence && (
+            <div
+              className="mb-3 rounded-xl p-3.5"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">
+                  {tier === 'leech' ? 'Your old try' : 'Your previous sentence'}
+                </span>
+                <button
+                  onClick={() => onGenerationTextChange(priorSentence)}
+                  className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full transition-all active:scale-95"
+                  style={{ background: 'rgba(0,255,200,0.08)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.22)' }}
+                >
+                  Remix
+                </button>
+              </div>
+              <p className="text-sm text-zinc-300 italic">"{priorSentence}"</p>
+            </div>
+          )}
 
           {!generationSaved ? (
             <div className="space-y-3">
               <textarea
                 className="rv-textarea"
-                placeholder="Type your sentence…"
+                placeholder={placeholder}
                 value={generationText}
                 onChange={e => onGenerationTextChange(e.target.value)}
               />
-              <button
-                onClick={onSave}
-                disabled={!generationText.trim() || isSaving || aiLoading}
-                className="rv-btn-mint"
-              >
-                {isSaving || aiLoading ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" />Checking…</>
-                ) : 'Submit'}
-              </button>
+              {tier === 'mature' ? (
+                <div className="flex gap-3">
+                  <button
+                    onClick={onSave}
+                    disabled={!generationText.trim() || isSaving || aiLoading}
+                    className="flex items-center justify-center gap-2 flex-1 rounded-2xl py-3 text-sm font-bold transition-all active:scale-95"
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: '#a1a1aa' }}
+                  >
+                    {aiLoading ? <><Loader2 className="h-4 w-4 animate-spin" />Auditing…</> : 'Audit with AI'}
+                  </button>
+                  <button
+                    onClick={onSaveQuick}
+                    disabled={!generationText.trim() || isSaving}
+                    className="rv-btn-mint flex-1"
+                  >
+                    Save · skip AI
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={onSave}
+                  disabled={!generationText.trim() || isSaving || aiLoading}
+                  className="rv-btn-mint"
+                >
+                  {isSaving || aiLoading ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" />Checking…</>
+                  ) : 'Submit'}
+                </button>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
@@ -390,6 +537,28 @@ export function GenerationPhase({
                   <Loader2 className="h-4 w-4 animate-spin" style={{ color: '#00FFC8' }} />
                   Checking your sentence…
                 </div>
+              )}
+
+              {trophyMinted && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.94 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 220, damping: 16 }}
+                  className="rounded-xl px-4 py-3 flex items-center gap-3"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(240,201,106,0.10) 0%, rgba(200,146,42,0.06) 100%)',
+                    border: '1px solid rgba(240,201,106,0.45)',
+                    boxShadow: '0 0 28px rgba(240,201,106,0.18)',
+                  }}
+                >
+                  <Trophy className="h-5 w-5 shrink-0" style={{ color: '#f0c96a' }} />
+                  <div className="leading-tight">
+                    <p className="text-sm font-bold" style={{ color: '#f0c96a', fontFamily: "'Space Grotesk', sans-serif" }}>
+                      Greatest Hits — minted.
+                    </p>
+                    <p className="text-[11px] text-zinc-400">{aiFeedback.score}/10 — saved to your trophy wall.</p>
+                  </div>
+                </motion.div>
               )}
 
               {aiFeedback && verdict && (

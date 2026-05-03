@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Brain, Layers, ChevronUp, ChevronDown, HelpCircle, ChevronDown as ExpandIcon } from 'lucide-react';
+import { Settings, Brain, Layers, ChevronUp, ChevronDown, HelpCircle, ChevronDown as ExpandIcon, Zap } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { useUserPreferences, useUpdateUserPreferences } from '@/hooks/useWords';
 import { toast } from 'sonner';
 import { memeToast } from '@/lib/meme-toast';
+import { getRoastMode, setRoastMode } from '@/lib/local-prefs';
 
 const container = {
   hidden: { opacity: 0 },
@@ -108,6 +109,7 @@ export default function SettingsPage() {
   const [maxInterval, setMaxInterval] = useState(365);
   const [newCardsPerDay, setNewCardsPerDay] = useState(10);
   const [dirty, setDirty] = useState(false);
+  const [roast, setRoast] = useState(() => getRoastMode());
 
   const [showRetentionHelp, setShowRetentionHelp] = useState(false);
   const [showIntervalHelp, setShowIntervalHelp] = useState(false);
@@ -353,6 +355,39 @@ export default function SettingsPage() {
                   ? 'Gentle pace — good for consolidation periods.'
                   : 'Steady pace — sustainable long-term.'}
             </p>
+          </div>
+        </motion.div>
+
+        {/* AI feedback section */}
+        <motion.div variants={item} className="bg-white/[0.04] rounded-2xl ring-1 ring-white/[0.08] p-5">
+          <SectionHeader icon={Zap} title="AI Feedback" subtitle="How the Generation Lab grades your sentences" />
+
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-white/80">Roast Mode</span>
+                <span
+                  className="text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(239,68,68,0.10)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)' }}
+                >
+                  Brutal
+                </span>
+              </div>
+              <p className="text-xs text-white/40 mt-1.5 leading-relaxed">
+                Replaces the friendly coach with a savage IELTS examiner. Direct calques get called out by name; band-cost is named for each mistake. Honest feedback creates emotional encoding — you remember what stings.
+              </p>
+            </div>
+            <button
+              onClick={() => { const next = !roast; setRoast(next); setRoastMode(next); }}
+              className="shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+              style={{ background: roast ? '#ef4444' : 'rgba(255,255,255,0.10)' }}
+              aria-pressed={roast}
+            >
+              <span
+                className="inline-block h-5 w-5 transform rounded-full bg-white transition-transform"
+                style={{ transform: roast ? 'translateX(22px)' : 'translateX(2px)' }}
+              />
+            </button>
           </div>
         </motion.div>
 

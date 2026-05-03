@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Brain, Clock, Flame, Moon, Sparkles, ArrowRight, MoreHorizontal, Target } from 'lucide-react';
+import { BookOpen, Brain, Clock, Flame, Moon, Sparkles, ArrowRight, MoreHorizontal, Target, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { seedWordsIfEmpty } from '@/lib/seed-words';
 import { getIdentity } from '@/lib/identity';
 import { IdentityJourneyMap } from '@/components/IdentityJourneyMap';
+import { getTrophies, type Trophy as TrophyEntry } from '@/lib/trophies';
 
 /* ─── Animation variants ─────────────────────────────────────────── */
 const container = {
@@ -125,6 +126,10 @@ export default function Dashboard() {
   const recentWords = [...words]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 5);
+
+  /* ── Greatest Hits (10/10 trophies) ──────────────────────────────── */
+  const [trophies, setTrophies] = useState<TrophyEntry[]>([]);
+  useEffect(() => { setTrophies(getTrophies()); }, []);
 
   /* ── Identity ───────────────────────────────────────────────────── */
   const identity     = getIdentity(Math.max(1, streak));
@@ -512,6 +517,63 @@ export default function Dashboard() {
           </div>
           )}
           {/* end grid */}
+
+          {/* Greatest Hits — only shows once you've earned at least one 10/10 */}
+          {trophies.length > 0 && (
+            <motion.section
+              variants={item}
+              className="rounded-[2rem] overflow-hidden"
+              style={{
+                background: 'linear-gradient(180deg, #0d0a07 0%, #110e0a 100%)',
+                border: '1px solid rgba(180,140,55,0.28)',
+                boxShadow: 'inset 0 1px 0 rgba(255,210,100,0.06), 0 20px 50px rgba(0,0,0,0.5), 0 0 40px rgba(140,100,25,0.07)',
+              }}
+            >
+              <div className="px-7 pt-6 pb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-9 h-9 rounded-xl flex items-center justify-center"
+                    style={{ background: 'rgba(240,201,106,0.10)', border: '1px solid rgba(240,201,106,0.25)' }}
+                  >
+                    <Trophy className="w-4 h-4" style={{ color: '#f0c96a' }} />
+                  </div>
+                  <div>
+                    <h3 className="id-gold-text text-lg font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                      Greatest Hits
+                    </h3>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">Sentences scored a perfect 10</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'rgba(240,201,106,0.6)' }}>
+                  {trophies.length} minted
+                </span>
+              </div>
+              <div className="px-7 pb-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {trophies.slice(0, 6).map(t => (
+                  <div
+                    key={`${t.wordId}-${t.mintedAt}`}
+                    className="rounded-2xl p-4"
+                    style={{ background: 'rgba(240,201,106,0.04)', border: '1px solid rgba(240,201,106,0.18)' }}
+                  >
+                    <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                      <span className="id-gold-text text-sm font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                        {t.word}
+                      </span>
+                      <span className="text-[10px] tabular-nums" style={{ color: 'rgba(240,201,106,0.55)' }}>10/10</span>
+                    </div>
+                    <p className="text-zinc-300 text-sm italic leading-snug line-clamp-3">
+                      "{t.sentence}"
+                    </p>
+                    {t.topic && (
+                      <p className="text-[10px] text-zinc-600 mt-2 uppercase tracking-widest font-bold">
+                        {t.topic}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </motion.section>
+          )}
 
         </motion.div>
       </div>

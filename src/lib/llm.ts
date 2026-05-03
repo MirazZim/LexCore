@@ -71,19 +71,66 @@ Respond ONLY with this JSON:
 }
 
 // --- Sentence scoring ---
-export async function scoreSentence(word: string, definition: string, sentence: string) {
+export interface ScoreOptions {
+  roast?: boolean;
+  topic?: string | null;
+}
+
+export async function scoreSentence(
+  word: string,
+  definition: string,
+  sentence: string,
+  options: ScoreOptions = {},
+) {
+  const { roast = false, topic = null } = options;
+
+  const hardRules = `CRITICAL RULES (apply to BOTH "fix" and "better_example"):
+1. The learner is practicing the TARGET WORD. Your "better_example" MUST contain the target word (or a natural inflection: plural, past tense, -ing, -ly, etc.). NEVER replace the target word with a synonym in your better_example. If the learner used the wrong part of speech, show the correct part of speech of the SAME WORD (e.g. "rhetoric" → "rhetorical", "decide" → "decision") — not a different word.
+2. "fix" must teach the learner how to use the TARGET WORD correctly. Do not suggest abandoning the word. If the word does not fit the context they wrote, suggest a different context where it does fit — keep the word, change the sentence around it.
+3. "what_worked" must be a real short sentence. If there is genuinely nothing positive, write "Nothing yet — see the fix below." Never output the literal string "null" for this field.`;
+
+  const systemCoach = `You are an expert English language coach. A learner is practicing vocabulary by writing sentences.
+Evaluate their sentence briefly and naturally — like a friendly native speaker coach, not a grammar robot.
+Be honest but encouraging. Always respond with valid JSON only — no markdown, no backticks, no extra text.
+
+Scoring rubric (use this to calibrate, do not add to response):
+- 1–3: Wrong word use, or sentence is broken / incomprehensible.
+- 4–5: Understandable but unnatural; likely a direct translation pattern.
+- 6–7: Correct grammar, natural-ish, but a native speaker might phrase it differently.
+- 8: Good — natural, correct, and clear. Minor polish possible.
+- 9: Very good — a native speaker might say exactly this; only a stylistic tweak separates it from perfect.
+- 10: Perfect — idiomatic, precise, and could appear in published writing. Award 10 when it is genuinely earned; do not withhold it to "leave room to improve."
+
+${hardRules}`;
+
+  const systemRoast = `You are a brutal IELTS Speaking & Writing examiner with 20 years of experience. You do not soften feedback.
+Style:
+- Address the learner directly. Use second person.
+- If their sentence is a direct Bengali/Hindi calque ("because of that", "do the needful", "discuss about"), name it as such — say it sounds like translation, not English.
+- If they used a connector incorrectly, say which band that mistake costs them.
+- If they used the wrong part of speech of the target word, name that explicitly (e.g. "'rhetoric' is a noun; you used it as an adjective — the adjective is 'rhetorical'").
+- "fix" must be specific: name the exact word or pattern to change, not vague advice.
+- The "better_example" must be one band higher than what the learner wrote.
+- Never use exclamation marks. Never call the learner "you" warmly — clinical, not friendly.
+Always respond with valid JSON only — no markdown, no backticks, no extra text.
+
+${hardRules}`;
+
+  const topicLine = topic
+    ? `Topic context: today's session is about ${topic}. If the learner's sentence is on-topic, that is a plus; if off-topic, that is fine — judge the language only.`
+    : '';
+
   const content = await callLLM([
     {
       role: 'system',
-      content: `You are an expert English language coach. A learner is practicing vocabulary by writing sentences.
-Evaluate their sentence briefly and naturally — like a friendly native speaker coach, not a grammar robot.
-Be honest but encouraging. Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
+      content: roast ? systemRoast : systemCoach,
     },
     {
       role: 'user',
       content: `Word: ${word}
 Definition: ${definition}
 Learner sentence: ${sentence}
+${topicLine}
 
 Respond ONLY with this JSON:
 {
@@ -97,7 +144,27 @@ Respond ONLY with this JSON:
   ])
 
   const clean = content.replace(/```json|```/g, '').trim()
-  return JSON.parse(clean)
+  const parsed = JSON.parse(clean)
+
+  // Defensive: the better_example must actually contain the target word.
+  // If the LLM ignored the constraint, drop the misleading suggestion rather
+  // than show the learner a "better" sentence that abandons the word they're practicing.
+  if (parsed.better_example && typeof parsed.better_example === 'string') {
+    const stem = word.toLowerCase().slice(0, Math.max(4, word.length - 3));
+    if (!parsed.better_example.toLowerCase().includes(stem)) {
+      parsed.better_example = null;
+    }
+  }
+
+  // Normalize literal "null" string and empty values
+  if (typeof parsed.what_worked !== 'string' || parsed.what_worked.trim().toLowerCase() === 'null' || !parsed.what_worked.trim()) {
+    parsed.what_worked = 'Nothing yet — see the fix below.';
+  }
+  if (typeof parsed.fix === 'string' && parsed.fix.trim().toLowerCase() === 'null') {
+    parsed.fix = null;
+  }
+
+  return parsed;
 }
 
 // --- Generate example sentences ---

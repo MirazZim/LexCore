@@ -11,7 +11,7 @@ import { generateMemoryTrick } from '@/lib/llm';
 import { toast } from 'sonner';
 import { memeToast } from '@/lib/meme-toast';
 import { cn } from '@/lib/utils';
-import { currentRetrievability, dbStateToCard } from '@/lib/fsrs';
+import { currentRetrievability, dbStateToCard, getReviewTier } from '@/lib/fsrs';
 import type { Register } from '@/lib/types';
 
 /* ─── Animation variants ─────────────────────────────────────────── */
@@ -47,7 +47,7 @@ function highlightWord(text: string, word: string): ReactNode {
 
 type MemoryStatus = { label: string; color: string; description: string };
 
-function getMemoryStatus(stats: { repetitions: number; difficulty: number; times_correct: number; times_incorrect: number } | null | undefined): MemoryStatus {
+function getMemoryStatus(stats: { repetitions: number; difficulty: number; times_correct: number; times_incorrect: number; stability: number; state: number } | null | undefined): MemoryStatus {
   if (!stats) return {
     label: 'New word',
     color: '#71717a',
@@ -416,6 +416,33 @@ export default function LibraryPage() {
                 const mastery = stats ? Math.min(Math.round((stats.stability / 30) * 100), 100) : 0;
                 const isStar = stats && stats.state === 2 && stats.stability >= 21;
                 const isDue = nextLabel === 'Ready now';
+                // Only meaningful for Review-state cards (state=2).
+                // Learning/Relearning cards have very short intervals and aren't
+                // on the forgetting curve yet — showing 100% there is misleading.
+                const recallPct = stats && stats.state === 2
+                  ? Math.round(currentRetrievability(dbStateToCard(stats)) * 100)
+                  : null;
+                const recallColor = recallPct === null ? '#52525b'
+                  : recallPct >= 80 ? '#00FFC8'
+                  : recallPct >= 60 ? '#fbbf24'
+                  : '#f97316';
+
+                const tier = stats
+                  ? getReviewTier(stats, recallPct !== null ? recallPct / 100 : undefined)
+                  : 'new';
+                const maturityPill = (() => {
+                  if (!stats || tier === 'new') return null;
+                  if (tier === 'leech') return { label: 'Leech', color: '#f87171', bg: 'rgba(248,113,113,0.1)' };
+                  if (tier === 'mature') return { label: 'Mature', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' };
+                  // Review state but not mature yet
+                  if (stats.state === 2) {
+                    const repsLeft = Math.max(0, 5 - stats.repetitions);
+                    return repsLeft > 0
+                      ? { label: `${repsLeft} rep${repsLeft !== 1 ? 's' : ''} to mature`, color: '#fbbf24', bg: 'rgba(251,191,36,0.08)' }
+                      : { label: 'Almost mature · keep reviewing', color: '#84cc16', bg: 'rgba(132,204,22,0.08)' };
+                  }
+                  return { label: 'Learning', color: '#71717a', bg: 'rgba(113,113,122,0.08)' };
+                })();
 
                 return (
                   <motion.div
@@ -433,9 +460,19 @@ export default function LibraryPage() {
                         >
                           {word.word}
                         </h4>
-                        <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/5 text-zinc-400">
-                          {word.register}
-                        </span>
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/5 text-zinc-400">
+                            {word.register}
+                          </span>
+                          {maturityPill && (
+                            <span
+                              className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
+                              style={{ background: maturityPill.bg, color: maturityPill.color }}
+                            >
+                              {maturityPill.label}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0 ml-3">
                         {stats && <EaseBadge difficulty={stats.difficulty} />}
@@ -454,6 +491,15 @@ export default function LibraryPage() {
                           style={{ width: `${mastery}%`, background: '#00FFC8' }}
                         />
                       </div>
+                      {recallPct !== null && (
+                        <span
+                          className="text-[10px] font-bold tabular-nums"
+                          style={{ color: recallColor }}
+                          title="Current recall probability"
+                        >
+                          {recallPct}%
+                        </span>
+                      )}
                       <span
                         className="text-[10px] font-bold uppercase tracking-wider"
                         style={{ color: isDue ? '#00FFC8' : '#52525b' }}
