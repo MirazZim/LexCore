@@ -777,6 +777,7 @@ export default function ReviewPage() {
           <AnimatePresence mode="wait">
             {phase === 'battle' && currentItem && (
               <BattlePhase
+                key={currentItem.word.id}
                 currentItem={currentItem}
                 currentIndex={currentIndex}
                 revealed={revealed}

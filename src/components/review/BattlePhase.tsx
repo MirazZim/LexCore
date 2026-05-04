@@ -38,6 +38,7 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [bufferedRating, setBufferedRating] = useState<Rating | null>(null);
   const [confidence, setConfidence] = useState<'sure' | 'unsure' | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Pick phrases once per card mount so they don't flicker
   const [winPhrase]  = useState(() => WIN_PHRASES[Math.floor(Math.random()  * WIN_PHRASES.length)]);
@@ -71,6 +72,8 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
   };
 
   const handleContinue = () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     const overconfident = !isCorrect && (bufferedRating === Rating.Good || bufferedRating === Rating.Easy);
     onRate(overconfident ? Rating.Hard : bufferedRating!, confidence);
   };
@@ -354,6 +357,7 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
               {/* Continue — delayed on loss so shake resolves first */}
               <motion.button
                 onClick={handleContinue}
+                disabled={isSubmitting}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: isCorrect ? 0.2 : 0.46, duration: 0.22 }}
