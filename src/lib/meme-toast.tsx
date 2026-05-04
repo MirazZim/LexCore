@@ -118,19 +118,19 @@ function MemeToast({
   id: string | number;
 }) {
   return (
-    <div className="w-[356px] overflow-hidden rounded-xl bg-zinc-900 border border-zinc-800 shadow-xl">
+    <div className="w-full overflow-hidden rounded-xl bg-zinc-900 border border-zinc-800 shadow-xl">
       <img
         src={meme.img}
         alt={meme.char}
-        className="w-full object-contain"
+        className="w-full max-h-44 sm:max-h-60 object-cover object-top"
       />
-      <div className="px-4 py-4 space-y-3">
-        <p className="text-sm font-bold text-white tracking-wide">{title}</p>
+      <div className="px-3 py-3 sm:px-4 sm:py-4 space-y-2 sm:space-y-3">
+        <p className="text-xs sm:text-sm font-bold text-white tracking-wide">{title}</p>
         <div className="border-l-2 border-teal-400 pl-3 space-y-1">
-          <p className="text-sm text-zinc-100 italic leading-relaxed">
+          <p className="text-xs sm:text-sm text-zinc-100 italic leading-relaxed">
             "{meme.quote}"
           </p>
-          <p className="text-xs font-semibold text-teal-400 uppercase tracking-wider">
+          <p className="text-[10px] sm:text-xs font-semibold text-teal-400 uppercase tracking-wider">
             — {meme.char}
           </p>
         </div>

@@ -267,20 +267,6 @@ export default function AddWordPage() {
         .aw-textarea::placeholder { color: #3f3f46; }
         .aw-textarea:focus { border-color: rgba(0,255,200,.45); background: rgba(0,255,200,.025); }
 
-        /* Tall desktop: fixed viewport, textareas grow */
-        @media (min-width: 1024px) and (min-height: 701px) {
-          .aw-textarea { min-height: 0 !important; flex: 1 !important; }
-        }
-
-        /* Short desktop (e.g. 1100×600): two columns but natural scroll */
-        @media (min-width: 1024px) and (max-height: 700px) {
-          .aw-root { height: auto !important; overflow: visible !important; padding-bottom: 2rem !important; }
-          .aw-motion, .aw-motion > form, .aw-cols, .aw-card-grow {
-            flex: 0 0 auto !important;
-            min-height: auto !important;
-          }
-        }
-
         .aw-card {
           background: rgba(255,255,255,.025);
           border: 1px solid rgba(255,255,255,.055);
@@ -312,19 +298,12 @@ export default function AddWordPage() {
         .slabel { font-size: .62rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: #52525b; }
       `}</style>
 
-      {/*
-        Mobile  : normal scroll, single column
-        Desktop : fixed viewport height, 2-column, no scroll
-      */}
-      <div className="aw-root
-        px-4 pt-4 pb-32 max-w-lg mx-auto
-        lg:pb-5 lg:max-w-6xl lg:h-[calc(100dvh-6rem)] lg:overflow-hidden lg:flex lg:flex-col
-      ">
+      <div className="aw-root px-4 pt-4 pb-16 max-w-lg mx-auto lg:pb-10 lg:max-w-6xl">
         <motion.div
           variants={container}
           initial="hidden"
           animate="show"
-          className="aw-motion flex flex-col gap-3 lg:flex-1 lg:min-h-0"
+          className="aw-motion flex flex-col gap-3"
         >
 
           {/* ── Header ─────────────────────────────────────── */}
@@ -376,13 +355,13 @@ export default function AddWordPage() {
           </motion.div>
 
           {/* ── Form ───────────────────────────────────────── */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3 lg:flex-1 lg:min-h-0">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
 
             {/* 2-col on desktop, stacked on mobile */}
-            <div className="aw-cols flex flex-col gap-3 lg:flex-row lg:gap-3 lg:flex-1 lg:min-h-0">
+            <div className="aw-cols flex flex-col gap-3 lg:flex-row lg:gap-3 lg:items-start">
 
               {/* ── LEFT COLUMN ────────────────────────────── */}
-              <div className="flex flex-col gap-3 lg:gap-2 lg:flex-1 lg:min-h-0">
+              <div className="flex flex-col gap-3 lg:gap-2 lg:flex-1">
 
                 {/* Word */}
                 <motion.div variants={item} className="aw-card flex flex-col gap-4 lg:gap-2 flex-shrink-0 lg:p-3">
@@ -458,7 +437,7 @@ export default function AddWordPage() {
                 </motion.div>
 
                 {/* Definition */}
-                <motion.div variants={item} className="aw-card-grow aw-card flex flex-col gap-3 lg:flex-1 lg:min-h-0">
+                <motion.div variants={item} className="aw-card flex flex-col gap-3">
                   <div className="flex items-center justify-between flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="slabel">Definition</span>
@@ -543,7 +522,7 @@ export default function AddWordPage() {
                 </motion.div>
 
                 {/* Example */}
-                <motion.div variants={item} className="aw-card-grow aw-card flex flex-col gap-3 lg:flex-1 lg:min-h-0">
+                <motion.div variants={item} className="aw-card flex flex-col gap-3">
                   <div className="flex items-center justify-between flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="slabel">Example</span>
@@ -565,10 +544,10 @@ export default function AddWordPage() {
               </div>{/* /LEFT */}
 
               {/* ── RIGHT COLUMN ───────────────────────────── */}
-              <div className="flex flex-col gap-3 lg:gap-2 lg:flex-1 lg:min-h-0">
+              <div className="flex flex-col gap-3 lg:gap-2 lg:flex-1">
 
                 {/* Collocations */}
-                <motion.div variants={item} className="aw-card-grow aw-card flex flex-col gap-3 lg:flex-1 lg:min-h-0">
+                <motion.div variants={item} className="aw-card flex flex-col gap-3">
                   <div className="flex items-center justify-between flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="slabel">Collocations</span>
@@ -598,7 +577,7 @@ export default function AddWordPage() {
                       Add
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 lg:overflow-y-auto lg:flex-1 lg:min-h-0 lg:content-start">
+                  <div className="flex flex-wrap gap-1.5">
                     {collocations.length === 0
                       ? <span className="text-xs text-zinc-700">Common word pairings will appear here</span>
                       : collocations.map((c, i) => (
@@ -616,7 +595,7 @@ export default function AddWordPage() {
                 </motion.div>
 
                 {/* Synonyms */}
-                <motion.div variants={item} className="aw-card-grow aw-card flex flex-col gap-3 lg:flex-1 lg:min-h-0">
+                <motion.div variants={item} className="aw-card flex flex-col gap-3">
                   <div className="flex items-center justify-between flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="slabel">Synonyms</span>
@@ -646,7 +625,7 @@ export default function AddWordPage() {
                       Add
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 lg:overflow-y-auto lg:flex-1 lg:min-h-0 lg:content-start">
+                  <div className="flex flex-wrap gap-1.5">
                     {synonyms.length === 0
                       ? <span className="text-xs text-zinc-700">Words with similar meaning will appear here</span>
                       : synonyms.map((s, i) => (

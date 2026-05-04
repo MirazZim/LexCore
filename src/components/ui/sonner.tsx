@@ -9,6 +9,7 @@ const Toaster = ({ ...props }: ToasterProps) => (
     closeButton
     expand={true}
     toastOptions={{}}
+    style={{ "--width": "min(356px, calc(100vw - 2rem))" } as React.CSSProperties}
     {...props}
   />
 );
