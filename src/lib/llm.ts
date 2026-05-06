@@ -432,7 +432,9 @@ export async function generateDefinition(word: string, style: GenerationStyle = 
       content: `You are a vocabulary coach helping people deeply learn new words.
 Style context: ${styleGuide[style]}
 Always respond with valid JSON only — no markdown, no backticks, no extra text.
-Each call must produce a fresh definition — never repeat a previously generated one.`,
+Each call must produce a fresh definition — never repeat a previously generated one.
+
+DEFINITION RULE: Write the definition in the simplest plain English possible — as if explaining the word to a friend who has never heard it. Use short, common words. No formal dictionary phrasing, no complex grammar, no jargon. A 10-year-old should immediately understand it.`,
     },
     {
       role: 'user',
@@ -445,7 +447,7 @@ Generate a learner-friendly entry for this word suited to a ${style} context.
 
 Respond ONLY with this JSON:
 {
-  "definition": "clear definition in one sentence matching the style",
+  "definition": "the simplest possible one-sentence explanation — plain everyday words only, no dictionary language",
   "part_of_speech": "noun | verb | adjective | adverb | etc",
   "emotion_anchor": "a vivid one-sentence memory hook or emotional association to help remember this word"
 }`,
