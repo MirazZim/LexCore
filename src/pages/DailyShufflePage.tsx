@@ -4,16 +4,21 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Check, ArrowRight, Trophy, Brain, X, Zap, Minus, Plus } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import oxfordWordsRaw from '@/data/oxford_words.json';
+import ieltsWordsRaw  from '@/data/ilets_advanced_words.json';
 import { useWords } from '@/hooks/useWords';
 import { generatePOSTips } from '@/lib/llm';
 
 type OxfordWord = { word: string; cefr: string; pos: string };
-const ALL_WORDS = oxfordWordsRaw as OxfordWord[];
+type WordSource  = 'oxford' | 'ielts';
+
+const OXFORD_WORDS = oxfordWordsRaw as OxfordWord[];
+const IELTS_WORDS  = ieltsWordsRaw  as OxfordWord[];
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 type CefrLevel = (typeof CEFR_LEVELS)[number];
 
-const POS_OPTIONS = ['All', ...Array.from(new Set(ALL_WORDS.map(w => w.pos))).sort()];
+const OXFORD_POS = ['All', ...Array.from(new Set(OXFORD_WORDS.map(w => w.pos))).sort()];
+const IELTS_POS  = ['All', ...Array.from(new Set(IELTS_WORDS.map(w => w.pos))).sort()];
 
 // LCG seeded PRNG — deterministic for a given date
 function seededRandom(seed: number) {
@@ -51,7 +56,17 @@ const inactiveStyle = {
 
 export default function DailyShufflePage() {
   const navigate = useNavigate();
-  const [cefr, setCefrRaw]       = useState<CefrLevel>(() => (sessionStorage.getItem('daily_cefr') as CefrLevel) ?? 'B1');
+  const source = (sessionStorage.getItem('dict_source') as WordSource) ?? 'oxford';
+
+  const SOURCE_WORDS = source === 'oxford' ? OXFORD_WORDS : IELTS_WORDS;
+  const POS_OPTIONS  = source === 'oxford' ? OXFORD_POS   : IELTS_POS;
+  const hasCefr      = SOURCE_WORDS.some(w => w.cefr && w.cefr.trim());
+
+  const [cefr, setCefrRaw] = useState<CefrLevel>(() => {
+    const saved = sessionStorage.getItem('daily_cefr') as CefrLevel ?? 'B1';
+    if (SOURCE_WORDS.some(w => w.cefr === saved)) return saved;
+    return CEFR_LEVELS.find(l => SOURCE_WORDS.some(w => w.cefr === l)) ?? saved;
+  });
   const [pos, setPosRaw]         = useState<string | null>(() => sessionStorage.getItem('daily_pos'));
   const [posOpen, setPosOpen]    = useState(false);
   const [page, setPageRaw]       = useState<number>(() => parseInt(sessionStorage.getItem('daily_page') ?? '0', 10));
@@ -83,15 +98,14 @@ export default function DailyShufflePage() {
     [libraryWords]
   );
 
-  // Shuffle the full filtered pool once per CEFR/POS change, seeded by today
   const shuffledPool = useMemo(() => {
-    const pool = ALL_WORDS.filter(w => {
-      if (w.cefr !== cefr) return false;
+    const pool = SOURCE_WORDS.filter(w => {
+      if (hasCefr && w.cefr !== cefr) return false;
       if (pos && w.pos !== pos) return false;
       return true;
     });
     return seededShuffle(pool, TODAY_SEED);
-  }, [cefr, pos]);
+  }, [SOURCE_WORDS, cefr, pos]);
 
   // Total unconquered count (for header display)
   const remaining = useMemo(
@@ -197,7 +211,17 @@ export default function DailyShufflePage() {
             </button>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <p className="text-zinc-500 text-xs">{DATE_LABEL} · {remaining.length} left</p>
+            <p className="text-zinc-500 text-xs flex items-center gap-2">
+              {DATE_LABEL} · {remaining.length} left
+              {source === 'ielts' && (
+                <span
+                  className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
+                  style={{ background: 'rgba(0,255,200,0.1)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.25)' }}
+                >
+                  IELTS
+                </span>
+              )}
+            </p>
             <div className="flex items-center gap-2 shrink-0">
               <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
                 <div
@@ -216,6 +240,7 @@ export default function DailyShufflePage() {
         </div>
 
         {/* ── Row 1: CEFR pills ─────────────────────────── */}
+        {hasCefr && (
         <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-2.5 shrink-0">
           {CEFR_LEVELS.map(level => (
             <button
@@ -228,6 +253,7 @@ export default function DailyShufflePage() {
             </button>
           ))}
         </div>
+        )}
 
         {/* ── Row 2: POS + word count stepper ──────────── */}
         <div className="flex items-center gap-2 mb-5 shrink-0">

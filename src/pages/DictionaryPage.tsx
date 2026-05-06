@@ -3,17 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { Search, ChevronDown, Check, Shuffle } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import oxfordWordsRaw from '@/data/oxford_words.json';
+import ieltsWordsRaw  from '@/data/ilets_advanced_words.json';
 import { useWords } from '@/hooks/useWords';
 
 type OxfordWord = { word: string; cefr: string; pos: string };
-const ALL_WORDS = oxfordWordsRaw as OxfordWord[];
+const OXFORD_WORDS = oxfordWordsRaw as OxfordWord[];
+const IELTS_WORDS  = ieltsWordsRaw  as OxfordWord[];
 
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 type CefrLevel = (typeof CEFR_LEVELS)[number];
 
+type WordSource = 'oxford' | 'ielts';
+
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
-const POS_OPTIONS = ['All', ...Array.from(new Set(ALL_WORDS.map(w => w.pos))).sort()];
+const OXFORD_POS = ['All', ...Array.from(new Set(OXFORD_WORDS.map(w => w.pos))).sort()];
+const IELTS_POS  = ['All', ...Array.from(new Set(IELTS_WORDS.map(w => w.pos))).sort()];
 
 const activeStyle = {
   background: 'rgba(0,255,200,0.15)',
@@ -35,10 +40,24 @@ export default function DictionaryPage() {
   const [pos, setPosRaw]         = useState<string | null>(() => sessionStorage.getItem('dict_pos'));
   const [posOpen, setPosOpen]    = useState(false);
   const [search, setSearch]      = useState('');
+  const [source, setSourceRaw]   = useState<WordSource>(() => (sessionStorage.getItem('dict_source') as WordSource) ?? 'oxford');
 
-  const setCefr = (v: CefrLevel) => { sessionStorage.setItem('dict_cefr', v); setCefrRaw(v); };
+  const setCefr   = (v: CefrLevel)     => { sessionStorage.setItem('dict_cefr',   v); setCefrRaw(v); };
   const setLetter = (v: string | null) => { v ? sessionStorage.setItem('dict_letter', v) : sessionStorage.removeItem('dict_letter'); setLetterRaw(v); };
-  const setPos = (v: string | null) => { v ? sessionStorage.setItem('dict_pos', v) : sessionStorage.removeItem('dict_pos'); setPosRaw(v); };
+  const setPos    = (v: string | null) => { v ? sessionStorage.setItem('dict_pos',    v) : sessionStorage.removeItem('dict_pos');    setPosRaw(v); };
+  const setSource = (v: WordSource) => {
+    sessionStorage.setItem('dict_source', v);
+    setSourceRaw(v);
+    const newWords = v === 'oxford' ? OXFORD_WORDS : IELTS_WORDS;
+    if (!newWords.some(w => w.cefr === cefr)) {
+      const first = CEFR_LEVELS.find(l => newWords.some(w => w.cefr === l));
+      if (first) setCefr(first);
+    }
+  };
+
+  const SOURCE_WORDS = source === 'oxford' ? OXFORD_WORDS : IELTS_WORDS;
+  const POS_OPTIONS  = source === 'oxford' ? OXFORD_POS   : IELTS_POS;
+  const hasCefr      = SOURCE_WORDS.some(w => w.cefr && w.cefr.trim());
 
   const { data: libraryWords } = useWords();
   const librarySet = useMemo(
@@ -48,15 +67,14 @@ export default function DictionaryPage() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return ALL_WORDS.filter(w => {
-      // CEFR only applies when not searching
-      if (!q && w.cefr !== cefr) return false;
+    return SOURCE_WORDS.filter(w => {
+      if (hasCefr && !q && w.cefr !== cefr) return false;
       if (letter && !w.word.toLowerCase().startsWith(letter.toLowerCase())) return false;
       if (pos && w.pos !== pos) return false;
       if (q && !w.word.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [cefr, letter, pos, search]);
+  }, [source, SOURCE_WORDS, cefr, letter, pos, search]);
 
   const handleAlphabetWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (!alphabetRef.current) return;
@@ -125,7 +143,7 @@ export default function DictionaryPage() {
             >
               Dictionary
             </h1>
-            <p className="text-zinc-500 text-xs mt-1">Oxford 3000 · {filtered.length} words</p>
+            <p className="text-zinc-500 text-xs mt-1">{source === 'oxford' ? 'Oxford 3000' : 'IELTS Advanced'} · {filtered.length} words</p>
           </div>
           <button
             onClick={() => navigate('/daily')}
@@ -137,9 +155,24 @@ export default function DictionaryPage() {
           </button>
         </div>
 
+        {/* ── Source toggle ──────────────────────────────── */}
+        <div className="flex gap-2 mb-3 shrink-0">
+          {(['oxford', 'ielts'] as WordSource[]).map(s => (
+            <button
+              key={s}
+              onClick={() => setSource(s)}
+              className="shrink-0 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all"
+              style={source === s ? activeStyle : inactiveStyle}
+            >
+              {s === 'oxford' ? 'Oxford 3000' : 'IELTS Advanced'}
+            </button>
+          ))}
+        </div>
+
         {/* ── CEFR row + POS dropdown ────────────────────── */}
         <div className="flex items-center gap-2 mb-3 shrink-0">
-          {/* CEFR pills — scrollable */}
+          {/* CEFR pills — scrollable, hidden when source has no CEFR data */}
+          {hasCefr && (
           <div className="flex-1 flex gap-2 overflow-x-auto scrollbar-hide">
             {CEFR_LEVELS.map(level => (
               <button
@@ -152,6 +185,7 @@ export default function DictionaryPage() {
               </button>
             ))}
           </div>
+          )}
 
           {/* POS dropdown button — pinned to the right */}
           <div className="relative shrink-0">
@@ -221,7 +255,7 @@ export default function DictionaryPage() {
         <div className="relative shrink-0 mb-3">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
           <input
-            placeholder={`Search ${cefr} words…`}
+            placeholder={source === 'ielts' ? `Search IELTS ${cefr} words…` : `Search ${cefr} words…`}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full h-11 pl-11 pr-4 rounded-full bg-zinc-900/60 border border-white/5 text-white placeholder:text-zinc-500 focus:outline-none focus:border-[#00FFC8]/40 transition-colors"
