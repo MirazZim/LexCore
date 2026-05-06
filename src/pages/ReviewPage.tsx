@@ -5,7 +5,7 @@ import { ArrowLeft, Moon, CheckCircle2, Flame, X, Brain, Zap, Clock3 } from 'luc
 import { Skeleton } from '@/components/ui/skeleton';
 import { Rating } from 'ts-fsrs';
 import { dbStateToCard, getReviewTier, currentRetrievability } from '@/lib/fsrs';
-import { useDueWords, useUpdateWordStats, useSaveWordContext, useWords, useWordStats, useReviewSessions } from '@/hooks/useWords';
+import { useDueWords, useUpdateWordStats, useSaveWordContext, useWords, useWordStats, useReviewSessions, useUserPreferences } from '@/hooks/useWords';
 import { supabase } from '@/lib/supabase';
 import { BattlePhase } from '@/components/review/BattlePhase';
 import { ContextPhase } from '@/components/review/ContextPhase';
@@ -18,6 +18,7 @@ import type { ReviewPhase, ReviewResult, AiFeedback, WordContext, WordCollocatio
 import { scoreSentence, generateClozeSentence } from '@/lib/llm';
 import { getTopicOfDay } from '@/lib/topic-of-day';
 import { getRoastMode, setRoastMode } from '@/lib/local-prefs';
+import { calculateStreak } from '@/lib/streak';
 import { matureNeedsGeneration, markGenerated } from '@/lib/generation-log';
 
 export const RV_STYLES = `
@@ -105,30 +106,8 @@ export default function ReviewPage() {
   const saveContext = useSaveWordContext();
   const { data: reviewSessions = [], isLoading: sessionsLoading } = useReviewSessions();
 
-  const streak = (() => {
-    if (reviewSessions.length === 0) return 0;
-    const sessionDates = [...new Set(
-      reviewSessions.map(s => {
-        const d = new Date(s.started_at);
-        return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-      })
-    )].sort().reverse();
-    const today = new Date();
-    const todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayKey = `${yesterday.getFullYear()}-${yesterday.getMonth()}-${yesterday.getDate()}`;
-    if (sessionDates[0] !== todayKey && sessionDates[0] !== yesterdayKey) return 0;
-    let count = 0;
-    const check = new Date(today);
-    if (sessionDates[0] !== todayKey) check.setDate(check.getDate() - 1);
-    for (let i = 0; i < 365; i++) {
-      const key = `${check.getFullYear()}-${check.getMonth()}-${check.getDate()}`;
-      if (sessionDates.includes(key)) { count++; check.setDate(check.getDate() - 1); }
-      else break;
-    }
-    return count;
-  })();
+  const { data: prefs } = useUserPreferences();
+  const { streak } = calculateStreak(reviewSessions.map(s => s.started_at), prefs?.streak_recovery_date ?? null);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<ReviewPhase>('battle');

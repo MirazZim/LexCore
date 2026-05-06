@@ -74,5 +74,6 @@ export interface UserPreferences {
   request_retention: number;  // 0.70 – 0.97
   maximum_interval: number;   // days
   new_cards_per_day: number;
+  streak_recovery_date: string | null;
   updated_at: string;
 }

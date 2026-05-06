@@ -4,7 +4,9 @@ import { BarChart2, Calendar, Target, TrendingUp, Zap } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import { EaseBadge } from '@/components/EaseBadge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useWords, useWordStats, useReviewSessions } from '@/hooks/useWords';
+import { useWords, useWordStats, useReviewSessions, useUserPreferences } from '@/hooks/useWords';
+import { dateKey } from '@/lib/streak';
+import { Tooltip as UITooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar,
@@ -33,7 +35,10 @@ export default function ProgressPage() {
   const { data: words = [], isLoading: wordsLoading } = useWords();
   const { data: wordStats = [], isLoading: statsLoading } = useWordStats();
   const { data: sessions = [], isLoading: sessionsLoading } = useReviewSessions();
+  const { data: prefs } = useUserPreferences();
   const now = useMemo(() => new Date(), []);
+
+  const recoveredDateKey = prefs?.streak_recovery_date ?? null;
 
   const calendarDays = useMemo(() => {
     const days = [];
@@ -41,11 +46,13 @@ export default function ProgressPage() {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
+      const localKey = dateKey(d); // same format as getRecoveredDate()
       const hasSession = sessions.some(s => s.started_at.split('T')[0] === dateStr);
-      days.push({ date: d, dateStr, hasSession, dayLabel: d.getDate() });
+      const isRecovered = !hasSession && localKey === recoveredDateKey;
+      days.push({ date: d, dateStr, hasSession, isRecovered, dayLabel: d.getDate() });
     }
     return days;
-  }, [sessions]);
+  }, [sessions, recoveredDateKey]);
 
   const masteryData = useMemo(() => {
     const weeks = [];
@@ -194,23 +201,49 @@ export default function ProgressPage() {
                 <span className="section-label">Study Activity</span>
               </div>
               <div className="grid grid-cols-10 gap-[5px]">
-                {calendarDays.map(day => (
-                  <div
-                    key={day.dateStr}
-                    title={day.dateStr}
-                    className="w-full aspect-square rounded-md flex items-center justify-center text-[8px] font-bold transition-all duration-200"
-                    style={{
-                      background: day.hasSession
-                        ? 'linear-gradient(135deg, rgba(0,255,200,0.25), rgba(0,255,200,0.12))'
-                        : 'rgba(255,255,255,0.03)',
-                      color: day.hasSession ? '#00FFC8' : '#3f3f46',
-                      border: day.hasSession ? '1px solid rgba(0,255,200,0.25)' : '1px solid rgba(255,255,255,0.04)',
-                      boxShadow: day.hasSession ? '0 0 8px rgba(0,255,200,0.1)' : 'none',
-                    }}
-                  >
-                    {day.dayLabel}
-                  </div>
-                ))}
+                {calendarDays.map(day => {
+                  const tile = (
+                    <div
+                      key={day.dateStr}
+                      title={day.isRecovered ? undefined : day.dateStr}
+                      className="w-full aspect-square rounded-md flex items-center justify-center text-[8px] font-bold transition-all duration-200"
+                      style={{
+                        background: day.hasSession
+                          ? 'linear-gradient(135deg, rgba(0,255,200,0.25), rgba(0,255,200,0.12))'
+                          : day.isRecovered
+                          ? 'linear-gradient(135deg, rgba(251,191,36,0.28), rgba(251,191,36,0.12))'
+                          : 'rgba(255,255,255,0.03)',
+                        color: day.hasSession ? '#00FFC8' : day.isRecovered ? '#fbbf24' : '#3f3f46',
+                        border: day.hasSession
+                          ? '1px solid rgba(0,255,200,0.25)'
+                          : day.isRecovered
+                          ? '1px solid rgba(251,191,36,0.45)'
+                          : '1px solid rgba(255,255,255,0.04)',
+                        boxShadow: day.hasSession
+                          ? '0 0 8px rgba(0,255,200,0.1)'
+                          : day.isRecovered
+                          ? '0 0 8px rgba(251,191,36,0.2)'
+                          : 'none',
+                      }}
+                    >
+                      {day.dayLabel}
+                    </div>
+                  );
+
+                  if (!day.isRecovered) return tile;
+
+                  return (
+                    <UITooltip key={day.dateStr}>
+                      <TooltipTrigger asChild>{tile}</TooltipTrigger>
+                      <TooltipContent
+                        className="text-xs font-medium border-amber-500/30 text-amber-300"
+                        style={{ background: 'rgba(24,24,27,0.95)', borderColor: 'rgba(251,191,36,0.3)' }}
+                      >
+                        🔥 Streak recovered — missed day
+                      </TooltipContent>
+                    </UITooltip>
+                  );
+                })}
               </div>
             </motion.div>
 

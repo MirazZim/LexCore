@@ -8,6 +8,7 @@ const PREF_DEFAULTS = {
   request_retention: 0.90,
   maximum_interval: 365,
   new_cards_per_day: 10,
+  streak_recovery_date: null,
 };
 
 export function useUserPreferences() {
@@ -45,6 +46,25 @@ export function useUpdateUserPreferences() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_preferences'] });
       queryClient.invalidateQueries({ queryKey: ['due_words'] });
+    },
+  });
+}
+
+export function useApplyStreakRecovery() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (missedDate: string) => {
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert(
+          { user_id: user!.id, streak_recovery_date: missedDate, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' },
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user_preferences'] });
     },
   });
 }

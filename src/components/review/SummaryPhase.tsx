@@ -2,9 +2,10 @@ import { useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Flame } from 'lucide-react';
-import { useSaveReviewSession, useReviewSessions } from '@/hooks/useWords';
+import { useSaveReviewSession, useReviewSessions, useUserPreferences } from '@/hooks/useWords';
 import { RV_STYLES } from '@/pages/ReviewPage';
 import { getIdentity } from '@/lib/identity';
+import { calculateStreak, dateKey } from '@/lib/streak';
 import type { ReviewResult } from './types';
 
 interface SummaryPhaseProps {
@@ -29,6 +30,7 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
   const saveSession = useSaveReviewSession();
   const savedRef    = useRef(false);
   const { data: reviewSessions = [] } = useReviewSessions();
+  const { data: prefs } = useUserPreferences();
 
   const correctCount = results.filter(r => r.correct).length;
   const accuracy     = results.length > 0 ? Math.round((correctCount / results.length) * 100) : 0;
@@ -36,28 +38,11 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
     ? Math.round((Date.now() - new Date(sessionStartedAt).getTime()) / 1000 / results.length)
     : 0;
 
-  const streak = useMemo(() => {
-    const dateKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-    // Always include today — the session was just completed even if the DB save hasn't reflected yet
-    const sessionDates = [...new Set([
-      ...reviewSessions.map(s => dateKey(new Date(s.started_at))),
-      dateKey(new Date()),
-    ])].sort().reverse();
-    const today        = new Date();
-    const todayKey     = dateKey(today);
-    const yesterday    = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayKey = dateKey(yesterday);
-    if (sessionDates[0] !== todayKey && sessionDates[0] !== yesterdayKey) return 0;
-    let count = 0;
-    const check = new Date(today);
-    if (sessionDates[0] !== todayKey) check.setDate(check.getDate() - 1);
-    for (let i = 0; i < 365; i++) {
-      if (sessionDates.includes(dateKey(check))) { count++; check.setDate(check.getDate() - 1); }
-      else break;
-    }
-    return count;
-  }, [reviewSessions]);
+  // Inject today optimistically — the session just completed even if DB hasn't reflected yet
+  const { streak } = useMemo(
+    () => calculateStreak(reviewSessions.map(s => s.started_at), prefs?.streak_recovery_date ?? null, dateKey(new Date())),
+    [reviewSessions, prefs?.streak_recovery_date],
+  );
 
   const identity    = getIdentity(Math.max(1, streak));
   const progressPct = Math.round(identity.progress * 100);

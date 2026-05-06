@@ -2,15 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Brain, Clock, Flame, Moon, Sparkles, ArrowRight, MoreHorizontal, Target, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { AppLayout } from '@/components/AppLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EaseBadge } from '@/components/EaseBadge';
-import { useWords, useWordStats, useDueWords, useReviewSessions, useCalibration } from '@/hooks/useWords';
+import { useWords, useWordStats, useDueWords, useReviewSessions, useCalibration, useUserPreferences, useApplyStreakRecovery } from '@/hooks/useWords';
 import { useAuth } from '@/contexts/AuthContext';
 import { seedWordsIfEmpty } from '@/lib/seed-words';
 import { getIdentity } from '@/lib/identity';
 import { IdentityJourneyMap } from '@/components/IdentityJourneyMap';
 import { getTrophies, type Trophy as TrophyEntry } from '@/lib/trophies';
+import { calculateStreak, dateKey } from '@/lib/streak';
 
 /* ─── Animation variants ─────────────────────────────────────────── */
 const container = {
@@ -77,27 +79,49 @@ export default function Dashboard() {
   const masteredPct = totalWords > 0 ? Math.round((mastered / totalWords) * 100) : 0;
 
   /* ── Streak ──────────────────────────────────────────────────────── */
-  const streak = (() => {
-    if (reviewSessions.length === 0) return 0;
-    const dateKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-    const sessionDates = [...new Set(
-      reviewSessions.map(s => dateKey(new Date(s.started_at)))
-    )].sort().reverse();
-    const today = new Date();
-    const todayKey = dateKey(today);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayKey = dateKey(yesterday);
-    if (sessionDates[0] !== todayKey && sessionDates[0] !== yesterdayKey) return 0;
-    let count = 0;
-    const check = new Date(today);
-    if (sessionDates[0] !== todayKey) check.setDate(check.getDate() - 1);
-    for (let i = 0; i < 365; i++) {
-      if (sessionDates.includes(dateKey(check))) { count++; check.setDate(check.getDate() - 1); }
-      else break;
-    }
-    return count;
-  })();
+  const { data: prefs } = useUserPreferences();
+  const applyStreakRecovery = useApplyStreakRecovery();
+  const recoveredDate = prefs?.streak_recovery_date ?? null;
+
+  const { streak, recoverable, recoverableStreak } = useMemo(
+    () => calculateStreak(reviewSessions.map(s => s.started_at), recoveredDate),
+    [reviewSessions, recoveredDate],
+  );
+
+  const handleRecover = () => {
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    const missedDate = dateKey(y);
+    const count = recoverableStreak;
+
+    toast.custom((id) => (
+      <div className="w-full overflow-hidden rounded-xl border border-zinc-700 shadow-2xl p-4 space-y-3"
+        style={{ background: '#18181b' }}>
+        <p className="text-sm font-bold text-white leading-snug">
+          🔥 Promise me you'll be more disciplined next time.
+        </p>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => {
+              applyStreakRecovery.mutate(missedDate);
+              toast.dismiss(id);
+              toast.success(`${count}-day streak recovered!`);
+            }}
+            className="w-full text-xs font-semibold text-zinc-900 px-3 py-2 rounded-md transition-opacity hover:opacity-85"
+            style={{ background: '#f97316' }}
+          >
+            Yes, I promise
+          </button>
+          <button
+            onClick={() => toast.dismiss(id)}
+            className="w-full text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition-colors px-3 py-2 rounded-md border border-zinc-700"
+          >
+            No, I will remain the way I am
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity });
+  };
 
   /* ── Velocity chart (last 7 days) ────────────────────────────────── */
   const velocityBars = useMemo(() => {
@@ -201,14 +225,25 @@ export default function Dashboard() {
                   <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-[#00FFC8] animate-pulse" />
                   System Active
                 </span>
-                <div
-                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}
-                >
-                  <Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: '#f97316' }} />
-                  <span className="text-white text-[10px] sm:text-xs font-bold">{streak}</span>
-                  <span className="text-zinc-500 text-[10px] sm:text-xs">day streak</span>
-                </div>
+                {recoverable ? (
+                  <button
+                    onClick={handleRecover}
+                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full transition-opacity hover:opacity-80"
+                    style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.4)' }}
+                  >
+                    <Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: '#f97316' }} />
+                    <span className="text-orange-400 text-[10px] sm:text-xs font-bold">Recover {recoverableStreak}-day streak</span>
+                  </button>
+                ) : (
+                  <div
+                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full"
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}
+                  >
+                    <Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: '#f97316' }} />
+                    <span className="text-white text-[10px] sm:text-xs font-bold">{streak}</span>
+                    <span className="text-zinc-500 text-[10px] sm:text-xs">day streak</span>
+                  </div>
+                )}
               </div>
 
               <h2
