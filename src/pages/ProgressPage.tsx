@@ -1,11 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart2, Calendar, Target, TrendingUp, Zap } from 'lucide-react';
+import { BarChart2, Calendar, ChevronLeft, ChevronRight, Target, TrendingUp, Zap } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import { EaseBadge } from '@/components/EaseBadge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWords, useWordStats, useReviewSessions, useUserPreferences } from '@/hooks/useWords';
-import { dateKey } from '@/lib/streak';
+import { dateKey, normalizeKey } from '@/lib/streak';
 import { Tooltip as UITooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -38,21 +38,56 @@ export default function ProgressPage() {
   const { data: prefs } = useUserPreferences();
   const now = useMemo(() => new Date(), []);
 
-  const recoveredDateKey = prefs?.streak_recovery_date ?? null;
+  const recoveredDateKey = prefs?.streak_recovery_date ? normalizeKey(prefs.streak_recovery_date) : null;
+  const [monthIndex, setMonthIndex] = useState(0); // 0 = current month, increases going back
 
-  const calendarDays = useMemo(() => {
-    const days = [];
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      const localKey = dateKey(d); // same format as getRecoveredDate()
-      const hasSession = sessions.some(s => s.started_at.split('T')[0] === dateStr);
-      const isRecovered = !hasSession && localKey === recoveredDateKey;
-      days.push({ date: d, dateStr, hasSession, isRecovered, dayLabel: d.getDate() });
+  const calendarMonths = useMemo(() => {
+    if (sessions.length === 0) return [];
+    const sessionKeys = new Set(sessions.map(s => dateKey(new Date(s.started_at))));
+    const todayKey = dateKey(now);
+
+    const earliest = sessions.reduce(
+      (min, s) => (s.started_at < min ? s.started_at : min),
+      sessions[0].started_at,
+    );
+    const cursor = new Date(new Date(earliest).getFullYear(), new Date(earliest).getMonth(), 1);
+    const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const months: {
+      year: number; month: number; name: string;
+      cells: (null | { day: number; dk: string; hasSession: boolean; isRecovered: boolean; isToday: boolean; isFuture: boolean })[];
+    }[] = [];
+
+    while (cursor < endMonth) {
+      const year = cursor.getFullYear();
+      const month = cursor.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const firstDow = new Date(year, month, 1).getDay();
+
+      const cells: typeof months[0]['cells'] = [];
+      for (let i = 0; i < firstDow; i++) cells.push(null);
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = new Date(year, month, d);
+        const dk = dateKey(date);
+        cells.push({
+          day: d, dk,
+          hasSession: sessionKeys.has(dk),
+          isRecovered: !sessionKeys.has(dk) && dk === recoveredDateKey,
+          isToday: dk === todayKey,
+          isFuture: date > now,
+        });
+      }
+
+      months.push({
+        year, month,
+        name: cursor.toLocaleString('default', { month: 'long', year: 'numeric' }),
+        cells,
+      });
+      cursor.setMonth(cursor.getMonth() + 1);
     }
-    return days;
-  }, [sessions, recoveredDateKey]);
+
+    return months.reverse();
+  }, [sessions, recoveredDateKey, now]);
 
   const masteryData = useMemo(() => {
     const weeks = [];
@@ -131,7 +166,10 @@ export default function ProgressPage() {
     );
   }
 
-  const activeDays = calendarDays.filter(d => d.hasSession).length;
+  const activeDays = calendarMonths.reduce(
+    (sum, m) => sum + m.cells.filter(c => c?.hasSession).length,
+    0,
+  );
 
   return (
     <AppLayout>
@@ -189,66 +227,125 @@ export default function ProgressPage() {
           {/* ── Row 1: Study Activity + Words Mastered ───────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-            {/* Study Activity */}
-            <motion.div variants={item} className="gls gls-hover rounded-[1.5rem] p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div
-                  className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'rgba(0,255,200,0.08)' }}
-                >
-                  <Calendar className="h-3.5 w-3.5" style={{ color: '#00FFC8' }} />
-                </div>
-                <span className="section-label">Study Activity</span>
+          {/* Study Activity */}
+          <motion.div variants={item} className="gls gls-hover rounded-[1.5rem] p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <div
+                className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(0,255,200,0.08)' }}
+              >
+                <Calendar className="h-3.5 w-3.5" style={{ color: '#00FFC8' }} />
               </div>
-              <div className="grid grid-cols-10 gap-[5px]">
-                {calendarDays.map(day => {
-                  const tile = (
-                    <div
-                      key={day.dateStr}
-                      title={day.isRecovered ? undefined : day.dateStr}
-                      className="w-full aspect-square rounded-md flex items-center justify-center text-[8px] font-bold transition-all duration-200"
-                      style={{
-                        background: day.hasSession
-                          ? 'linear-gradient(135deg, rgba(0,255,200,0.25), rgba(0,255,200,0.12))'
-                          : day.isRecovered
-                          ? 'linear-gradient(135deg, rgba(251,191,36,0.28), rgba(251,191,36,0.12))'
-                          : 'rgba(255,255,255,0.03)',
-                        color: day.hasSession ? '#00FFC8' : day.isRecovered ? '#fbbf24' : '#3f3f46',
-                        border: day.hasSession
-                          ? '1px solid rgba(0,255,200,0.25)'
-                          : day.isRecovered
-                          ? '1px solid rgba(251,191,36,0.45)'
-                          : '1px solid rgba(255,255,255,0.04)',
-                        boxShadow: day.hasSession
-                          ? '0 0 8px rgba(0,255,200,0.1)'
-                          : day.isRecovered
-                          ? '0 0 8px rgba(251,191,36,0.2)'
-                          : 'none',
-                      }}
+              <span className="section-label">Study Activity</span>
+              <span className="ml-auto text-[10px] text-zinc-600">{activeDays} day{activeDays !== 1 ? 's' : ''} studied</span>
+            </div>
+
+            {calendarMonths.length === 0 ? (
+              <p className="text-sm text-zinc-600 text-center py-8">No sessions yet — start reviewing to see your calendar.</p>
+            ) : (() => {
+              const m = calendarMonths[monthIndex];
+              const canGoPrev = monthIndex < calendarMonths.length - 1;
+              const canGoNext = monthIndex > 0;
+              return (
+                <>
+                  {/* Month navigation */}
+                  <div className="flex items-center justify-between mb-2">
+                    <button
+                      onClick={() => setMonthIndex(i => i + 1)}
+                      disabled={!canGoPrev}
+                      className="w-6 h-6 rounded-md flex items-center justify-center transition-all duration-150 disabled:opacity-20 disabled:cursor-not-allowed"
+                      style={{ background: 'rgba(255,255,255,0.05)', color: '#71717a' }}
+                      onMouseEnter={e => { if (canGoPrev) (e.currentTarget as HTMLButtonElement).style.color = '#00FFC8'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#71717a'; }}
                     >
-                      {day.dayLabel}
-                    </div>
-                  );
-
-                  if (!day.isRecovered) return tile;
-
-                  return (
-                    <UITooltip key={day.dateStr}>
-                      <TooltipTrigger asChild>{tile}</TooltipTrigger>
-                      <TooltipContent
-                        className="text-xs font-medium border-amber-500/30 text-amber-300"
-                        style={{ background: 'rgba(24,24,27,0.95)', borderColor: 'rgba(251,191,36,0.3)' }}
+                      <ChevronLeft className="h-3 w-3" />
+                    </button>
+                    <span className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider">
+                      {m.name}
+                    </span>
+                    {canGoNext ? (
+                      <button
+                        onClick={() => setMonthIndex(i => i - 1)}
+                        className="w-6 h-6 rounded-md flex items-center justify-center transition-all duration-150"
+                        style={{ background: 'rgba(255,255,255,0.05)', color: '#71717a' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#00FFC8'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#71717a'; }}
                       >
-                        🔥 Streak recovered — missed day
-                      </TooltipContent>
-                    </UITooltip>
-                  );
-                })}
-              </div>
-            </motion.div>
+                        <ChevronRight className="h-3 w-3" />
+                      </button>
+                    ) : (
+                      <div className="w-6" />
+                    )}
+                  </div>
+
+                  {/* Day-of-week labels */}
+                  <div className="grid grid-cols-7 mb-[3px]">
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                      <span key={i} className="text-[9px] text-zinc-700 text-center font-bold">{d}</span>
+                    ))}
+                  </div>
+
+                  {/* Day cells */}
+                  <div className="grid grid-cols-7 gap-[3px]">
+                    {m.cells.map((cell, i) => {
+                      if (!cell) return <div key={`pad-${i}`} />;
+
+                      const tile = (
+                        <div
+                          key={cell.dk}
+                          className="aspect-square rounded-[4px] flex items-center justify-center text-[9px] font-bold transition-all duration-150"
+                          style={{
+                            background: cell.isToday
+                              ? 'rgba(0,255,200,0.18)'
+                              : cell.hasSession
+                              ? 'linear-gradient(135deg, rgba(0,255,200,0.22), rgba(0,255,200,0.10))'
+                              : cell.isRecovered
+                              ? 'linear-gradient(135deg, rgba(251,191,36,0.25), rgba(251,191,36,0.10))'
+                              : 'rgba(255,255,255,0.025)',
+                            color: cell.isToday || cell.hasSession
+                              ? '#00FFC8'
+                              : cell.isRecovered
+                              ? '#fbbf24'
+                              : '#3f3f46',
+                            border: cell.isToday
+                              ? '1px solid rgba(0,255,200,0.55)'
+                              : cell.hasSession
+                              ? '1px solid rgba(0,255,200,0.2)'
+                              : cell.isRecovered
+                              ? '1px solid rgba(251,191,36,0.4)'
+                              : '1px solid rgba(255,255,255,0.04)',
+                            boxShadow: cell.isToday
+                              ? '0 0 10px rgba(0,255,200,0.18)'
+                              : cell.hasSession
+                              ? '0 0 6px rgba(0,255,200,0.08)'
+                              : 'none',
+                          }}
+                        >
+                          {cell.day}
+                        </div>
+                      );
+
+                      if (!cell.isRecovered) return tile;
+                      return (
+                        <UITooltip key={cell.dk}>
+                          <TooltipTrigger asChild>{tile}</TooltipTrigger>
+                          <TooltipContent
+                            className="text-xs font-medium"
+                            style={{ background: 'rgba(24,24,27,0.95)', borderColor: 'rgba(251,191,36,0.3)', color: '#fbbf24' }}
+                          >
+                            🔥 Streak recovered — missed day
+                          </TooltipContent>
+                        </UITooltip>
+                      );
+                    })}
+                  </div>
+                </>
+              );
+            })()}
+          </motion.div>
 
             {/* Words Mastered */}
-            <motion.div variants={item} className="gls gls-hover rounded-[1.5rem] p-6">
+            <motion.div variants={item} className="gls gls-hover rounded-[1.5rem] p-6 self-start">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <div
@@ -289,6 +386,7 @@ export default function ProgressPage() {
                 </LineChart>
               </ResponsiveContainer>
             </motion.div>
+
           </div>
 
           {/* ── Row 2: Answer Breakdown + Upcoming Reviews ───────────── */}

@@ -125,7 +125,6 @@ export default function Dashboard() {
 
   /* ── Velocity chart (last 7 days) ────────────────────────────────── */
   const velocityBars = useMemo(() => {
-    const dateKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
     const bars = Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
