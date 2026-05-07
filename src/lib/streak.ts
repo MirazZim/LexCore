@@ -65,15 +65,16 @@ export function calculateStreak(
     return count;
   }
 
-  const effectiveDates =
-    recoveryActive && hasOneDayGap
-      ? [...new Set([...sessionDates, yesterdayKey])].sort().reverse()
-      : sessionDates;
+  const effectiveDates = recoveredDate
+    ? [...new Set([...sessionDates, recoveredDate])].sort().reverse()
+    : sessionDates;
 
   const streak = countStreak(effectiveDates);
 
   const recoverableStreak = recoverable
-    ? countStreak([...new Set([...sessionDates, yesterdayKey])].sort().reverse())
+    ? countStreak(
+        [...new Set([...sessionDates, yesterdayKey, ...(recoveredDate ? [recoveredDate] : [])])].sort().reverse(),
+      )
     : 0;
 
   return { streak, recoverable, recoverableStreak };
