@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, RotateCcw, Sparkles, Trophy, X, Zap } from 'lucide-react';
 import type { DueWordItem, AiFeedback } from './types';
@@ -32,216 +32,381 @@ interface GenerationPhaseProps {
   onToggleRoast: () => void;
 }
 
+// Shared shape for connector chips and power-phrase chips.
+// Both arrays satisfy this type so they can reuse the same lookup + sheet UI.
+export type ChipCategory = {
+  readonly id: string;
+  readonly label: string;
+  readonly hint: string;
+  readonly color: string;
+  readonly description: string;
+  readonly tip: string;
+  readonly items: readonly { readonly connector: string; readonly example: string }[];
+};
+
 export const CONNECTORS = [
   {
     id: 'cause',
+    hint: 'X → Y',
     label: 'Cause & Effect',
     color: '#f97316',
     description: 'Use when one thing causes another',
     tip: 'Avoid "because of that" — it is a direct Bengali translation. Use "as a result" or "consequently" instead.',
     items: [
-      { connector: 'As a result,',        example: 'Traffic increased. As a result, air quality worsened.' },
-      { connector: 'Consequently,',       example: 'Roads were neglected. Consequently, accidents rose.' },
-      { connector: 'Therefore,',          example: 'Funding was cut. Therefore, services declined.' },
-      { connector: 'This means that',     example: 'Buses are unreliable. This means that workers arrive late.' },
-      { connector: '…, which leads to',   example: 'Poor roads cause accidents, which leads to economic loss.' },
+      { connector: 'As a result,', example: 'Traffic increased. As a result, air quality worsened.' },
+      { connector: 'Consequently,', example: 'Roads were neglected. Consequently, accidents rose.' },
+      { connector: 'Therefore,', example: 'Funding was cut. Therefore, services declined.' },
+      { connector: 'This means that', example: 'Buses are unreliable. This means that workers arrive late.' },
+      { connector: '…, which leads to', example: 'Poor roads cause accidents, which leads to economic loss.' },
+      { connector: 'Due to', example: 'Due to heavy rainfall, several rural roads became impassable last week.' },
+      { connector: 'Owing to', example: 'Owing to limited funding, the metro extension was delayed by two years.' },
+      { connector: 'Because of', example: 'Because of poor planning, the new highway already requires major repairs.' },
     ],
   },
   {
     id: 'contrast',
+    hint: 'X but Y',
     label: 'Contrast',
     color: '#8b5cf6',
     description: 'Use when two ideas disagree or surprise',
     tip: 'Never start a sentence with "But" in IELTS writing. Replace it with "However," every time.',
     items: [
-      { connector: 'However,',            example: 'Roads are important. However, public transport saves more lives.' },
-      { connector: 'On the other hand,',  example: 'Cities need metro systems. On the other hand, rural areas need roads.' },
-      { connector: 'While',               example: 'While transport is affordable, roads are still unsafe.' },
-      { connector: 'Despite this,',       example: 'Funding was low. Despite this, the system improved.' },
-      { connector: 'Nevertheless,',       example: 'Critics disagreed. Nevertheless, the policy was passed.' },
+      { connector: 'However,', example: 'Roads are important. However, public transport saves more lives.' },
+      { connector: 'On the other hand,', example: 'Cities need metro systems. On the other hand, rural areas need roads.' },
+      { connector: 'While', example: 'While transport is affordable, roads are still unsafe.' },
+      { connector: 'Despite this,', example: 'Funding was low. Despite this, the system improved.' },
+      { connector: 'Nevertheless,', example: 'Critics disagreed. Nevertheless, the policy was passed.' },
+      { connector: 'Conversely,', example: 'Urban areas are well-connected. Conversely, rural villages remain isolated.' },
     ],
   },
   {
     id: 'adding',
+    hint: 'X and Y',
     label: 'Adding Ideas',
     color: '#00FFC8',
     description: 'Use when building on the previous idea',
     tip: '"Also" alone is weak in academic writing. Upgrade it to "furthermore" or "moreover" for Band 6+.',
     items: [
-      { connector: 'Furthermore,',        example: 'Roads reduce accidents. Furthermore, they connect rural communities.' },
-      { connector: 'Moreover,',           example: 'Transport is cheap. Moreover, it reduces carbon emissions.' },
-      { connector: 'In addition,',        example: 'The system is fast. In addition, it is reliable.' },
-      { connector: 'Not only… but also',  example: 'It not only saves time but also reduces pollution.' },
+      { connector: 'Furthermore,', example: 'Roads reduce accidents. Furthermore, they connect rural communities.' },
+      { connector: 'Moreover,', example: 'Transport is cheap. Moreover, it reduces carbon emissions.' },
+      { connector: 'In addition,', example: 'The system is fast. In addition, it is reliable.' },
+      { connector: 'Not only… but also', example: 'It not only saves time but also reduces pollution.' },
+      { connector: 'Along with', example: 'Along with better roads, the city introduced new bus routes.' },
+      { connector: 'As well as', example: 'As well as cutting emissions, electric buses reduce noise pollution.' },
     ],
   },
   {
     id: 'examples',
+    hint: 'like…',
     label: 'Examples',
     color: '#60a5fa',
     description: 'Use to introduce real evidence',
     tip: 'After your example, always add one sentence explaining WHY it proves your point. Never let examples stand alone.',
     items: [
-      { connector: 'For instance,',              example: 'Many cities lack transport. For instance, rural Bangladesh has no bus routes.' },
-      { connector: 'For example,',               example: 'Poor roads cause harm. For example, villages in Sylhet report weekly accidents.' },
-      { connector: 'This is evident in',         example: 'This is evident in Japan, where metro usage reduced road deaths by 40%.' },
+      { connector: 'For instance,', example: 'Many cities lack transport. For instance, rural Bangladesh has no bus routes.' },
+      { connector: 'For example,', example: 'Poor roads cause harm. For example, villages in Sylhet report weekly accidents.' },
+      { connector: 'This is evident in', example: 'This is evident in Japan, where metro usage reduced road deaths by 40%.' },
       { connector: 'A clear example of this is', example: "A clear example of this is Singapore's investment in rail infrastructure." },
+      { connector: 'Such as', example: 'Several countries, such as Germany and Japan, have invested heavily in rail.' },
     ],
   },
   {
     id: 'concluding',
+    hint: 'wrap up',
     label: 'Concluding',
     color: '#f43f5e',
     description: 'Use in your conclusion only',
     tip: 'Never introduce a new idea in the conclusion. Restate your position in different words and end with an insight.',
     items: [
-      { connector: 'In conclusion,',   example: 'In conclusion, road infrastructure must precede transport investment.' },
-      { connector: 'To summarise,',    example: 'To summarise, both systems are needed, but roads come first.' },
-      { connector: 'Ultimately,',      example: 'Ultimately, no transport system functions without stable roads.' },
+      { connector: 'In conclusion,', example: 'In conclusion, road infrastructure must precede transport investment.' },
+      { connector: 'To summarise,', example: 'To summarise, both systems are needed, but roads come first.' },
+      { connector: 'To sum up,', example: 'To sum up, sustainable transport requires both political will and steady funding.' },
+      { connector: 'Overall,', example: 'Overall, the evidence suggests that public transport investment yields the greatest returns.' },
+      { connector: 'Ultimately,', example: 'Ultimately, no transport system functions without stable roads.' },
       { connector: 'It is clear that', example: 'It is clear that governments must prioritise infrastructure.' },
     ],
   },
   {
     id: 'concession',
+    hint: 'yes, but…',
     label: 'Concession',
     color: '#a78bfa',
     description: 'Admit the opposing view before countering it',
     tip: 'Don\'t just concede and leave it there — always follow with "however" or "yet" to bring the argument back to your side.',
     items: [
-      { connector: 'Admittedly,',     example: 'Admittedly, cars are convenient. However, their environmental cost is too high to ignore.' },
+      { connector: 'Admittedly,', example: 'Admittedly, cars are convenient. However, their environmental cost is too high to ignore.' },
       { connector: 'It is true that', example: 'It is true that technology creates jobs. However, it also displaces traditional workers.' },
-      { connector: 'Although',        example: 'Although public transport is slow, it remains the most sustainable option.' },
-      { connector: 'Even though',     example: 'Even though the cost is high, investment in infrastructure is essential.' },
-      { connector: 'Granted,',        example: 'Granted, the policy has flaws. Yet it represents the first step toward meaningful change.' },
+      { connector: 'Although', example: 'Although public transport is slow, it remains the most sustainable option.' },
+      { connector: 'Even though', example: 'Even though the cost is high, investment in infrastructure is essential.' },
+      { connector: 'Granted,', example: 'Granted, the policy has flaws. Yet it represents the first step toward meaningful change.' },
+      { connector: 'In spite of', example: 'In spite of the rising costs, demand for public transport continues to grow.' },
+      { connector: 'Despite', example: 'Despite the criticism, the metro project moved forward as planned.' },
+      { connector: 'Regardless of', example: 'Regardless of political pressure, the safety regulations remained in place.' },
     ],
   },
   {
     id: 'condition',
+    hint: 'if X then Y',
     label: 'Condition',
     color: '#fbbf24',
     description: 'Use for if/unless scenarios',
     tip: 'In academic writing, prefer "provided that" and "as long as" over the casual "if" for more formal impact.',
     items: [
-      { connector: 'If',                   example: 'If governments invest in roads, rural economies will improve significantly.' },
-      { connector: 'Unless',               example: 'Unless emissions are reduced, climate targets will remain unmet.' },
-      { connector: 'Provided that',        example: 'Provided that funding is secured, the project will be completed on time.' },
-      { connector: 'As long as',           example: 'As long as safety standards are maintained, the benefits outweigh the risks.' },
-      { connector: 'On the condition that',example: 'The agreement will hold on the condition that both parties comply.' },
+      { connector: 'If', example: 'If governments invest in roads, rural economies will improve significantly.' },
+      { connector: 'Unless', example: 'Unless emissions are reduced, climate targets will remain unmet.' },
+      { connector: 'Provided that', example: 'Provided that funding is secured, the project will be completed on time.' },
+      { connector: 'As long as', example: 'As long as safety standards are maintained, the benefits outweigh the risks.' },
+      { connector: 'On the condition that', example: 'The agreement will hold on the condition that both parties comply.' },
     ],
   },
   {
     id: 'purpose',
+    hint: 'in order to',
     label: 'Purpose',
     color: '#34d399',
     description: 'Use to explain the goal behind an action',
     tip: '"In order to" is more formal than bare "to" — use it in body paragraphs for added academic weight.',
     items: [
-      { connector: 'In order to',     example: 'In order to reduce congestion, cities must expand public transport.' },
-      { connector: 'So that',         example: 'Governments invest in education so that future generations can compete globally.' },
+      { connector: 'In order to', example: 'In order to reduce congestion, cities must expand public transport.' },
+      { connector: 'So that', example: 'Governments invest in education so that future generations can compete globally.' },
       { connector: 'With the aim of', example: 'The policy was introduced with the aim of cutting carbon emissions by 2030.' },
-      { connector: 'To ensure that',  example: 'Strict regulations exist to ensure that public safety is never compromised.' },
+      { connector: 'To ensure that', example: 'Strict regulations exist to ensure that public safety is never compromised.' },
     ],
   },
   {
     id: 'comparison',
+    hint: 'X like Y',
     label: 'Comparison',
     color: '#f472b6',
     description: 'Use to show two things are similar',
     tip: 'Never use "same as" in formal writing. Replace it with "similarly" or "likewise" for a higher band score.',
     items: [
-      { connector: 'Similarly,',      example: 'Japan invested in rail early. Similarly, Singapore built a world-class metro system.' },
-      { connector: 'Likewise,',       example: 'Roads reduce accidents. Likewise, street lighting improves pedestrian safety.' },
-      { connector: 'In the same way,',example: 'Exercise improves mental health. In the same way, green spaces reduce urban stress.' },
-      { connector: 'Just as',         example: 'Just as physical health requires exercise, economic health requires investment.' },
-      { connector: 'Compared to',     example: 'Compared to road transport, rail travel emits far less carbon per journey.' },
+      { connector: 'Similarly,', example: 'Japan invested in rail early. Similarly, Singapore built a world-class metro system.' },
+      { connector: 'Likewise,', example: 'Roads reduce accidents. Likewise, street lighting improves pedestrian safety.' },
+      { connector: 'In the same way,', example: 'Exercise improves mental health. In the same way, green spaces reduce urban stress.' },
+      { connector: 'Just as', example: 'Just as physical health requires exercise, economic health requires investment.' },
+      { connector: 'Compared to', example: 'Compared to road transport, rail travel emits far less carbon per journey.' },
     ],
   },
   {
     id: 'sequence',
+    hint: 'first, then…',
     label: 'Sequence/Time',
     color: '#38bdf8',
     description: 'Use to order events or steps in an argument',
     tip: 'Avoid relying only on "firstly, secondly, thirdly" — vary with "initially", "subsequently", and "finally" for a richer sequence.',
     items: [
-      { connector: 'Firstly,',       example: 'Firstly, the government must assess existing infrastructure before spending begins.' },
-      { connector: 'Subsequently,',  example: 'Roads were built. Subsequently, trade between regions increased dramatically.' },
-      { connector: 'Meanwhile,',     example: 'Construction continued in the north. Meanwhile, southern areas faced neglect.' },
-      { connector: 'Eventually,',    example: 'Funding was delayed for years. Eventually, the project was abandoned altogether.' },
-      { connector: 'Finally,',       example: 'Finally, once the network is complete, maintenance must be prioritised.' },
+      { connector: 'Firstly,', example: 'Firstly, the government must assess existing infrastructure before spending begins.' },
+      { connector: 'To begin with,', example: 'To begin with, any meaningful reform requires a clear and measurable goal.' },
+      { connector: 'Subsequently,', example: 'Roads were built. Subsequently, trade between regions increased dramatically.' },
+      { connector: 'Meanwhile,', example: 'Construction continued in the north. Meanwhile, southern areas faced neglect.' },
+      { connector: 'At the same time,', example: 'New roads were paved. At the same time, public transport routes were expanded.' },
+      { connector: 'As soon as', example: 'As soon as the policy was announced, fuel demand began to drop sharply.' },
+      { connector: 'Immediately after,', example: 'The metro opened in 2010. Immediately after, traffic in central districts fell by 18%.' },
+      { connector: 'Eventually,', example: 'Funding was delayed for years. Eventually, the project was abandoned altogether.' },
+      { connector: 'Finally,', example: 'Finally, once the network is complete, maintenance must be prioritised.' },
     ],
   },
   {
     id: 'emphasis',
+    hint: 'stress this',
     label: 'Emphasis',
     color: '#fb923c',
     description: 'Use to stress the importance of a point',
     tip: 'Use emphasis connectors only once per paragraph — overuse drains them of their power.',
     items: [
-      { connector: 'Above all,',            example: 'Above all, governments must ensure that basic services reach rural communities.' },
-      { connector: 'In particular,',        example: 'The report highlights one concern in particular: the lack of rural road access.' },
-      { connector: 'Notably,',              example: 'Notably, countries with strong infrastructure tend to report higher GDP growth.' },
-      { connector: 'It is worth noting that',example: 'It is worth noting that investment in roads also benefits healthcare delivery.' },
-      { connector: 'Crucially,',            example: 'Crucially, no economic plan will succeed without addressing transport links first.' },
+      { connector: 'Above all,', example: 'Above all, governments must ensure that basic services reach rural communities.' },
+      { connector: 'In particular,', example: 'The report highlights one concern in particular: the lack of rural road access.' },
+      { connector: 'Notably,', example: 'Notably, countries with strong infrastructure tend to report higher GDP growth.' },
+      { connector: 'It is worth noting that', example: 'It is worth noting that investment in roads also benefits healthcare delivery.' },
+      { connector: 'Crucially,', example: 'Crucially, no economic plan will succeed without addressing transport links first.' },
+      { connector: 'There is no doubt that', example: 'There is no doubt that climate change is reshaping global migration patterns.' },
+      { connector: 'It is undeniable that', example: 'It is undeniable that early education shapes a child\'s long-term opportunities.' },
+      { connector: 'Certainly,', example: 'Certainly, no nation has succeeded economically without first investing in literacy.' },
+      { connector: 'It is obvious that', example: 'It is obvious that overcrowded classrooms hurt learning outcomes.' },
+      { connector: 'Clearly,', example: 'Clearly, the current waste management system cannot handle urban growth.' },
+      { connector: 'Evidently,', example: 'Evidently, remote work has changed how cities plan their downtown areas.' },
+      { connector: 'It is essential to', example: 'It is essential to maintain road quality if rural trade is to grow.' },
+      { connector: 'It is necessary to', example: 'It is necessary to retrain workers as automation reshapes the job market.' },
+      { connector: 'It is important to', example: 'It is important to balance economic growth with environmental protection.' },
     ],
   },
   {
     id: 'clarification',
+    hint: 'I mean…',
     label: 'Clarification',
     color: '#4ade80',
     description: 'Use to explain or restate what you mean',
     tip: 'Use clarification connectors when your statement is complex — they show the examiner you can self-monitor your writing.',
     items: [
-      { connector: 'In other words,',       example: 'Investment declined. In other words, the roads were simply left to decay.' },
-      { connector: 'That is to say,',       example: 'The system is underfunded, that is to say, it cannot serve growing demand.' },
-      { connector: 'To put it another way,',example: 'The policy failed. To put it another way, it never addressed the root cause.' },
-      { connector: 'More specifically,',    example: 'Poor infrastructure affects communities. More specifically, it limits access to hospitals.' },
-      { connector: 'Put simply,',           example: 'Put simply, there is not enough money and too little planning.' },
+      { connector: 'In other words,', example: 'Investment declined. In other words, the roads were simply left to decay.' },
+      { connector: 'That is to say,', example: 'The system is underfunded, that is to say, it cannot serve growing demand.' },
+      { connector: 'To put it another way,', example: 'The policy failed. To put it another way, it never addressed the root cause.' },
+      { connector: 'More specifically,', example: 'Poor infrastructure affects communities. More specifically, it limits access to hospitals.' },
+      { connector: 'Put simply,', example: 'Put simply, there is not enough money and too little planning.' },
     ],
   },
   {
     id: 'generalisation',
+    hint: 'usually…',
     label: 'Generalisation',
     color: '#c084fc',
     description: 'Use to make broad or universal claims',
     tip: 'Always soften generalisations with "tend to", "often", or "in many cases" — absolute claims are easy to disprove.',
     items: [
-      { connector: 'In general,',       example: 'In general, wealthier nations invest more heavily in public infrastructure.' },
-      { connector: 'On the whole,',     example: 'On the whole, countries with better roads report higher levels of economic growth.' },
-      { connector: 'As a rule,',        example: 'As a rule, urban areas receive more transport funding than rural ones.' },
-      { connector: 'In most cases,',    example: 'In most cases, road improvements lead to lower accident rates within two years.' },
+      { connector: 'In general,', example: 'In general, wealthier nations invest more heavily in public infrastructure.' },
+      { connector: 'On the whole,', example: 'On the whole, countries with better roads report higher levels of economic growth.' },
+      { connector: 'As a rule,', example: 'As a rule, urban areas receive more transport funding than rural ones.' },
+      { connector: 'In most cases,', example: 'In most cases, road improvements lead to lower accident rates within two years.' },
       { connector: 'Broadly speaking,', example: 'Broadly speaking, infrastructure investment yields long-term economic dividends.' },
     ],
   },
   {
     id: 'opinion',
+    hint: 'I think…',
     label: 'Opinion/Stance',
     color: '#facc15',
     description: 'Use to express your personal position',
     tip: 'Weak starters like "I think" score lower — use "It is argued that" or "I would contend that" for formal IELTS impact.',
     items: [
-      { connector: 'It is argued that',       example: 'It is argued that public transport is more beneficial than private vehicle use.' },
-      { connector: 'In my view,',             example: 'In my view, governments should prioritise rail over road construction.' },
-      { connector: 'It is widely believed that',example: 'It is widely believed that education is the key driver of economic growth.' },
-      { connector: 'From my perspective,',    example: 'From my perspective, short-term costs should not deter long-term infrastructure planning.' },
-      { connector: 'I would contend that',    example: 'I would contend that without proper funding, no transport reform will succeed.' },
+      { connector: 'It is argued that', example: 'It is argued that public transport is more beneficial than private vehicle use.' },
+      { connector: 'In my view,', example: 'In my view, governments should prioritise rail over road construction.' },
+      { connector: 'It is widely believed that', example: 'It is widely believed that education is the key driver of economic growth.' },
+      { connector: 'From my perspective,', example: 'From my perspective, short-term costs should not deter long-term infrastructure planning.' },
+      { connector: 'I would contend that', example: 'I would contend that without proper funding, no transport reform will succeed.' },
+      { connector: 'I believe', example: 'I believe that early intervention is the most effective way to reduce dropout rates.' },
+      { connector: 'Personally,', example: 'Personally, I find that sustained reform matters more than dramatic announcements.' },
     ],
   },
   {
     id: 'unexpected',
+    hint: 'surprise!',
     label: 'Unexpected Result',
     color: '#e879f9',
     description: 'Use when the outcome is surprising or contrary to expectation',
     tip: '"Surprisingly" alone is not enough — always explain why the result was unexpected to demonstrate critical thinking.',
     items: [
-      { connector: 'Surprisingly,',            example: 'Roads were built in the region. Surprisingly, air pollution actually decreased.' },
-      { connector: 'Unexpectedly,',            example: 'The budget was cut. Unexpectedly, efficiency improved as a result.' },
-      { connector: 'Against all expectations,',example: 'Against all expectations, ridership increased during the economic downturn.' },
-      { connector: 'It is remarkable that',    example: 'It is remarkable that a city of this size manages with so few private vehicles.' },
-      { connector: 'Paradoxically,',           example: 'Paradoxically, building more roads often leads to greater traffic congestion over time.' },
+      { connector: 'Surprisingly,', example: 'Roads were built in the region. Surprisingly, air pollution actually decreased.' },
+      { connector: 'Unexpectedly,', example: 'The budget was cut. Unexpectedly, efficiency improved as a result.' },
+      { connector: 'Against all expectations,', example: 'Against all expectations, ridership increased during the economic downturn.' },
+      { connector: 'It is remarkable that', example: 'It is remarkable that a city of this size manages with so few private vehicles.' },
+      { connector: 'Paradoxically,', example: 'Paradoxically, building more roads often leads to greater traffic congestion over time.' },
     ],
   },
-] as const;
+  // ─── NEW CATEGORIES ──────────────────────────────────────────────
+  {
+    id: 'attribution',
+    hint: 'they said…',
+    label: 'Attribution',
+    color: '#14b8a6',
+    description: 'Use to cite data, studies, or sources',
+    tip: 'When citing in IELTS, vary your attribution phrases. Relying on "according to" every time is a Band 5 habit.',
+    items: [
+      { connector: 'According to', example: 'According to recent studies, urban traffic has nearly doubled in the past decade.' },
+      { connector: 'Based on', example: 'Based on government data, road accidents fell by 12% after the new policy.' },
+      { connector: 'As stated by', example: 'As stated by the Ministry of Transport, road safety remains the top priority.' },
+      { connector: 'It is believed that', example: 'It is believed that public transport significantly reduces commuter stress.' },
+    ],
+  },
+  {
+    id: 'time-markers',
+    hint: 'now / later',
+    label: 'Time Markers',
+    color: '#ec4899',
+    description: 'Use to anchor a claim in the present or future',
+    tip: 'Avoid "Nowadays" as the opener of every paragraph — alternate with "At present" or "Currently" for variety.',
+    items: [
+      { connector: 'Nowadays,', example: 'Nowadays, most students rely on smartphones for daily research and study.' },
+      { connector: 'At present,', example: 'At present, only 30% of rural villages have stable internet access.' },
+      { connector: 'Currently,', example: 'Currently, the government is reviewing its long-term transport policy.' },
+      { connector: 'In the future,', example: 'In the future, electric vehicles will likely replace petrol cars in urban areas.' },
+      { connector: 'In upcoming years,', example: 'In upcoming years, AI tools will reshape education across developing countries.' },
+      { connector: 'Later on,', example: 'The plan begins in 2027. Later on, additional cities will join the network.' },
+    ],
+  },
+  {
+    id: 'solutions',
+    hint: 'fix it by…',
+    label: 'Solutions',
+    color: '#22d3ee',
+    description: 'Use to propose a fix or remedy',
+    tip: 'After proposing a solution, always explain WHY it works. Examiners reward depth, not the suggestion alone.',
+    items: [
+      { connector: 'One possible solution', example: 'One possible solution is to build dedicated bus lanes across major cities.' },
+      { connector: 'One remedy', example: 'One remedy for traffic congestion is investing in underground metro systems.' },
+      { connector: 'One approach', example: 'One approach to reducing emissions is to subsidise electric vehicles for low-income families.' },
+    ],
+  },
+] as const satisfies readonly ChipCategory[];
+
+// Power Phrases — vocab upgrades and collocations.
+// NOT sentence connectors. Use these to strengthen the words *inside* your sentences.
+export const POWER_PHRASES = [
+  {
+    id: 'pp-quantity',
+    hint: 'how many',
+    label: 'Quantity & Scale',
+    color: '#f59e0b',
+    description: 'Replace weak quantifiers like "a lot of"',
+    tip: '"A lot of" is informal. Use "numerous" or "a significant proportion" for academic register.',
+    items: [
+      { connector: 'A large number of', example: 'A large number of students drop out of university due to financial pressure.' },
+      { connector: 'The majority of', example: 'The majority of citizens support stricter traffic laws in residential areas.' },
+      { connector: 'Numerous', example: 'Numerous studies have linked long-term air pollution to heart disease.' },
+      { connector: 'Various', example: 'Various countries have adopted similar climate policies in the past decade.' },
+      { connector: 'A wide range of', example: 'Universities now offer a wide range of online courses for working adults.' },
+      { connector: 'A significant proportion', example: 'A significant proportion of urban residents now commute by metro rather than car.' },
+      { connector: 'Most', example: 'Most households in the region rely on a single source of income.' },
+    ],
+  },
+  {
+    id: 'pp-trends',
+    hint: 'going up / down',
+    label: 'Trends',
+    color: '#6366f1',
+    description: 'Describe how something changes over time',
+    tip: '"More and more" is acceptable but "increasingly" scores higher. Use trend phrases in introductions and conclusions.',
+    items: [
+      { connector: 'More and more', example: 'More and more people now work remotely after the pandemic reshaped office culture.' },
+      { connector: 'Increasingly,', example: 'Urban areas are increasingly turning to renewable energy sources to meet demand.' },
+      { connector: 'Less and less', example: 'Less and less cash is used in daily transactions as digital wallets spread.' },
+      { connector: 'Gradually,', example: 'The government is gradually phasing out single-use plastics across the country.' },
+    ],
+  },
+  {
+    id: 'pp-hedging',
+    hint: 'kind of / sort of',
+    label: 'Hedging',
+    color: '#94a3b8',
+    description: 'Soften absolute claims to sound more academic',
+    tip: 'Hedging shows critical thinking. Absolute claims ("always", "never") invite the examiner to disprove you.',
+    items: [
+      { connector: 'To a certain extent,', example: 'To a certain extent, technology has improved the quality of public education.' },
+      { connector: 'Partially', example: 'The policy was partially successful in reducing emissions in the first year.' },
+      { connector: 'To some degree,', example: 'To some degree, social media has weakened face-to-face communication skills.' },
+    ],
+  },
+  {
+    id: 'pp-collocations',
+    hint: 'IELTS power',
+    label: 'Collocations',
+    color: '#d946ef',
+    description: 'Verb + noun combos examiners reward',
+    tip: 'Use 2–3 per essay — not more — or your writing sounds memorised rather than authentic.',
+    items: [
+      { connector: 'plays an important role', example: 'Education plays an important role in long-term economic development.' },
+      { connector: 'has negative effects', example: 'Excessive screen time has negative effects on children\'s eyesight and sleep.' },
+      { connector: 'has positive effects', example: 'Regular exercise has positive effects on both mental and physical health.' },
+      { connector: 'take responsibility', example: 'Governments must take responsibility for maintaining public infrastructure.' },
+      { connector: 'improve quality of life', example: 'Better healthcare can dramatically improve quality of life in rural communities.' },
+      { connector: 'can be seen as', example: 'Free education can be seen as a long-term investment in a country\'s future.' },
+      { connector: 'A key factor', example: 'A key factor in urban migration is the search for better employment opportunities.' },
+    ],
+  },
+] as const satisfies readonly ChipCategory[];
 
 export type ConnectorCategory = typeof CONNECTORS[number];
+export type PowerPhraseCategory = typeof POWER_PHRASES[number];
 
 function highlightConnector(example: string, connector: string) {
   const clean = connector.replace('…, ', '').replace('… ', '');
@@ -256,7 +421,7 @@ function highlightConnector(example: string, connector: string) {
   );
 }
 
-export function ConnectorContent({ data }: { data: ConnectorCategory }) {
+export function ConnectorContent({ data }: { data: ChipCategory }) {
   return (
     <div className="space-y-2">
       {data.items.map((item: { connector: string; example: string }) => (
@@ -293,9 +458,9 @@ export function ConnectorContent({ data }: { data: ConnectorCategory }) {
 }
 
 const verdictConfig = {
-  natural:   { bg: 'rgba(0,255,200,0.1)',   border: 'rgba(0,255,200,0.3)',   color: '#00FFC8', label: '✓ Natural' },
-  close:     { bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.3)',  color: '#f97316', label: '⚡ Almost there' },
-  unnatural: { bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.3)',   color: '#ef4444', label: '✗ Try again' },
+  natural: { bg: 'rgba(0,255,200,0.1)', border: 'rgba(0,255,200,0.3)', color: '#00FFC8', label: '✓ Natural' },
+  close: { bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.3)', color: '#f97316', label: '⚡ Almost there' },
+  unnatural: { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', color: '#ef4444', label: '✗ Try again' },
 } as const;
 
 export function GenerationPhase({
@@ -309,7 +474,20 @@ export function GenerationPhase({
     ? verdictConfig[aiFeedback.verdict as keyof typeof verdictConfig] ?? verdictConfig.close
     : null;
 
-  const activeData = CONNECTORS.find(c => c.id === activeConnector) ?? null;
+  // Local UI state: which tab is active in the chip strip.
+  // Independent from `activeConnector` (which is the open sheet's id, global to both lists).
+  const [activeTab, setActiveTab] = useState<'connectors' | 'phrases'>('connectors');
+
+  // Active list driving the chip strip below the toggle.
+  const currentList: readonly ChipCategory[] =
+    activeTab === 'connectors' ? CONNECTORS : POWER_PHRASES;
+
+  // Bottom-sheet lookup: search BOTH arrays so the sheet stays correct
+  // even if the user toggles tabs while a sheet is open.
+  const activeData: ChipCategory | null =
+    CONNECTORS.find(c => c.id === activeConnector) ??
+    POWER_PHRASES.find(c => c.id === activeConnector) ??
+    null;
 
   // Mint a trophy on a 10/10 score. Fires once per saved sentence.
   const mintedRef = useRef<string | null>(null);
@@ -332,10 +510,10 @@ export function GenerationPhase({
   // Tier-driven copy
   const promptText = (() => {
     switch (tier) {
-      case 'new':      return 'Write your own sentence using this word:';
+      case 'new': return 'Write your own sentence using this word:';
       case 'learning': return 'Write a short phrase or sentence using this word:';
-      case 'mature':   return 'Quick check — write a sentence. AI scoring is optional at this level.';
-      case 'leech':    return "You've slipped on this word before. Rewrite your old sentence — better this time.";
+      case 'mature': return 'Quick check — write a sentence. AI scoring is optional at this level.';
+      case 'leech': return "You've slipped on this word before. Rewrite your old sentence — better this time.";
     }
   })();
 
@@ -371,10 +549,10 @@ export function GenerationPhase({
                 className="text-[9px] uppercase tracking-[0.2em] font-bold px-2.5 py-1 rounded-full"
                 style={
                   tier === 'leech'
-                    ? { background: 'rgba(239,68,68,0.08)',  color: '#ef4444', border: '1px solid rgba(239,68,68,0.22)' }
+                    ? { background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.22)' }
                     : tier === 'mature'
-                    ? { background: 'rgba(0,255,200,0.07)',  color: '#00FFC8', border: '1px solid rgba(0,255,200,0.18)' }
-                    : { background: 'rgba(56,189,248,0.07)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.18)' }
+                      ? { background: 'rgba(0,255,200,0.07)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.18)' }
+                      : { background: 'rgba(56,189,248,0.07)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.18)' }
                 }
               >
                 {tier === 'leech' ? '⚠ Leech' : tier === 'mature' ? '◆ Mature' : '◇ Learning'}
@@ -439,22 +617,53 @@ export function GenerationPhase({
           </div>
           <p className="text-zinc-400 text-sm mb-6">{currentItem.word.definition}</p>
 
-          {/* Connector buttons */}
+          {/* Toggle pill + chip strip */}
           <div className="mb-4 space-y-3">
-            <p className="text-[10px] uppercase tracking-widest text-zinc-600">Connectors</p>
+            {/* Toggle pill — swaps which list of chips shows below */}
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => setActiveTab('connectors')}
+                className="text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-full transition-all active:scale-95"
+                style={
+                  activeTab === 'connectors'
+                    ? { background: 'rgba(0,255,200,0.12)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.32)' }
+                    : { background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.08)' }
+                }
+                aria-pressed={activeTab === 'connectors'}
+              >
+                Connectors
+              </button>
+              <button
+                onClick={() => setActiveTab('phrases')}
+                className="text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-full transition-all active:scale-95"
+                style={
+                  activeTab === 'phrases'
+                    ? { background: 'rgba(0,255,200,0.12)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.32)' }
+                    : { background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.08)' }
+                }
+                aria-pressed={activeTab === 'phrases'}
+              >
+                Power Phrases
+              </button>
+            </div>
+
             <div className="flex flex-wrap gap-2">
-              {CONNECTORS.map(cat => (
+              {currentList.map(cat => (
                 <button
                   key={cat.id}
                   onClick={() => onConnectorChange(activeConnector === cat.id ? null : cat.id)}
-                  className="rounded-xl px-3 py-1.5 text-xs font-semibold transition-all active:scale-95"
+                  className="rounded-xl px-3 py-1.5 flex flex-col items-start gap-1 transition-all active:scale-95"
                   style={{
                     background: activeConnector === cat.id ? `${cat.color}18` : 'rgba(255,255,255,0.06)',
                     border: `1px solid ${activeConnector === cat.id ? cat.color : cat.color + '55'}`,
-                    color: cat.color,
                   }}
                 >
-                  {cat.label}
+                  <span className="text-xs font-semibold leading-none" style={{ color: cat.color }}>
+                    {cat.label}
+                  </span>
+                  <span className="text-[10px] font-medium leading-none opacity-60" style={{ color: cat.color }}>
+                    {cat.hint}
+                  </span>
                 </button>
               ))}
             </div>
