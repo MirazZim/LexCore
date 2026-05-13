@@ -18,6 +18,12 @@ const DictionaryPage = lazy(() => import("./pages/DictionaryPage"));
 const DailyShufflePage = lazy(() => import("./pages/DailyShufflePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
+// Dev-only routes. The conditional + static env replacement lets Vite tree-shake
+// the dynamic import out of the production bundle.
+const TestCREI = import.meta.env.DEV
+  ? lazy(() => import("./pages/__dev/TestCREI"))
+  : null;
+
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -47,6 +53,9 @@ function AppRoutes() {
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="/dictionary" element={<ProtectedRoute><DictionaryPage /></ProtectedRoute>} />
       <Route path="/daily" element={<ProtectedRoute><DailyShufflePage /></ProtectedRoute>} />
+      {import.meta.env.DEV && TestCREI && (
+        <Route path="/dev/test-crei" element={<ProtectedRoute><TestCREI /></ProtectedRoute>} />
+      )}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
