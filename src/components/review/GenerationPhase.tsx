@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, RotateCcw, Sparkles, Trophy, X, Zap } from 'lucide-react';
-import type { DueWordItem, AiFeedback } from './types';
+import { Link2, Loader2, RotateCcw, Sparkles, Trophy, X, Zap } from 'lucide-react';
+import type { DueWordItem, AiFeedback, WordCollocation } from './types';
 import type { ReviewTier } from '@/lib/fsrs';
 import type { DailyTopic } from '@/lib/topic-of-day';
 import { mintTrophy } from '@/lib/trophies';
@@ -30,6 +30,7 @@ interface GenerationPhaseProps {
   priorSentence: string | null;
   roastMode: boolean;
   onToggleRoast: () => void;
+  collocations: WordCollocation[];
 }
 
 // Shared shape for connector chips and power-phrase chips.
@@ -468,7 +469,7 @@ export function GenerationPhase({
   aiFeedback, aiLoading, aiError, isSaving,
   activeConnector, onConnectorChange,
   onGenerationTextChange, onSave, onSaveQuick, onNextWord, onRetry,
-  tier, topic, priorSentence, roastMode, onToggleRoast,
+  tier, topic, priorSentence, roastMode, onToggleRoast, collocations,
 }: GenerationPhaseProps) {
   const verdict = aiFeedback
     ? verdictConfig[aiFeedback.verdict as keyof typeof verdictConfig] ?? verdictConfig.close
@@ -477,6 +478,7 @@ export function GenerationPhase({
   // Local UI state: which tab is active in the chip strip.
   // Independent from `activeConnector` (which is the open sheet's id, global to both lists).
   const [activeTab, setActiveTab] = useState<'connectors' | 'phrases'>('connectors');
+  const [showCollocations, setShowCollocations] = useState(false);
 
   // Active list driving the chip strip below the toggle.
   const currentList: readonly ChipCategory[] =
@@ -573,18 +575,6 @@ export function GenerationPhase({
             </button>
           </div>
 
-          {/* Topic of the day banner */}
-          <div
-            className="mb-5 rounded-xl px-4 py-2.5 flex items-center gap-2.5"
-            style={{ background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.18)' }}
-          >
-            <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: '#38bdf8' }} />
-            <p className="text-[11px] text-zinc-400 leading-snug">
-              <span className="text-[10px] uppercase tracking-widest font-bold mr-1.5" style={{ color: '#38bdf8' }}>Today's topic</span>
-              <span className="text-zinc-200 font-semibold">{topic.title}</span>
-              <span className="text-zinc-500"> · weave today's words around {topic.prompt}.</span>
-            </p>
-          </div>
           <div className="flex items-baseline gap-3 mb-2">
             <motion.h2
               initial={{ opacity: 0, scale: 0.82, filter: 'blur(8px)' }}
@@ -668,6 +658,37 @@ export function GenerationPhase({
               ))}
             </div>
           </div>
+
+          {/* Topic of the day banner */}
+          <div
+            className="mb-5 rounded-xl px-4 py-2.5 flex items-center gap-2.5"
+            style={{ background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.18)' }}
+          >
+            <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: '#38bdf8' }} />
+            <p className="text-[11px] text-zinc-400 leading-snug">
+              <span className="text-[10px] uppercase tracking-widest font-bold mr-1.5" style={{ color: '#38bdf8' }}>Today's topic</span>
+              <span className="text-zinc-200 font-semibold">{topic.title}</span>
+              <span className="text-zinc-500"> · weave today's words around {topic.prompt}.</span>
+            </p>
+          </div>
+
+          {collocations.length > 0 && (
+            <button
+              onClick={() => setShowCollocations(true)}
+              className="mb-5 w-full rounded-xl px-4 py-2.5 flex items-center gap-2.5 transition-all active:scale-[0.99]"
+              style={{ background: 'rgba(0,255,200,0.06)', border: '1px solid rgba(0,255,200,0.22)' }}
+              title="Peek at collocations for this word"
+            >
+              <Link2 className="h-3.5 w-3.5 shrink-0" style={{ color: '#00FFC8' }} />
+              <p className="text-[11px] text-zinc-400 leading-snug text-left">
+                <span className="text-[10px] uppercase tracking-widest font-bold mr-1.5" style={{ color: '#00FFC8' }}>
+                  Collocations
+                </span>
+                <span className="text-zinc-200 font-semibold">{collocations.length} saved</span>
+                <span className="text-zinc-500"> · tap to peek without leaving.</span>
+              </p>
+            </button>
+          )}
 
           <p className="text-white font-semibold mb-3">{promptText}</p>
 
@@ -892,6 +913,83 @@ export function GenerationPhase({
                 </button>
               </div>
               <ConnectorContent data={activeData} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Collocations peek sheet — lets the user reference collocations mid-write */}
+      <AnimatePresence>
+        {showCollocations && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-40"
+              style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+              onClick={() => setShowCollocations(false)}
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-[2rem] p-6 space-y-4 max-h-[78vh] overflow-y-auto"
+              style={{
+                background: 'rgba(18,18,22,0.88)',
+                backdropFilter: 'blur(28px)',
+                WebkitBackdropFilter: 'blur(28px)',
+                borderTop: '1px solid rgba(0,255,200,0.4)',
+                borderLeft: '1px solid rgba(255,255,255,0.07)',
+                borderRight: '1px solid rgba(255,255,255,0.07)',
+              }}
+            >
+              <div className="flex justify-center -mt-1 mb-1">
+                <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
+              </div>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xl font-bold" style={{ color: '#00FFC8', fontFamily: "'Space Grotesk', sans-serif" }}>
+                    Collocations
+                  </p>
+                  <p className="text-xs text-zinc-500 italic mt-0.5">
+                    Word pairings for <span className="text-zinc-300 not-italic font-semibold">{currentItem.word.word}</span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowCollocations(false)}
+                  className="flex items-center justify-center w-8 h-8 rounded-full shrink-0 ml-4 transition-all active:scale-90"
+                  style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa' }}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {collocations.map((col, i) => {
+                  const target = currentItem.word.word;
+                  const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                  const regex = new RegExp(`(${escaped})`, 'gi');
+                  const parts = col.collocation.split(regex);
+                  return (
+                    <div
+                      key={col.id}
+                      className="rounded-2xl px-4 py-3 flex items-center gap-3"
+                      style={{ background: 'rgba(0,255,200,0.05)', border: '1px solid rgba(0,255,200,0.16)' }}
+                    >
+                      <span className="text-[9px] font-bold text-zinc-600 w-4 shrink-0">#{i + 1}</span>
+                      <span className="text-sm font-semibold text-zinc-200" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                        {parts.map((part, j) =>
+                          regex.test(part)
+                            ? <span key={j} style={{ color: '#00FFC8', fontWeight: 700 }}>{part}</span>
+                            : <span key={j}>{part}</span>
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </motion.div>
           </>
         )}

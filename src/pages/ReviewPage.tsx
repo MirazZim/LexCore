@@ -871,6 +871,7 @@ export default function ReviewPage() {
                 priorSentence={priorSentence}
                 roastMode={roastMode}
                 onToggleRoast={handleToggleRoast}
+                collocations={collocations}
               />
             )}
 
