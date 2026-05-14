@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, PenLine } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { generateCREIPrompt, scoreCREI } from '@/lib/llm';
 import type { CREIPrompt, CREIFeedback } from '@/lib/llm';
@@ -29,8 +29,6 @@ export default function WritingLabPage() {
   const [gradeError, setGradeError] = useState(false);
 
   // ── Generate prompt ──────────────────────────────────────────────
-  // Raw async — matches scoreSentence pattern in ReviewPage.
-  // recentPrompts.data may still be loading on mount; exclude is best-effort.
   async function generate() {
     setGenLoading(true);
     setGenError(false);
@@ -49,7 +47,7 @@ export default function WritingLabPage() {
   useEffect(() => {
     generate();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // fires once on mount
+  }, []);
 
   // ── Submit + grade ───────────────────────────────────────────────
   async function handleSubmit() {
@@ -64,9 +62,6 @@ export default function WritingLabPage() {
       );
       setFeedback(result);
       setSubmitted(true);
-      // TODO: saveAttempt.isError currently has no UI surface. If a user
-      // reports "I wrote a paragraph but it's not in my history," wire a
-      // toast or banner here.
       saveAttempt.mutate({
         prompt: currentPrompt.prompt,
         prompt_meta: {
@@ -91,7 +86,6 @@ export default function WritingLabPage() {
   }
 
   // ── Post-feedback actions ────────────────────────────────────────
-  // Keeps current prompt; new attempt row on next submit.
   function handleTryAgain() {
     setUserText('');
     setFeedback(null);
@@ -99,7 +93,6 @@ export default function WritingLabPage() {
     setGradeError(false);
   }
 
-  // Fetches a fresh prompt, passing current history as exclude array.
   function handleNewPrompt() {
     setCurrentPrompt(null);
     setUserText('');
@@ -111,99 +104,181 @@ export default function WritingLabPage() {
 
   const count = todayCount.data ?? 0;
 
+  // ── Prompt panel content ────────────────────────────────────────
+  const promptPanel = genLoading && !currentPrompt ? (
+    <div className="space-y-4">
+      <Skeleton className="h-5 w-2/5 rounded-full bg-zinc-800/70" />
+      <Skeleton className="h-40 w-full rounded-3xl bg-zinc-800/60" />
+      <Skeleton className="h-16 w-full rounded-2xl bg-zinc-800/50" />
+    </div>
+  ) : genError && !currentPrompt ? (
+    <div
+      className="rounded-3xl p-8 text-center space-y-4 h-full flex flex-col items-center justify-center"
+      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
+    >
+      <div
+        className="w-10 h-10 rounded-2xl flex items-center justify-center"
+        style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
+      >
+        <span className="text-red-400 text-lg font-bold">!</span>
+      </div>
+      <div>
+        <p className="text-sm font-semibold text-white mb-1">Couldn't load a prompt</p>
+        <p className="text-xs text-zinc-500">Check your connection and try again.</p>
+      </div>
+      <button
+        onClick={generate}
+        className="rv-btn-secondary"
+        style={{ width: 'auto', padding: '10px 24px' }}
+      >
+        Retry
+      </button>
+    </div>
+  ) : currentPrompt ? (
+    <PromptCard prompt={currentPrompt} />
+  ) : null;
+
   return (
-    <div className="min-h-screen pt-8 pb-24 px-4 max-w-lg mx-auto">
+    <div
+      className="flex flex-col"
+      style={{ height: '100dvh', minHeight: '100vh', background: '#09090b' }}
+    >
       <style>{RV_STYLES}</style>
 
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      {/* Ambient glow */}
+      <div
+        aria-hidden
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: '30%',
+          width: '500px',
+          height: '250px',
+          background: 'radial-gradient(ellipse at center, rgba(0,255,200,0.04) 0%, transparent 70%)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <header
+        className="shrink-0 flex items-center gap-3 px-5 md:px-8"
+        style={{
+          height: '56px',
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          background: 'rgba(9,9,11,0.85)',
+          backdropFilter: 'blur(20px)',
+          position: 'relative',
+          zIndex: 10,
+        }}
+      >
         <button
           onClick={() => navigate('/')}
-          className="flex items-center justify-center w-10 h-10 rounded-full shrink-0"
-          style={{ background: 'rgba(255,255,255,0.05)', color: '#a1a1aa' }}
+          className="flex items-center justify-center w-8 h-8 rounded-full shrink-0 transition-all duration-150 hover:scale-105"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: '#71717a' }}
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-3.5 w-3.5" />
         </button>
 
-        <h1
-          className="text-xl font-bold text-white flex-1"
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-        >
-          Writing Lab
-        </h1>
+        <div className="flex items-center gap-2 flex-1">
+          <div
+            className="flex items-center justify-center w-7 h-7 rounded-lg"
+            style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.18)' }}
+          >
+            <PenLine className="h-3.5 w-3.5" style={{ color: '#fbbf24' }} />
+          </div>
+          <h1
+            className="text-[15px] font-bold text-white"
+            style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.01em' }}
+          >
+            Writing Lab
+          </h1>
+        </div>
 
-        {/* Today's attempt counter */}
         {count > 0 && (
           <span
-            className="text-[11px] font-bold px-3 py-1 rounded-full shrink-0"
-            style={{ background: 'rgba(0,255,200,0.1)', color: '#00FFC8' }}
+            className="text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 tabular-nums"
+            style={{ background: 'rgba(0,255,200,0.08)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.16)', letterSpacing: '0.04em' }}
           >
-            {count} paragraph{count !== 1 ? 's' : ''} today
+            {count} today
           </span>
         )}
-      </div>
+      </header>
 
-      <div className="space-y-4">
-        {/* Prompt area */}
-        {genLoading && !currentPrompt ? (
-          <Skeleton className="h-40 w-full rounded-2xl bg-zinc-800/60" />
-        ) : genError && !currentPrompt ? (
-          <div
-            className="rounded-2xl p-6 text-center space-y-3"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
-          >
-            <p className="text-sm text-zinc-400">Couldn't generate a prompt. Check your connection and try again.</p>
-            <button
-              onClick={generate}
-              className="rv-btn-secondary"
-              style={{ width: 'auto', padding: '10px 20px' }}
-            >
-              Retry
-            </button>
+      {/* ── Body ────────────────────────────────────────────────── */}
+      <main
+        className="flex-1 flex flex-col md:flex-row"
+        style={{ overflow: 'hidden', position: 'relative', zIndex: 1 }}
+      >
+        {/* Left panel — Prompt (desktop only; shown inline on mobile) */}
+        <aside
+          className="hidden md:block"
+          style={{
+            width: '50%',
+            flexShrink: 0,
+            height: 'calc(100dvh - 56px)',
+            overflowY: 'auto',
+            borderRight: '1px solid rgba(255,255,255,0.05)',
+            padding: '32px 32px',
+          }}
+        >
+          {promptPanel}
+        </aside>
+
+        {/* Right panel — Composer / Feedback (full width on mobile) */}
+        <section
+          className="flex-1 flex flex-col"
+          style={{ height: 'calc(100dvh - 56px)', overflowY: 'auto', padding: 'clamp(16px, 3vw, 32px) clamp(16px, 3vw, 32px) 48px', gap: '12px' }}
+        >
+          {/* Prompt shown inline on mobile only */}
+          <div className="md:hidden">
+            {promptPanel}
           </div>
-        ) : currentPrompt ? (
-          <PromptCard prompt={currentPrompt} />
-        ) : null}
 
-        {/* Composer — visible once a prompt is loaded and feedback not yet shown */}
-        {currentPrompt && !feedback && (
-          <WritingComposer
-            value={userText}
-            onChange={setUserText}
-            onSubmit={handleSubmit}
-            submitting={gradeLoading}
-            disabled={gradeLoading || !userText.trim()}
-          />
-        )}
+          {/* Composer */}
+          {currentPrompt && !feedback && (
+            <WritingComposer
+              value={userText}
+              onChange={setUserText}
+              onSubmit={handleSubmit}
+              submitting={gradeLoading}
+              disabled={gradeLoading || !userText.trim()}
+            />
+          )}
 
-        {/* Grade error — shown below composer when grading fails */}
-        {gradeError && !feedback && currentPrompt && (
-          <div
-            className="rounded-2xl p-4 flex items-center justify-between gap-4"
-            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}
-          >
-            <p className="text-sm text-red-400">Grading failed. Your text is still here — try again.</p>
-            <button
-              onClick={handleSubmit}
-              disabled={gradeLoading}
-              className="text-xs font-bold text-red-400 underline shrink-0 disabled:opacity-50"
+          {/* Grade error */}
+          {gradeError && !feedback && currentPrompt && (
+            <div
+              className="rounded-2xl px-5 py-4 flex items-center justify-between gap-4"
+              style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.16)' }}
             >
-              Retry
-            </button>
-          </div>
-        )}
+              <div>
+                <p className="text-sm font-semibold text-red-400">Grading failed</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Your text is still here — try again.</p>
+              </div>
+              <button
+                onClick={handleSubmit}
+                disabled={gradeLoading}
+                className="text-xs font-bold px-3 py-1.5 rounded-lg shrink-0 disabled:opacity-50 transition-all"
+                style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
 
-        {/* Feedback */}
-        {feedback && (
-          <WritingFeedback
-            feedback={feedback}
-            submitted={submitted}
-            onTryAgain={handleTryAgain}
-            onNewPrompt={handleNewPrompt}
-            generating={genLoading}
-          />
-        )}
-      </div>
+          {/* Feedback */}
+          {feedback && (
+            <WritingFeedback
+              feedback={feedback}
+              submitted={submitted}
+              onTryAgain={handleTryAgain}
+              onNewPrompt={handleNewPrompt}
+              generating={genLoading}
+            />
+          )}
+        </section>
+      </main>
     </div>
   );
 }
