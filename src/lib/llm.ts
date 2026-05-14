@@ -761,6 +761,7 @@ export async function generateCREIPrompt(opts: CREIPromptOptions = {}): Promise<
   const domain: CREIDomain = CREI_DOMAINS[Math.floor(Math.random() * CREI_DOMAINS.length)];
   const questionType: CREIQuestionType = opts.questionType
     ?? CREI_QUESTION_TYPES[Math.floor(Math.random() * CREI_QUESTION_TYPES.length)];
+  console.log('[generateCREIPrompt]', { domain, questionType, passedQuestionType: opts.questionType });
   const exclude = opts.exclude ?? [];
   const seed = Math.random().toString(36).slice(2, 8);
 
@@ -780,6 +781,19 @@ CONSTRAINTS:
   • The prompt must clearly fall within the given domain.
   • The prompt must match the given question type format exactly.
   • Do NOT name political parties, living individuals, or culturally inflammatory framings. Use general societal trends.
+
+FORBIDDEN OPENERS — your generated prompt MUST NOT start with any of these stock phrases. Vary the opening style across calls:
+  FORBIDDEN: "In many parts of the world..."
+  FORBIDDEN: "Nowadays..."
+  FORBIDDEN: "These days..."
+  FORBIDDEN: "In the modern world..."
+  FORBIDDEN: "In recent years..."
+  FORBIDDEN: "Currently..."
+
+Open instead with the topic noun, a statistic, a comparison, or a direct claim. Examples of acceptable opener styles (do NOT copy verbatim, just match the variety):
+  "Electronic waste has become one of the fastest-growing waste streams..."
+  "Plastic waste in the world's oceans has tripled since 2000..."
+  "More children than ever are being diagnosed with type 2 diabetes..."
 
 TIP — you must also produce ONE sharp framing tip for the learner. The tip teaches them how to score higher on THIS specific prompt. Voice contract:
   • Imperative, not advisory.
