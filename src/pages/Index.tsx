@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Brain, Clock, Flame, Moon, Sparkles, ArrowRight, MoreHorizontal, Target, Trophy } from 'lucide-react';
+import { BookOpen, Brain, Clock, Flame, Moon, PenLine, Sparkles, ArrowRight, MoreHorizontal, Target, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/AppLayout';
@@ -293,6 +293,15 @@ export default function Dashboard() {
                 >
                   <Moon className="h-4 w-4 shrink-0" />
                   {isSleepPrepActive ? 'Sleep Prep' : `Sleep Prep in ${sleepCountdown}`}
+                </button>
+
+                <button
+                  onClick={() => navigate('/writing')}
+                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full text-sm font-medium transition-all hover:opacity-85"
+                  style={{ color: '#fbbf24', border: '1px solid rgba(251,191,36,0.22)', background: 'rgba(251,191,36,0.06)' }}
+                >
+                  <PenLine className="h-4 w-4 shrink-0" />
+                  Writing Practice
                 </button>
               </div>
             </div>

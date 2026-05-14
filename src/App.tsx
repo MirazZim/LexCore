@@ -16,6 +16,7 @@ const GrammarRulesPage = lazy(() => import("./pages/GrammarRulesPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const DictionaryPage = lazy(() => import("./pages/DictionaryPage"));
 const DailyShufflePage = lazy(() => import("./pages/DailyShufflePage"));
+const WritingLabPage = lazy(() => import("./pages/WritingLabPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Dev-only routes. The conditional + static env replacement lets Vite tree-shake
@@ -53,6 +54,7 @@ function AppRoutes() {
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="/dictionary" element={<ProtectedRoute><DictionaryPage /></ProtectedRoute>} />
       <Route path="/daily" element={<ProtectedRoute><DailyShufflePage /></ProtectedRoute>} />
+      <Route path="/writing" element={<ProtectedRoute><WritingLabPage /></ProtectedRoute>} />
       {import.meta.env.DEV && TestCREI && (
         <Route path="/dev/test-crei" element={<ProtectedRoute><TestCREI /></ProtectedRoute>} />
       )}
