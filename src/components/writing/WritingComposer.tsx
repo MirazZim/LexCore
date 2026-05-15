@@ -36,14 +36,16 @@ export default function WritingComposer({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-      className="rounded-3xl overflow-hidden"
+      className="rounded-3xl overflow-hidden flex flex-col"
       style={{
         background: 'rgba(18,18,21,0.7)',
         border: '1px solid rgba(255,255,255,0.07)',
         backdropFilter: 'blur(24px)',
+        flex: 1,
+        height: '100%',
       }}
     >
-      <div className="p-5 flex flex-col gap-4">
+      <div className="p-5 flex flex-col gap-4" style={{ flex: 1, minHeight: 0 }}>
         <textarea
           className="rv-textarea"
           placeholder="Write your CREI paragraph here…"
@@ -52,7 +54,8 @@ export default function WritingComposer({
           onKeyDown={handleKeyDown}
           disabled={submitting}
           style={{
-            height: '280px',
+            flex: 1,
+            minHeight: '200px',
             fontSize: '0.95rem',
             lineHeight: '1.75',
             borderRadius: '1rem',
