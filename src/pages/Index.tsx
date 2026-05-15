@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { BookOpen, Brain, Clock, Flame, Moon, PenLine, Sparkles, ArrowRight, MoreHorizontal, Target, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -25,6 +25,283 @@ const item = {
 };
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+/* ─── Hero rotating word ─────────────────────────────────────────── */
+/* Sleek palette — desaturated tints (200-level) for a sophisticated cool
+   base, with a soft warm complement that produces tension without going
+   neon. Chromatic vibration is still the goal, but tuned down so the
+   overall feel is liquid-metal / iridescent foil instead of arcade. */
+const HERO_WORDS = [
+  { text: 'sharpening.',    b1: '#93C5FD', b2: '#C4B5FD', o1: '#FED7AA', o2: '#FECDD3' },
+  { text: 'compounding.',   b1: '#A5B4FC', b2: '#C7D2FE', o1: '#FDE68A', o2: '#FED7AA' },
+  { text: 'deepening.',     b1: '#DDD6FE', b2: '#FBCFE8', o1: '#BBF7D0', o2: '#A7F3D0' },
+  { text: 'expanding.',     b1: '#FBCFE8', b2: '#FED7AA', o1: '#BAE6FD', o2: '#A5B4FC' },
+  { text: 'crystallizing.', b1: '#FDE68A', b2: '#A7F3D0', o1: '#DDD6FE', o2: '#C7D2FE' },
+];
+
+const letterVariants = {
+  hidden: { opacity: 0, y: 24, filter: 'blur(8px)' },
+  show:   { opacity: 1, y: 0,  filter: 'blur(0px)', transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
+};
+const lineVariants = {
+  hidden: { opacity: 1 },
+  show:   { opacity: 1, transition: { staggerChildren: 0.035, delayChildren: 0.1 } },
+};
+
+function ScatterWord({ text, b1, b2, o1, o2 }: { text: string; b1: string; b2: string; o1: string; o2: string }) {
+  const chars = Array.from(text);
+  return (
+    <span className="relative inline-block" style={{ whiteSpace: 'pre' }}>
+      <AnimatePresence mode="popLayout" initial={false}>
+        {chars.map((char, i) => {
+          const inAngle  = Math.random() * Math.PI * 2;
+          const inDist   = 90 + Math.random() * 90;
+          const outAngle = Math.random() * Math.PI * 2;
+          const outDist  = 120 + Math.random() * 120;
+          return (
+            <motion.span
+              key={`${text}-${i}-${char}`}
+              layout
+              className="hero-rotword inline-block will-change-transform"
+              style={{
+                ['--b1' as never]: b1,
+                ['--b2' as never]: b2,
+                ['--o1' as never]: o1,
+                ['--o2' as never]: o2,
+                whiteSpace: 'pre',
+                transformOrigin: '50% 60%',
+              }}
+              initial={{
+                opacity: 0,
+                x: Math.cos(inAngle) * inDist,
+                y: Math.sin(inAngle) * inDist - 20,
+                rotate: (Math.random() - 0.5) * 160,
+                scale: 0.25,
+                filter: 'blur(8px)',
+              }}
+              animate={{
+                opacity: 1,
+                x: 0,
+                y: 0,
+                rotate: 0,
+                scale: 1,
+                filter: 'blur(0px)',
+                transition: {
+                  type: 'spring',
+                  stiffness: 280,
+                  damping: 18,
+                  mass: 0.7,
+                  delay: i * 0.035,
+                },
+              }}
+              exit={{
+                opacity: 0,
+                x: Math.cos(outAngle) * outDist,
+                y: Math.sin(outAngle) * outDist - 40,
+                rotate: (Math.random() - 0.5) * 240,
+                scale: 0.4,
+                filter: 'blur(6px)',
+                transition: {
+                  duration: 0.45,
+                  ease: [0.4, 0, 0.7, 0.2],
+                  delay: i * 0.015,
+                },
+              }}
+            >
+              {char}
+            </motion.span>
+          );
+        })}
+      </AnimatePresence>
+    </span>
+  );
+}
+
+/* ─── Hero brain visual ──────────────────────────────────────────── */
+function HeroBrain({ tintB1, tintB2 }: { tintB1: string; tintB2: string }) {
+  // Mouse-tracked parallax tilt — punchy amplitudes for a real 3D read
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rySpring = useSpring(useTransform(mx, [-1, 1], [-16, 16]), { stiffness: 110, damping: 16 });
+  const rxSpring = useSpring(useTransform(my, [-1, 1], [12, -12]), { stiffness: 110, damping: 16 });
+
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    mx.set(((e.clientX - r.left) / r.width) * 2 - 1);
+    my.set(((e.clientY - r.top) / r.height) * 2 - 1);
+  };
+  const handleLeave = () => { mx.set(0); my.set(0); };
+
+  // Glint positions (stable per mount). Stored as numeric % so we can
+  // also draw the constellation lines between them in SVG coords.
+  const glints = useMemo(
+    () => [
+      { top: 12, left: 8,  size: 5, dur: 5.2, delay: 0   },
+      { top: 28, left: 88, size: 4, dur: 6.4, delay: 0.6 },
+      { top: 52, left: 4,  size: 6, dur: 5.8, delay: 1.1 },
+      { top: 70, left: 82, size: 4, dur: 6.2, delay: 1.8 },
+      { top: 86, left: 24, size: 5, dur: 5.5, delay: 2.3 },
+    ],
+    []
+  );
+  // Connect adjacent glints with thin "synapse" lines.
+  const links: Array<[number, number]> = [[0, 1], [1, 3], [3, 4], [4, 2], [2, 0], [0, 3]];
+
+  return (
+    <motion.div
+      className="relative w-full max-w-[230px] xl:max-w-[260px] mx-auto"
+      style={{
+        perspective: 800,
+        perspectiveOrigin: '50% 50%',
+        aspectRatio: '3 / 4',
+        transformStyle: 'preserve-3d',
+      }}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      initial={{ opacity: 0, scale: 0.9, y: 30 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 1.0, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {/* Synced colored halo — sits BEHIND the brain (negative Z) */}
+      <motion.div
+        className="absolute pointer-events-none"
+        style={{
+          inset: '-18%',
+          background: `radial-gradient(closest-side, ${tintB1}66 0%, ${tintB2}33 42%, transparent 78%)`,
+          filter: 'blur(52px)',
+          transform: 'translateZ(-60px)',
+          transition: 'background 0.8s ease',
+        }}
+        animate={{ scale: [1, 1.07, 1], opacity: [0.85, 1, 0.85] }}
+        transition={{ duration: 6.5, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
+      {/* Ambient floor shadow — anchors the brain to a plane */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          left: '15%', right: '15%', bottom: '4%',
+          height: '10%',
+          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, transparent 70%)',
+          filter: 'blur(8px)',
+          transform: 'translateZ(-30px)',
+        }}
+      />
+
+      {/* Faint orbit ring — sits behind the brain plane */}
+      <motion.div
+        className="absolute pointer-events-none rounded-full"
+        style={{
+          inset: '6%',
+          border: '1px dashed rgba(255,255,255,0.08)',
+          transform: 'translateZ(-20px)',
+        }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
+      />
+
+      {/* Neural constellation — thin pulsing synapse lines linking the glints */}
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ transform: 'translateZ(20px)' }}
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <linearGradient id="hero-synapse" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor={tintB1} stopOpacity="0" />
+            <stop offset="50%" stopColor={tintB1} stopOpacity="0.65" />
+            <stop offset="100%" stopColor={tintB2} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {links.map(([a, b], i) => {
+          const ga = glints[a];
+          const gb = glints[b];
+          return (
+            <motion.line
+              key={i}
+              x1={ga.left} y1={ga.top}
+              x2={gb.left} y2={gb.top}
+              stroke="url(#hero-synapse)"
+              strokeWidth={0.25}
+              strokeLinecap="round"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: [0, 1, 1, 0], opacity: [0, 0.7, 0.7, 0] }}
+              transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut', delay: i * 0.6 }}
+            />
+          );
+        })}
+      </svg>
+
+      {/* Floating glints — neural firing, lifted in front of brain */}
+      {glints.map((g, i) => (
+        <motion.span
+          key={i}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            top: `${g.top}%`,
+            left: `${g.left}%`,
+            width: g.size,
+            height: g.size,
+            background: tintB1,
+            boxShadow: `0 0 14px ${tintB1}, 0 0 4px ${tintB2}`,
+            transform: 'translateZ(60px)',
+            transition: 'background 0.6s ease, box-shadow 0.6s ease',
+          }}
+          animate={{
+            y: [0, -14, 0],
+            x: [0, i % 2 ? 6 : -6, 0],
+            opacity: [0.25, 0.9, 0.25],
+            scale:  [0.8, 1.2, 0.8],
+          }}
+          transition={{ duration: g.dur, repeat: Infinity, ease: 'easeInOut', delay: g.delay }}
+        />
+      ))}
+
+      {/* The brain — parallax-tilted, breathing, with soft bottom fade */}
+      <motion.div
+        className="relative w-full h-full"
+        style={{
+          rotateX: rxSpring,
+          rotateY: rySpring,
+          z: 20,
+          transformStyle: 'preserve-3d',
+        }}
+      >
+        <motion.img
+          src="/hero-brain.png"
+          alt=""
+          draggable={false}
+          className="hero-brain-img relative w-full h-full object-contain select-none pointer-events-none"
+          style={{
+            maskImage: 'linear-gradient(to bottom, black 78%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 78%, transparent 100%)',
+          }}
+          animate={{ y: [0, -8, 0], scale: [1, 1.018, 1] }}
+          transition={{ duration: 7.5, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function CountUp({ to, durationMs = 700 }: { to: number; durationMs?: number }) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const start = performance.now();
+    const from = 0;
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / durationMs);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setN(Math.round(from + (to - from) * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [to, durationMs]);
+  return <>{n}</>;
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -154,6 +431,13 @@ export default function Dashboard() {
   const [trophies, setTrophies] = useState<TrophyEntry[]>([]);
   useEffect(() => { setTrophies(getTrophies()); }, []);
 
+  /* ── Hero rotating word ──────────────────────────────────────────── */
+  const [heroIdx, setHeroIdx] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setHeroIdx(i => (i + 1) % HERO_WORDS.length), 2600);
+    return () => clearInterval(id);
+  }, []);
+
   /* ── Identity ───────────────────────────────────────────────────── */
   const identity     = getIdentity(Math.max(1, streak));
   const idProgressPct = Math.round(identity.progress * 100);
@@ -174,6 +458,113 @@ export default function Dashboard() {
         }
         .glow-mint { box-shadow: 0 0 28px rgba(0,255,200,0.25); }
         .bar-hover:hover { background-color: #00FFC8 !important; }
+        @keyframes hero-grid-drift {
+          0%   { transform: translate3d(0, 0, 0); }
+          100% { transform: translate3d(40px, 40px, 0); }
+        }
+        @keyframes hero-cursor-blink {
+          0%, 49%   { opacity: 1; }
+          50%, 100% { opacity: 0; }
+        }
+        @keyframes hero-shimmer {
+          0%   { background-position: 200% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .hero-grid {
+          position: absolute; inset: 0;
+          background-image:
+            linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+          background-size: 40px 40px;
+          mask-image: radial-gradient(ellipse at 30% 40%, black 0%, transparent 70%);
+          -webkit-mask-image: radial-gradient(ellipse at 30% 40%, black 0%, transparent 70%);
+          animation: hero-grid-drift 18s linear infinite;
+          pointer-events: none;
+        }
+        .hero-cursor {
+          display: inline-block;
+          width: 0.05em;
+          height: 0.85em;
+          margin-left: 0.08em;
+          vertical-align: -0.08em;
+          background: #F8FAFC;
+          box-shadow: 0 0 14px rgba(199,210,254,0.65);
+          animation: hero-cursor-blink 1.1s steps(1) infinite;
+          border-radius: 2px;
+        }
+        .hero-rotword {
+          /* Liquid-metal sheen: a wide soft base, a narrow warm complement
+             band, with a pearl-white core. As the strip pans, the eye sees a
+             metallic highlight pass over a cool surface — chromatic tension
+             without saturation. */
+          background-image: linear-gradient(
+            110deg,
+            var(--b1) 0%,
+            var(--b2) 38%,
+            var(--o1) 46%,
+            #FFFFFF   50%,
+            var(--o2) 54%,
+            var(--b2) 62%,
+            var(--b1) 100%
+          );
+          background-size: 280% 100%;
+          background-position: 100% 50%;
+          animation: hero-shimmer 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          transition: --b1 0.6s ease, --b2 0.6s ease, --o1 0.6s ease, --o2 0.6s ease;
+          font-variant-ligatures: none;
+          font-feature-settings: "kern" 0;
+        }
+        @keyframes hero-rotword-settle {
+          0%   { transform: scale(1)    translateY(0);    filter: brightness(1); }
+          35%  { transform: scale(1.06) translateY(-2px); filter: brightness(1.25); }
+          100% { transform: scale(1)    translateY(0);    filter: brightness(1); }
+        }
+        .hero-rotword-pulse {
+          display: inline-block;
+          animation: hero-rotword-settle 0.55s ease;
+        }
+        @keyframes hero-cta-shine {
+          0%   { transform: translateX(-120%) skewX(-20deg); }
+          60%  { transform: translateX(220%)  skewX(-20deg); }
+          100% { transform: translateX(220%)  skewX(-20deg); }
+        }
+        @keyframes hero-cta-gradient {
+          0%   { background-position: 0% 50%; }
+          50%  { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .hero-cta {
+          position: relative;
+          overflow: hidden;
+          background-size: 200% 200%;
+          animation: hero-cta-gradient 6s ease-in-out infinite;
+        }
+        .hero-cta::before {
+          content: '';
+          position: absolute;
+          top: 0; bottom: 0;
+          left: 0; width: 35%;
+          background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%);
+          animation: hero-cta-shine 3.6s ease-in-out infinite;
+          pointer-events: none;
+        }
+        .hero-cta > * { position: relative; z-index: 1; }
+        @keyframes hero-soft-pulse {
+          0%, 100% { box-shadow: 0 0 0 rgba(0,255,200,0.0); }
+          50%      { box-shadow: 0 0 22px rgba(0,255,200,0.28); }
+        }
+        .hero-sleep-active { animation: hero-soft-pulse 2.6s ease-in-out infinite; }
+        .hero-brain-img {
+          /* No drop-shadow — depth comes from the halo + floor shadow behind
+             the brain, which stay anchored when the image tilts on hover. */
+          filter:
+            grayscale(0.1)
+            contrast(1.12)
+            brightness(1.06);
+        }
         .id-card-home {
           background: linear-gradient(180deg, #0d0a07 0%, #110e0a 100%);
           border: 1px solid rgba(180,140,55,0.28);
@@ -197,15 +588,28 @@ export default function Dashboard() {
           {/* ── Hero ─────────────────────────────────────────────────── */}
           <section className="relative overflow-hidden rounded-[2.5rem]">
             <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #080b12 0%, #060608 60%, #0a0612 100%)' }} />
-            <div className="absolute -top-16 -right-16 w-[520px] h-[520px] pointer-events-none opacity-50"
-              style={{ background: 'radial-gradient(circle, #00FFC8 0%, transparent 60%)' }} />
-            <div className="absolute -bottom-20 -left-12 w-[460px] h-[460px] pointer-events-none opacity-40"
-              style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 60%)' }} />
-            <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[360px] h-[360px] pointer-events-none opacity-25"
-              style={{ background: 'radial-gradient(circle, #38bdf8 0%, transparent 60%)' }} />
+            <div className="hero-grid" />
+            <motion.div
+              className="absolute -top-16 -right-16 w-[520px] h-[520px] pointer-events-none opacity-50"
+              style={{ background: 'radial-gradient(circle, #00FFC8 0%, transparent 60%)' }}
+              animate={{ x: [0, -30, 10, 0], y: [0, 20, -10, 0], scale: [1, 1.06, 0.97, 1] }}
+              transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="absolute -bottom-20 -left-12 w-[460px] h-[460px] pointer-events-none opacity-40"
+              style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 60%)' }}
+              animate={{ x: [0, 25, -15, 0], y: [0, -20, 15, 0], scale: [1, 1.08, 0.95, 1] }}
+              transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[360px] h-[360px] pointer-events-none opacity-25"
+              style={{ background: 'radial-gradient(circle, #38bdf8 0%, transparent 60%)' }}
+              animate={{ x: [0, 40, -20, 0], y: [0, -30, 20, 0], scale: [1, 1.1, 0.92, 1] }}
+              transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+            />
 
             <div
-              className="relative z-10 p-7 sm:p-9 lg:p-12"
+              className="relative z-10 p-6 sm:p-7 lg:p-9"
               style={{
                 background: 'rgba(255,255,255,0.06)',
                 backdropFilter: 'blur(72px) saturate(180%)',
@@ -216,7 +620,7 @@ export default function Dashboard() {
                 boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12), 0 24px 64px rgba(0,0,0,0.4)',
               }}
             >
-              <div className="flex items-center justify-between mb-8 sm:mb-10">
+              <div className="flex items-center justify-between mb-5 sm:mb-6">
                 <span
                   className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em]"
                   style={{ background: 'rgba(0,255,200,0.07)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.18)' }}
@@ -245,64 +649,137 @@ export default function Dashboard() {
                 )}
               </div>
 
+              <div className="lg:flex lg:items-center lg:gap-10 xl:gap-14">
+              <div className="lg:flex-1 lg:min-w-0">
+
               <h2
-                className="text-4xl sm:text-5xl xl:text-6xl font-bold text-white leading-[1.06] tracking-tight mb-5"
+                className="text-3xl sm:text-4xl xl:text-5xl font-bold text-white leading-[1.08] tracking-tight mb-3"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
-                Good {greeting}.<br />
-                Your edge is{' '}
-                <span
-                  className="bg-clip-text text-transparent"
-                  style={{ backgroundImage: 'linear-gradient(120deg, #00FFC8 0%, #38bdf8 100%)' }}
+                <motion.span
+                  className="block"
+                  variants={lineVariants}
+                  initial="hidden"
+                  animate="show"
+                  aria-label={`Good ${greeting}.`}
                 >
-                  sharpening.
-                </span>
+                  {Array.from(`Good ${greeting}.`).map((c, i) => (
+                    <motion.span
+                      key={i}
+                      variants={letterVariants}
+                      className="inline-block"
+                      style={{ whiteSpace: 'pre' }}
+                    >
+                      {c}
+                    </motion.span>
+                  ))}
+                </motion.span>
+
+                <motion.span
+                  className="block"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  Your edge is{' '}
+                  <span className="relative inline-block align-baseline" style={{ minWidth: '7ch' }}>
+                    <ScatterWord
+                      text={HERO_WORDS[heroIdx].text}
+                      b1={HERO_WORDS[heroIdx].b1}
+                      b2={HERO_WORDS[heroIdx].b2}
+                      o1={HERO_WORDS[heroIdx].o1}
+                      o2={HERO_WORDS[heroIdx].o2}
+                    />
+                  </span>
+                </motion.span>
               </h2>
 
-              <p className="text-zinc-400 text-sm sm:text-base leading-relaxed mb-8 max-w-md">
-                {dueToday > 0
-                  ? `You have ${dueToday} word${dueToday > 1 ? 's' : ''} due for review. Don't break the chain.`
-                  : "You're all caught up. Add new words to keep growing."}
-              </p>
+              <motion.p
+                className="text-zinc-400 text-sm leading-relaxed mb-5 max-w-md"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.85, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {dueToday > 0 ? (
+                  <>
+                    You have{' '}
+                    <span className="text-white font-bold tabular-nums">
+                      <CountUp to={dueToday} />
+                    </span>{' '}
+                    word{dueToday > 1 ? 's' : ''} due for review. Don't break the chain.
+                  </>
+                ) : (
+                  "You're all caught up. Add new words to keep growing."
+                )}
+              </motion.p>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <button
+              <motion.div
+                className="flex flex-wrap items-center gap-3"
+                initial="hidden"
+                animate="show"
+                variants={{
+                  hidden: { opacity: 1 },
+                  show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 1.05 } },
+                }}
+              >
+                <motion.button
+                  variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } } }}
+                  whileHover={{ scale: 1.04, y: -1 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => navigate('/review')}
-                  className="group inline-flex items-center gap-2.5 px-6 sm:px-7 py-3.5 rounded-full font-bold text-sm text-zinc-900 transition-all hover:scale-[1.03] active:scale-[0.98]"
+                  className="hero-cta group w-full sm:w-auto inline-flex items-center justify-center gap-2 sm:gap-2.5 px-5 sm:px-7 py-3 rounded-full font-bold text-sm text-zinc-900 whitespace-nowrap"
                   style={{
-                    background: 'linear-gradient(135deg, #2cffca 0%, #38bdf8 100%)',
-                    boxShadow: '0 0 32px rgba(0,255,200,0.28), 0 4px 20px rgba(56,189,248,0.18)',
+                    backgroundImage: 'linear-gradient(135deg, #2cffca 0%, #38bdf8 50%, #a78bfa 100%)',
+                    boxShadow: '0 0 32px rgba(0,255,200,0.32), 0 4px 24px rgba(56,189,248,0.22)',
                   }}
                 >
                   <Brain className="h-4 w-4 shrink-0" />
-                  Start Today's Review
+                  <span>Start Today's Review</span>
                   {dueToday > 0 && (
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-zinc-900/25">
-                      {dueToday} due
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-zinc-900/25 tabular-nums shrink-0">
+                      <CountUp to={dueToday} /> due
                     </span>
                   )}
-                  <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
-                </button>
+                  <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
+                </motion.button>
 
-                <button
+                <motion.button
+                  variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } } }}
+                  whileHover={isSleepPrepActive ? { scale: 1.04, y: -1 } : undefined}
+                  whileTap={isSleepPrepActive ? { scale: 0.97 } : undefined}
                   onClick={() => isSleepPrepActive && navigate('/review?mode=sleep_prep')}
-                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full text-sm font-medium transition-all"
+                  className={`inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-medium transition-colors ${isSleepPrepActive ? 'hero-sleep-active' : ''}`}
                   style={isSleepPrepActive
-                    ? { color: '#00FFC8', border: '1px solid rgba(0,255,200,0.22)', background: 'rgba(0,255,200,0.06)' }
+                    ? { color: '#00FFC8', border: '1px solid rgba(0,255,200,0.28)', background: 'rgba(0,255,200,0.08)' }
                     : { color: '#52525b', border: '1px solid rgba(255,255,255,0.07)', cursor: 'default' }}
                 >
                   <Moon className="h-4 w-4 shrink-0" />
-                  {isSleepPrepActive ? 'Sleep Prep' : `Sleep Prep in ${sleepCountdown}`}
-                </button>
+                  {isSleepPrepActive
+                    ? 'Sleep Prep'
+                    : <>Sleep Prep in <span className="tabular-nums">{sleepCountdown}</span></>}
+                </motion.button>
 
-                <button
+                <motion.button
+                  variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } } }}
+                  whileHover={{ scale: 1.04, y: -1 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => navigate('/writing')}
-                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full text-sm font-medium transition-all hover:opacity-85"
-                  style={{ color: '#fbbf24', border: '1px solid rgba(251,191,36,0.22)', background: 'rgba(251,191,36,0.06)' }}
+                  className="group inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-medium transition-colors"
+                  style={{ color: '#fbbf24', border: '1px solid rgba(251,191,36,0.28)', background: 'rgba(251,191,36,0.06)' }}
                 >
-                  <PenLine className="h-4 w-4 shrink-0" />
+                  <PenLine className="h-4 w-4 shrink-0 transition-transform group-hover:rotate-[-8deg]" />
                   Writing Practice
-                </button>
+                </motion.button>
+              </motion.div>
+
+              </div>
+
+              <div className="hidden lg:block lg:w-[40%] xl:w-[44%] shrink-0">
+                <HeroBrain
+                  tintB1={HERO_WORDS[heroIdx].b1}
+                  tintB2={HERO_WORDS[heroIdx].b2}
+                />
+              </div>
               </div>
             </div>
           </section>
