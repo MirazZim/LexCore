@@ -406,7 +406,7 @@ export default function WritingLabPage() {
             >
               {/* Time display */}
               <span
-                className="flex items-center gap-1.5 text-[24px] font-bold tabular-nums mr-1"
+                className="flex items-center gap-3.5 text-[24px] font-bold tabular-nums mr-1"
                 style={{
                   color: timerColor,
                   fontFamily: "'Space Grotesk', sans-serif",
@@ -435,7 +435,7 @@ export default function WritingLabPage() {
               {/* Stop */}
               <button
                 onClick={stopTimer}
-                className="flex items-center justify-center w-6 h-6 rounded-full transition-all hover:scale-110"
+                className="flex items-center justify-center w-10 h-10 rounded-full transition-all hover:scale-110"
                 style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171' }}
                 title="Stop timer"
               >
