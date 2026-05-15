@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Flame } from 'lucide-react';
 import { useSaveReviewSession, useReviewSessions, useUserPreferences } from '@/hooks/useWords';
-import { RV_STYLES } from '@/pages/ReviewPage';
+import { RV_STYLES } from '@/lib/rv-styles';
 import { getIdentity } from '@/lib/identity';
 import { calculateStreak, dateKey } from '@/lib/streak';
 import type { ReviewResult } from './types';
