@@ -30,8 +30,8 @@ export type GenerationStyle = 'formal' | 'casual' | 'daily' | 'ielts';
 const styleGuide: Record<GenerationStyle, string> = {
   formal: 'Professional/academic contexts. Use precise, formal language suitable for business writing or academic papers.',
   casual: 'Everyday casual conversation. Use natural, relaxed language as spoken between friends.',
-  daily:  'Common daily life situations. Use practical, accessible language for everyday scenarios.',
-  ielts:  'IELTS Academic exam preparation. Use band 7-9 academic vocabulary with complex sentence structures and contexts commonly tested in IELTS Writing/Speaking.',
+  daily: 'Common daily life situations. Use practical, accessible language for everyday scenarios.',
+  ielts: 'IELTS Academic exam preparation. Use band 7-9 academic vocabulary with complex sentence structures and contexts commonly tested in IELTS Writing/Speaking.',
 };
 
 // --- Auto-generate a word suggestion ---
@@ -239,7 +239,7 @@ export async function generateSynonyms(word: string, definition: string, style: 
   const content = await callLLM([
     {
       role: 'system',
-      content: `You are a vocabulary coach helping English learners. Generate simple, everyday synonyms.
+      content: `You are a vocabulary depth coach. Your job is to expand a learner's understanding of a word — not just replace it.
 Style context: ${styleGuide[style]}
 Always respond with valid JSON only — no markdown, no backticks, no extra text.
 Each call must produce fresh synonyms — never repeat previously generated ones.`,
@@ -252,7 +252,14 @@ Style: ${style}
 Variation seed (ensure uniqueness): ${seed}
 ${exclude.length > 0 ? `Do NOT include any of these already-shown synonyms: ${exclude.join(', ')}` : ''}
 
-Generate 4-5 synonyms for this word. Each synonym must be very simple, common, and easy to understand — prefer short, familiar words that a learner already knows (e.g., "happy" instead of "elated").
+Generate 4-5 synonyms that reveal the full character of this word.
+
+STRICT RULES:
+- At least 3 out of 5 must be words a regular English speaker uses in daily conversation
+- The remaining 1-2 can be slightly more expressive — but still words you'd hear in a news article or casual book, NOT academic or rare
+- Cover different shades: intensity, formality, connotation — but stay grounded
+- Each synonym should make the learner think "oh, so this word leans THAT way too"
+- NO obscure, archaic, literary, or dictionary-only words
 
 Respond ONLY with this JSON:
 {
@@ -429,12 +436,12 @@ export async function generateDefinition(word: string, style: GenerationStyle = 
   const content = await callLLM([
     {
       role: 'system',
-      content: `You are a vocabulary coach helping people deeply learn new words.
+      content: `You are a vocabulary coach who explains words the way a smart friend would — clear, direct, no fluff.
 Style context: ${styleGuide[style]}
 Always respond with valid JSON only — no markdown, no backticks, no extra text.
 Each call must produce a fresh definition — never repeat a previously generated one.
 
-DEFINITION RULE: Write the definition in the simplest plain English possible — as if explaining the word to a friend who has never heard it. Use short, common words. No formal dictionary phrasing, no complex grammar, no jargon. A 10-year-old should immediately understand it.`,
+DEFINITION RULE: One clean sentence. Capture the core meaning without over-simplifying or over-explaining. Write like you're texting a smart friend — not writing a children's book, not a dictionary. The reader should instantly "get" the word.`,
     },
     {
       role: 'user',
@@ -443,11 +450,11 @@ Style: ${style}
 Variation seed (ensure uniqueness): ${seed}
 ${excludeDefinition ? `Do NOT reuse or closely paraphrase this definition: "${excludeDefinition}"` : ''}
 
-Generate a learner-friendly entry for this word suited to a ${style} context.
+Generate a sharp, memorable entry for this word suited to a ${style} context.
 
 Respond ONLY with this JSON:
 {
-  "definition": "the simplest possible one-sentence explanation — plain everyday words only, no dictionary language",
+  "definition": "one crisp sentence — clear enough to instantly get the meaning, smart enough to respect the reader",
   "part_of_speech": "noun | verb | adjective | adverb | etc",
   "emotion_anchor": "a vivid one-sentence memory hook or emotional association to help remember this word"
 }`,
