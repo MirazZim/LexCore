@@ -141,7 +141,7 @@ Respond ONLY with this JSON:
   "better_example": "a better sentence or null"
 }`,
     },
-  ])
+  ], 0.2)
 
   const clean = content.replace(/```json|```/g, '').trim()
   const parsed = JSON.parse(clean)
@@ -459,7 +459,7 @@ Respond ONLY with this JSON:
   "emotion_anchor": "a vivid one-sentence memory hook or emotional association to help remember this word"
 }`,
     },
-  ])
+  ], 0.7)
 
   const clean = content.replace(/```json|```/g, '').trim()
   return JSON.parse(clean)
