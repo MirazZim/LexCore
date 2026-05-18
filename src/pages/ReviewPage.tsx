@@ -425,9 +425,9 @@ export default function ReviewPage() {
 
   const currentTier = currentItem
     ? getReviewTier(
-        currentItem.stats,
-        currentRetrievability(dbStateToCard(currentItem.stats)),
-      )
+      currentItem.stats,
+      currentRetrievability(dbStateToCard(currentItem.stats)),
+    )
     : 'new';
 
   const advancePastGeneration = () => {
@@ -683,139 +683,209 @@ export default function ReviewPage() {
       </div>
 
       <div>
-          <AnimatePresence mode="wait">
-            {phase === 'battle' && currentItem && (
-              <BattlePhase
-                key={currentItem.word.id}
-                currentItem={currentItem}
-                currentIndex={currentIndex}
-                revealed={revealed}
-                onReveal={() => setRevealed(true)}
-                onRate={handleRate}
-                allWords={allWords}
-                streak={streak}
-              />
-            )}
+        <AnimatePresence mode="wait">
+          {phase === 'battle' && currentItem && (
+            <BattlePhase
+              key={currentItem.word.id}
+              currentItem={currentItem}
+              currentIndex={currentIndex}
+              revealed={revealed}
+              onReveal={() => setRevealed(true)}
+              onRate={handleRate}
+              allWords={allWords}
+              streak={streak}
+            />
+          )}
 
-            {phase === 'memory_trick' && currentItem && (
-              <MemoryTrickPhase
-                currentItem={currentItem}
-                currentIndex={currentIndex}
-                onNext={handleMemoryTrickNext}
-              />
-            )}
+          {phase === 'memory_trick' && currentItem && (
+            <MemoryTrickPhase
+              currentItem={currentItem}
+              currentIndex={currentIndex}
+              onNext={handleMemoryTrickNext}
+            />
+          )}
 
-            {phase === 'context' && currentItem && (
-              <ContextPhase
-                currentItem={currentItem}
-                currentIndex={currentIndex}
-                clozeContext={clozeContext}
-                clozeLoading={clozeLoading}
-                clozeAnswer={clozeAnswer}
-                clozeSubmitted={clozeSubmitted}
-                onClozeAnswerChange={setClozeAnswer}
-                onClozeSubmit={handleClozeSubmit}
-                onClozeNext={handleClozeNext}
-              />
-            )}
+          {phase === 'context' && currentItem && (
+            <ContextPhase
+              currentItem={currentItem}
+              currentIndex={currentIndex}
+              clozeContext={clozeContext}
+              clozeLoading={clozeLoading}
+              clozeAnswer={clozeAnswer}
+              clozeSubmitted={clozeSubmitted}
+              onClozeAnswerChange={setClozeAnswer}
+              onClozeSubmit={handleClozeSubmit}
+              onClozeNext={handleClozeNext}
+            />
+          )}
 
-            {phase === 'collocation' && currentItem && (
-              <CollocationPhase
-                currentItem={currentItem}
-                currentIndex={currentIndex}
-                collocations={collocations}
-                onNext={handleCollocationNext}
-              />
-            )}
+          {phase === 'collocation' && currentItem && (
+            <CollocationPhase
+              currentItem={currentItem}
+              currentIndex={currentIndex}
+              collocations={collocations}
+              onNext={handleCollocationNext}
+            />
+          )}
 
-            {phase === 'mature_examples' && currentItem && (
-              <motion.div
-                key="mature_examples"
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -24 }}
-                className="space-y-4"
+          {phase === 'mature_examples' && currentItem && (
+            <motion.div
+              key="mature_examples"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -24 }}
+              className="space-y-4"
+            >
+              <div className="text-center mb-2">
+                <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>
+                  Mature · Quick Review
+                </span>
+              </div>
+              <div className="text-center mb-4">
+                <h2 className="text-2xl font-bold text-white">{currentItem.word.word}</h2>
+                <p className="text-zinc-400 text-sm mt-1">{currentItem.word.definition}</p>
+              </div>
+              <div className="space-y-3">
+                {contexts.slice(0, 3).map((ctx, i) => {
+                  const target = currentItem.word.word;
+                  const parts = ctx.sentence.split(new RegExp(`(${target})`, 'gi'));
+                  const isMatch = (s: string) => s.toLowerCase() === target.toLowerCase();
+                  return (
+                    <div
+                      key={ctx.id}
+                      className="rounded-2xl p-4"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+                    >
+                      <p className="text-xs text-zinc-500 mb-1">Example {i + 1}</p>
+                      <p className="text-white text-sm leading-relaxed">
+                        {parts.map((part, j) =>
+                          isMatch(part)
+                            ? <span key={j} style={{ color: '#a78bfa', fontWeight: 700 }}>{part}</span>
+                            : part
+                        )}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+              <button
+                onClick={handleMatureExamplesNext}
+                className="w-full py-3 rounded-2xl font-bold text-sm mt-2"
+                style={{ background: 'linear-gradient(135deg, #2cffca, #00c896)', color: '#0a0a0a' }}
               >
-                <div className="text-center mb-2">
-                  <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>
-                    Mature · Quick Review
-                  </span>
-                </div>
-                <div className="text-center mb-4">
-                  <h2 className="text-2xl font-bold text-white">{currentItem.word.word}</h2>
-                  <p className="text-zinc-400 text-sm mt-1">{currentItem.word.definition}</p>
-                </div>
-                <div className="space-y-3">
-                  {contexts.slice(0, 3).map((ctx, i) => {
-                    const target = currentItem.word.word;
-                    const parts = ctx.sentence.split(new RegExp(`(${target})`, 'gi'));
-                    const isMatch = (s: string) => s.toLowerCase() === target.toLowerCase();
-                    return (
-                      <div
-                        key={ctx.id}
-                        className="rounded-2xl p-4"
-                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
-                      >
-                        <p className="text-xs text-zinc-500 mb-1">Example {i + 1}</p>
-                        <p className="text-white text-sm leading-relaxed">
-                          {parts.map((part, j) =>
-                            isMatch(part)
-                              ? <span key={j} style={{ color: '#a78bfa', fontWeight: 700 }}>{part}</span>
-                              : part
-                          )}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-                <button
-                  onClick={handleMatureExamplesNext}
-                  className="w-full py-3 rounded-2xl font-bold text-sm mt-2"
-                  style={{ background: 'linear-gradient(135deg, #2cffca, #00c896)', color: '#0a0a0a' }}
+                Got it →
+              </button>
+            </motion.div>
+          )}
+
+          {phase === 'generation' && currentItem && (
+            <GenerationPhase
+              currentItem={currentItem}
+              currentIndex={currentIndex}
+              totalWords={totalWords}
+              generationText={generationText}
+              generationSaved={generationSaved}
+              aiFeedback={aiFeedback}
+              aiLoading={aiLoading}
+              aiError={aiError}
+              isSaving={saveContext.isPending}
+              activeConnector={activeConnector}
+              onConnectorChange={setActiveConnector}
+              onGenerationTextChange={setGenerationText}
+              onSave={handleGenerationSave}
+              onSaveQuick={handleGenerationQuickSave}
+              onNextWord={handleNextWord}
+              onRetry={handleGenerationRetry}
+              tier={currentTier}
+              topic={topic}
+              priorSentence={priorSentence}
+              roastMode={roastMode}
+              onToggleRoast={handleToggleRoast}
+              collocations={collocations}
+            />
+          )}
+
+          {phase === 'synonyms' && currentItem && (
+            <SynonymsPhase
+              currentItem={currentItem}
+              currentIndex={currentIndex}
+              totalWords={totalWords}
+              synonyms={synonyms}
+              allWords={allWords}
+              onNext={handleSynonymsNext}
+            />
+          )}
+
+          {phase === 'generation' && (
+            <button
+              onClick={() => setPhase('synonyms')}
+              className="group relative w-full mt-2 overflow-hidden"
+              style={{
+                padding: '0',
+                border: 'none',
+                borderRadius: '16px',
+                background: 'transparent',
+                cursor: 'pointer',
+              }}
+            >
+              {/* Glow layer */}
+              <span
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, #2cffca, #00c896)',
+                  filter: 'blur(8px)',
+                  opacity: 0.45,
+                  transform: 'scaleY(0.85) translateY(4px)',
+                  transition: 'opacity 0.25s ease, transform 0.25s ease',
+                  pointerEvents: 'none',
+                }}
+                className="group-hover:opacity-70 group-hover:scale-105"
+              />
+
+              {/* Button face */}
+              <span
+                style={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '11px 20px',
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, #2cffca 0%, #00c896 100%)',
+                  color: '#071a14',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  transition: 'filter 0.2s ease, transform 0.2s ease',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25)',
+                }}
+                className="group-hover:brightness-110 group-active:scale-95"
+              >
+                Skip to Synonyms
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  style={{ transition: 'transform 0.2s ease' }}
+                  className="group-hover:translate-x-1"
                 >
-                  Got it →
-                </button>
-              </motion.div>
-            )}
-
-            {phase === 'generation' && currentItem && (
-              <GenerationPhase
-                currentItem={currentItem}
-                currentIndex={currentIndex}
-                totalWords={totalWords}
-                generationText={generationText}
-                generationSaved={generationSaved}
-                aiFeedback={aiFeedback}
-                aiLoading={aiLoading}
-                aiError={aiError}
-                isSaving={saveContext.isPending}
-                activeConnector={activeConnector}
-                onConnectorChange={setActiveConnector}
-                onGenerationTextChange={setGenerationText}
-                onSave={handleGenerationSave}
-                onSaveQuick={handleGenerationQuickSave}
-                onNextWord={handleNextWord}
-                onRetry={handleGenerationRetry}
-                tier={currentTier}
-                topic={topic}
-                priorSentence={priorSentence}
-                roastMode={roastMode}
-                onToggleRoast={handleToggleRoast}
-                collocations={collocations}
-              />
-            )}
-
-            {phase === 'synonyms' && currentItem && (
-              <SynonymsPhase
-                currentItem={currentItem}
-                currentIndex={currentIndex}
-                totalWords={totalWords}
-                synonyms={synonyms}
-                allWords={allWords}
-                onNext={handleSynonymsNext}
-              />
-            )}
-          </AnimatePresence>
+                  <path
+                    d="M3 8h10M9 4l4 4-4 4"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            </button>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
