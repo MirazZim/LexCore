@@ -4,14 +4,14 @@ import { Lock, Check, X, MapPin, Star, Zap, BookOpen, Brain, Feather, Search, La
 
 /* ─── Identity data ──────────────────────────────────────────────── */
 const IDENTITIES = [
-  { id: 'apprentice',    title: 'Apprentice',    dayStart: 1,   dayEnd: 7,   image: '/Apprentice.webp'    },
-  { id: 'scribe',        title: 'Scribe',        dayStart: 8,   dayEnd: 20,  image: '/Scribe.webp'        },
-  { id: 'scholar',       title: 'Scholar',       dayStart: 21,  dayEnd: 45,  image: '/Scholar.webp'       },
-  { id: 'rhetorician',   title: 'Rhetorician',   dayStart: 46,  dayEnd: 75,  image: '/Rhetorician.webp'   },
-  { id: 'lexicographer', title: 'Lexicographer', dayStart: 76,  dayEnd: 120, image: '/Lexicographer.webp' },
-  { id: 'philologist',   title: 'Philologist',   dayStart: 121, dayEnd: 200, image: '/Philologist.webp'   },
-  { id: 'etymologist',   title: 'Etymologist',   dayStart: 201, dayEnd: 365, image: '/Etymologist.webp'   },
-  { id: 'polymath',      title: 'Polymath',      dayStart: 366, dayEnd: null, image: '/Polymath.webp'     },
+  { id: 'apprentice', title: 'Apprentice', dayStart: 1, dayEnd: 7, image: '/Apprentice.webp' },
+  { id: 'scribe', title: 'Scribe', dayStart: 8, dayEnd: 20, image: '/Scribe.webp' },
+  { id: 'scholar', title: 'Scholar', dayStart: 21, dayEnd: 45, image: '/Scholar.webp' },
+  { id: 'rhetorician', title: 'Rhetorician', dayStart: 46, dayEnd: 75, image: '/Rhetorician.webp' },
+  { id: 'lexicographer', title: 'Lexicographer', dayStart: 76, dayEnd: 120, image: '/Lexicographer.webp' },
+  { id: 'philologist', title: 'Philologist', dayStart: 121, dayEnd: 200, image: '/Philologist.webp' },
+  { id: 'etymologist', title: 'Etymologist', dayStart: 201, dayEnd: 365, image: '/Etymologist.webp' },
+  { id: 'polymath', title: 'Polymath', dayStart: 366, dayEnd: null, image: '/Polymath.webp' },
 ] as const;
 
 type IdentityId = typeof IDENTITIES[number]['id'];
@@ -186,18 +186,18 @@ function getStatus(currentDay: number, dayStart: number, dayEnd: number | null):
 }
 
 const DASHED_GOLD = 'repeating-linear-gradient(to bottom,rgba(180,140,55,0.5) 0px,rgba(180,140,55,0.5) 5px,transparent 5px,transparent 11px)';
-const DASHED_DIM  = 'repeating-linear-gradient(to bottom,rgba(255,255,255,0.08) 0px,rgba(255,255,255,0.08) 5px,transparent 5px,transparent 11px)';
-const SOLID_MINT  = 'rgba(0,255,200,0.3)';
+const DASHED_DIM = 'repeating-linear-gradient(to bottom,rgba(255,255,255,0.08) 0px,rgba(255,255,255,0.08) 5px,transparent 5px,transparent 11px)';
+const SOLID_MINT = 'rgba(0,255,200,0.3)';
 
 /* ─── Detail panel ───────────────────────────────────────────────── */
 function DetailPanel({ identity, status, currentDay }: {
   identity: typeof IDENTITIES[number]; status: Status; currentDay: number;
 }) {
-  const detail    = DETAILS[identity.id];
-  const Icon      = detail.icon;
-  const isLocked  = status === 'locked';
+  const detail = DETAILS[identity.id];
+  const Icon = detail.icon;
+  const isLocked = status === 'locked';
   const isCurrent = status === 'current';
-  const isPast    = status === 'past';
+  const isPast = status === 'past';
 
   const progress = isCurrent && identity.dayEnd != null
     ? Math.min((currentDay - identity.dayStart) / (identity.dayEnd - identity.dayStart + 1), 1)
@@ -222,7 +222,7 @@ function DetailPanel({ identity, status, currentDay }: {
       value: isCurrent && dayInTier && totalDays
         ? `Day ${dayInTier} / ${totalDays}`
         : isPast ? 'Completed'
-        : `Day ${identity.dayStart}`,
+          : `Day ${identity.dayStart}`,
       accent: true,
     },
   ];
@@ -394,8 +394,8 @@ function DetailPanel({ identity, status, currentDay }: {
                     letterSpacing: '-0.01em',
                     color: isLocked ? 'rgba(255,255,255,0.22)'
                       : accent && isCurrent ? detail.accentColor
-                      : isPast ? '#e4e4e7'
-                      : '#e4e4e7',
+                        : isPast ? '#e4e4e7'
+                          : '#e4e4e7',
                   }}
                 >
                   {value}
@@ -573,15 +573,15 @@ function DetailPanel({ identity, status, currentDay }: {
 
 /* ─── Main component ─────────────────────────────────────────────── */
 export function IdentityJourneyMap({ currentDay, onClose }: Props) {
-  const [hoveredId, setHoveredId]  = useState<IdentityId | null>(null);
-  const [shakingId,  setShakingId] = useState<IdentityId | null>(null);
+  const [hoveredId, setHoveredId] = useState<IdentityId | null>(null);
+  const [shakingId, setShakingId] = useState<IdentityId | null>(null);
   const currentRef = useRef<HTMLDivElement>(null);
 
   const currentIdentity = IDENTITIES.find(i => getStatus(currentDay, i.dayStart, i.dayEnd) === 'current');
   const [defaultId] = useState<IdentityId>(currentIdentity?.id ?? 'apprentice');
 
-  const shownId     = hoveredId ?? defaultId;
-  const shownEntry  = IDENTITIES.find(i => i.id === shownId)!;
+  const shownId = hoveredId ?? defaultId;
+  const shownEntry = IDENTITIES.find(i => i.id === shownId)!;
   const shownStatus = getStatus(currentDay, shownEntry.dayStart, shownEntry.dayEnd);
 
   useEffect(() => {
@@ -648,14 +648,14 @@ export function IdentityJourneyMap({ currentDay, onClose }: Props) {
 
                 <div className="space-y-5 relative" style={{ zIndex: 1 }}>
                   {IDENTITIES.map((identity, index) => {
-                    const status    = getStatus(currentDay, identity.dayStart, identity.dayEnd);
-                    const isPast    = status === 'past';
+                    const status = getStatus(currentDay, identity.dayStart, identity.dayEnd);
+                    const isPast = status === 'past';
                     const isCurrent = status === 'current';
-                    const isLocked  = status === 'locked';
+                    const isLocked = status === 'locked';
                     const isShaking = shakingId === identity.id;
                     const isHovered = hoveredId === identity.id;
-                    const detail    = DETAILS[identity.id];
-                    const Icon      = detail.icon;
+                    const detail = DETAILS[identity.id];
+                    const Icon = detail.icon;
 
                     const progress = isCurrent && identity.dayEnd != null
                       ? Math.min((currentDay - identity.dayStart) / (identity.dayEnd - identity.dayStart + 1), 1)
@@ -664,8 +664,8 @@ export function IdentityJourneyMap({ currentDay, onClose }: Props) {
                     const nodeStyle: React.CSSProperties = isPast
                       ? { background: 'rgba(0,255,200,0.15)', border: '1.5px solid #00FFC8', boxShadow: '0 0 8px rgba(0,255,200,0.4)' }
                       : isCurrent
-                      ? { background: 'linear-gradient(135deg,#c8922a,#f0c96a)', border: '2px solid rgba(255,210,100,0.5)' }
-                      : { background: '#18181b', border: '2px solid #27272a' };
+                        ? { background: 'linear-gradient(135deg,#c8922a,#f0c96a)', border: '2px solid rgba(255,210,100,0.5)' }
+                        : { background: '#18181b', border: '2px solid #27272a' };
 
                     const connectorBg = isPast ? SOLID_MINT : isCurrent ? DASHED_GOLD : DASHED_DIM;
 
@@ -688,8 +688,8 @@ export function IdentityJourneyMap({ currentDay, onClose }: Props) {
                               />
                             ) : (
                               <div className="w-4 h-4 rounded-full shrink-0 flex items-center justify-center" style={nodeStyle}>
-                                {isPast   && <Check className="w-2.5 h-2.5" style={{ color: '#00FFC8' }} strokeWidth={3} />}
-                                {isLocked && <Lock  className="w-2 h-2"     style={{ color: '#3f3f46' }} />}
+                                {isPast && <Check className="w-2.5 h-2.5" style={{ color: '#00FFC8' }} strokeWidth={3} />}
+                                {isLocked && <Lock className="w-2 h-2" style={{ color: '#3f3f46' }} />}
                               </div>
                             )}
                             {index < IDENTITIES.length - 1 && (
@@ -834,8 +834,8 @@ export function IdentityJourneyMap({ currentDay, onClose }: Props) {
                                           fontFamily: "'Space Grotesk', sans-serif",
                                           color: isLocked ? 'rgba(255,255,255,0.28)'
                                             : isCurrent ? '#f0c96a'
-                                            : isHovered ? detail.accentColor
-                                            : '#e4e4e7',
+                                              : isHovered ? detail.accentColor
+                                                : '#e4e4e7',
                                           transition: 'color 0.2s',
                                         }}
                                       >
@@ -847,7 +847,7 @@ export function IdentityJourneyMap({ currentDay, onClose }: Props) {
                                       style={{
                                         color: isLocked ? 'rgba(255,255,255,0.18)'
                                           : isCurrent ? 'rgba(240,201,106,0.55)'
-                                          : 'rgba(0,255,200,0.5)',
+                                            : 'rgba(0,255,200,0.5)',
                                       }}
                                     >
                                       {identity.dayEnd ? `D${identity.dayStart}–${identity.dayEnd}` : `D${identity.dayStart}+`}

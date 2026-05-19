@@ -399,7 +399,11 @@ After the trick line always add a clarification in this format:
 "👉 [One natural sentence that uses the word correctly in context.]"
 
 Selection rules:
-- Try phonetic_split first. Only skip it if the split would MISLEAD the meaning — accuracy beats cleverness
+- You MUST choose the technique that makes the meaning most memorable — not the easiest one
+- phonetic_split is NOT the default. Only use it if the word has parts that genuinely sound like real familiar words
+- The variation seed is: ${seed}. Use it to push yourself toward a less obvious technique
+- Rank all 7 techniques mentally for this specific word, then pick the highest-ranked one
+- NEVER default. If phonetic_split doesn't create a strong, accurate link — skip it entirely
 - The trick MUST match the given definition exactly — never invent or bend a meaning to fit a trick
 - Breakdown ≤ 18 words. Clarification ≤ 16 words. One emoji in the breakdown, max.
 
@@ -410,6 +414,10 @@ Always respond with valid JSON only — no markdown, no backticks, no extra text
       content: `Word: ${word}
 Definition: ${definition}
 Variation seed: ${seed}
+
+
+IMPORTANT: For this attempt, avoid phonetic_split unless it is clearly the strongest option.
+Prefer: root_hook, sound_alike, micro_story, formula, contrast_anchor, or analogy_bridge.
 
 Choose the best technique for "${word}" and create a trick that perfectly matches the definition above.
 
