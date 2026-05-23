@@ -40,7 +40,7 @@ The competitive edge: an **AI-powered sentence scoring pipeline** that evaluates
 - 🔐 **Auth & RLS** — Row-level security so your data stays yours.
 - 📖 **Oxford 3000 Dictionary** — Browse all 3000 Oxford words in a 3-column library card grid. Filter by CEFR level, part of speech, and alphabet. Words already in your library are visually marked as conquered (dimmed, strikethrough, teal border + checkmark).
 - 🎲 **Daily Shuffle** — Date-seeded daily word discovery engine. Pick a CEFR level and part of speech, set how many words you want (1–50), and get a fresh randomized batch every day — excluding words you've already conquered. Paginate through the full pool with Prev / Next.
-- 🧠 **AI Intelligence Tips** — On the Daily Shuffle page, tap Tips to get a live AI-generated intelligence report: why learning your chosen POS at your chosen CEFR level matters, the optimal strategy, and a power insight most learners don't know.
+- 🧠 **AI Intelligence Tips** — On the Daily Shuffle page, tap Tips to get a live AI-generated intelligence report: why learning your chosen POS at your chosen CEFR level matters, the optimal strategy, and a power insight most learners don't know. identity
 
 ---
 
