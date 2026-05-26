@@ -434,43 +434,106 @@ Respond ONLY with this JSON:
   return JSON.parse(clean)
 }
 
-// --- Auto-generate definition ---
-export async function generateDefinition(word: string, style: GenerationStyle = 'daily', excludeDefinition = ''): Promise<{
+export async function generateDefinition(
+  word: string,
+  style: GenerationStyle = 'daily',
+  excludeDefinition = ''
+): Promise<{
   definition: string
   emotion_anchor: string
   part_of_speech: string
+  format_used: string  // expose this so UI can style differently if needed
 }> {
   const seed = Math.random().toString(36).slice(2, 8)
-  const content = await callLLM([
-    {
-      role: 'system',
-      content: `You are a vocabulary coach who explains words the way a smart friend would — clear, direct, no fluff.
-Style context: ${styleGuide[style]}
-Always respond with valid JSON only — no markdown, no backticks, no extra text.
-Each call must produce a fresh definition — never repeat a previously generated one.
 
-DEFINITION RULE: One clean sentence. Capture the core meaning without over-simplifying or over-explaining. Write like you're texting a smart friend — not writing a children's book, not a dictionary. The reader should instantly "get" the word.`,
+  const formats = [
+    {
+      name: 'synonym_flash',
+      instruction: `DEFINITION RULE: 1–3 razor-sharp synonyms only. Format: "= word1, word2". No sentence. No explanation. Just the core equivalents a smart person would already know.`,
+      example: `Word: audacious → "definition": "= bold, shameless, gutsy"`,
     },
     {
-      role: 'user',
-      content: `Word: ${word}
+      name: 'gut_fragment',
+      instruction: `DEFINITION RULE: 3–6 words. A compressed snapshot of the word's soul — no verb required, no full sentence. Think: what's the FEELING of this word in the fewest words possible.`,
+      example: `Word: melancholy → "definition": "sadness with no clear reason"`,
+    },
+    {
+      name: 'sentence',
+      instruction: `DEFINITION RULE: One punchy sentence. Write like you're texting a smart friend who's never heard this word. Zero dictionary energy. The reader should "get" it in one read.`,
+      example: `Word: condescending → "definition": "Talking to someone like they're lucky you're even explaining it."`,
+    },
+    {
+      name: 'contrast',
+      instruction: `DEFINITION RULE: Define by what it's NOT, then what it IS. Format: "Not [wrong idea] — [correct sharp truth]." One sentence max. This works best for words people commonly misuse or misunderstand.`,
+      example: `Word: frugal → "definition": "Not being cheap — just refusing to spend money on things that don't matter."`,
+    },
+    {
+      name: 'scenario',
+      instruction: `DEFINITION RULE: Paint a 1-sentence real-life micro-scene where this word lives. The scene should make the meaning obvious without ever defining it directly. Start with "When..." or "That moment when..." or "The person who..."`,
+      example: `Word: procrastinate → "definition": "When you know exactly what you need to do and open YouTube instead."`,
+    },
+    {
+      name: 'analogy',
+      instruction: `DEFINITION RULE: Explain the word using a comparison to something universally familiar. Format: "Like [familiar thing], but [key difference that captures the word's meaning]." Keep it to one sentence.`,
+      example: `Word: stoic → "definition": "Like having emotions but choosing not to let them drive the car."`,
+    },
+    {
+      name: 'basically',
+      instruction: `DEFINITION RULE: Start with "Basically:" and give the most brutally honest, no-pretense explanation possible. Like you're explaining to a sharp friend who hates unnecessary complexity. Max 10 words after "Basically:".`,
+      example: `Word: verbose → "definition": "Basically: using 100 words when 10 would do."`,
+    },
+    {
+      name: 'root_flash',
+      instruction: `DEFINITION RULE: Give the Latin/Greek root meaning + what the word means today. Format: "[root] = [root meaning] → today it means [sharp 3-5 word meaning]". Skip the root if it's not interesting or helpful.`,
+      example: `Word: philanthropy → "definition": "philos + anthropos = love of humans → giving money to help people at scale."`,
+    },
+  ]
+
+  const format = formats[Math.floor(Math.random() * formats.length)]
+
+  const content = await callLLM(
+    [
+      {
+        role: 'system',
+        content: `You are a vocabulary coach who makes words stick — not by explaining more, but by explaining smarter.
+Style context: ${styleGuide[style]}
+Always respond with valid JSON only — no markdown, no backticks, no extra text.
+Each call must produce a FRESH definition — never repeat or closely paraphrase a previous one.
+
+ACTIVE FORMAT THIS CALL: ${format.name}
+${format.instruction}
+
+EXAMPLE OF CORRECT OUTPUT FOR THIS FORMAT:
+${format.example}
+
+EMOTION ANCHOR RULE: The emotion_anchor is a vivid, sensory one-liner that creates a mental image or personal feeling tied to the word. Not a repeat of the definition. Should feel like a memory trigger — something the reader has felt before.`,
+      },
+      {
+        role: 'user',
+        content: `Word: ${word}
 Style: ${style}
+Format mode this call: ${format.name}
 Variation seed (ensure uniqueness): ${seed}
 ${excludeDefinition ? `Do NOT reuse or closely paraphrase this definition: "${excludeDefinition}"` : ''}
 
-Generate a sharp, memorable entry for this word suited to a ${style} context.
-
-Respond ONLY with this JSON:
+Respond ONLY with this JSON — no extra fields, no markdown:
 {
-  "definition": "one crisp sentence — clear enough to instantly get the meaning, smart enough to respect the reader",
+  "definition": "follow the active format rule exactly — no exceptions",
   "part_of_speech": "noun | verb | adjective | adverb | etc",
-  "emotion_anchor": "a vivid one-sentence memory hook or emotional association to help remember this word"
+  "emotion_anchor": "vivid sensory memory hook — makes the word unforgettable"
 }`,
-    },
-  ], 0.7)
+      },
+    ],
+    0.9
+  )
 
   const clean = content.replace(/```json|```/g, '').trim()
-  return JSON.parse(clean)
+  const parsed = JSON.parse(clean)
+
+  return {
+    ...parsed,
+    format_used: format.name,
+  }
 }
 
 // --- IELTS Writing Lab — Drill 6 (CREI body paragraph grading) ---
