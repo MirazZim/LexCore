@@ -372,8 +372,34 @@ function DetailPanel({ identity, status, currentDay }: {
         />
       </div>
 
+      {/* Lock overlay — sits above the blurred body */}
+      {isLocked && (
+        <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-center gap-3 pointer-events-none" style={{ top: 268 + 48, zIndex: 10 }}>
+          <div
+            className="flex flex-col items-center gap-2 rounded-2xl px-6 py-5 text-center"
+            style={{ background: 'rgba(4,3,8,0.72)', border: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)' }}
+          >
+            <Lock className="w-6 h-6" style={{ color: 'rgba(255,255,255,0.3)' }} />
+            <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              {identity.dayStart - currentDay} day{identity.dayStart - currentDay !== 1 ? 's' : ''} until this identity unlocks
+            </p>
+            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
+              Keep your streak alive. Don't break what you're building.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto" style={{ zIndex: 1 }}>
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{
+          zIndex: 1,
+          filter: isLocked ? 'blur(4px)' : 'none',
+          userSelect: isLocked ? 'none' : 'auto',
+          pointerEvents: isLocked ? 'none' : 'auto',
+        }}
+      >
         <div className="px-6 pt-5 pb-10 space-y-6">
 
           {/* Stats — 3 data cells */}
@@ -578,9 +604,9 @@ export function IdentityJourneyMap({ currentDay, onClose }: Props) {
   const currentRef = useRef<HTMLDivElement>(null);
 
   const currentIdentity = IDENTITIES.find(i => getStatus(currentDay, i.dayStart, i.dayEnd) === 'current');
-  const [defaultId] = useState<IdentityId>(currentIdentity?.id ?? 'apprentice');
+  const [selectedId, setSelectedId] = useState<IdentityId>(currentIdentity?.id ?? 'apprentice');
 
-  const shownId = hoveredId ?? defaultId;
+  const shownId = hoveredId ?? selectedId;
   const shownEntry = IDENTITIES.find(i => i.id === shownId)!;
   const shownStatus = getStatus(currentDay, shownEntry.dayStart, shownEntry.dayEnd);
 
@@ -654,6 +680,7 @@ export function IdentityJourneyMap({ currentDay, onClose }: Props) {
                     const isLocked = status === 'locked';
                     const isShaking = shakingId === identity.id;
                     const isHovered = hoveredId === identity.id;
+                    const isSelected = selectedId === identity.id && !hoveredId;
                     const detail = DETAILS[identity.id];
                     const Icon = detail.icon;
 
@@ -720,17 +747,20 @@ export function IdentityJourneyMap({ currentDay, onClose }: Props) {
                                 animate={isShaking ? { x: [0, -10, 10, -7, 7, -3, 3, 0], transition: { duration: 0.5 } } : { x: 0 }}
                                 onMouseEnter={() => setHoveredId(identity.id)}
                                 onMouseLeave={() => setHoveredId(null)}
-                                onClick={() => { if (isLocked) shake(identity.id); }}
+                                onClick={() => {
+                                  if (isLocked) shake(identity.id);
+                                  else setSelectedId(identity.id);
+                                }}
                                 className="rounded-2xl overflow-hidden relative"
                                 style={{
-                                  cursor: isLocked ? 'not-allowed' : 'default',
+                                  cursor: isLocked ? 'not-allowed' : 'pointer',
                                   transform: isHovered ? 'scale(1.02)' : isCurrent ? 'scale(1.01)' : 'scale(1)',
                                   transition: 'transform 0.2s',
                                   ...(isCurrent ? {
                                     background: 'linear-gradient(160deg,#0d0a07 0%,#110e0a 100%)',
                                   } : isPast ? {
                                     background: 'rgba(255,255,255,0.03)',
-                                    boxShadow: isHovered
+                                    boxShadow: (isHovered || isSelected)
                                       ? `0 0 0 1px ${detail.accentColor}44, 0 6px 24px ${detail.accentColor}14`
                                       : '0 0 0 1px rgba(0,255,200,0.12)',
                                   } : {
@@ -858,7 +888,7 @@ export function IdentityJourneyMap({ currentDay, onClose }: Props) {
                                     style={{ color: isLocked ? 'rgba(255,255,255,0.16)' : `${detail.accentColor}99` }}
                                   >
                                     {isLocked
-                                      ? `${identity.dayStart - currentDay}d away · hover to preview`
+                                      ? `${identity.dayStart - currentDay}d away`
                                       : detail.tagline}
                                   </p>
                                   {isCurrent && identity.dayEnd != null && (
