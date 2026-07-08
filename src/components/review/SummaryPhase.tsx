@@ -2,6 +2,7 @@ import { useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Flame } from 'lucide-react';
+import { Rating } from 'ts-fsrs';
 import { useSaveReviewSession, useReviewSessions, useUserPreferences } from '@/hooks/useWords';
 import { RV_STYLES } from '@/lib/rv-styles';
 import { getIdentity } from '@/lib/identity';
@@ -13,11 +14,13 @@ interface SummaryPhaseProps {
   sessionStartedAt: string;
 }
 
+// ReviewResult.quality stores ts-fsrs Rating values (Again=1 … Easy=4),
+// not the old SM-2 0–5 quality scale.
 const QUALITY_LABELS = [
-  { quality: 0, label: 'Again', color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
-  { quality: 2, label: 'Hard',  color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
-  { quality: 4, label: 'Good',  color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
-  { quality: 5, label: 'Easy',  color: '#00FFC8', bg: 'rgba(0,255,200,0.12)' },
+  { quality: Rating.Again, label: 'Again', color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
+  { quality: Rating.Hard,  label: 'Hard',  color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
+  { quality: Rating.Good,  label: 'Good',  color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
+  { quality: Rating.Easy,  label: 'Easy',  color: '#00FFC8', bg: 'rgba(0,255,200,0.12)' },
 ];
 
 const fade = (delay = 0) => ({

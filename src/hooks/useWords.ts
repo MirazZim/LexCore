@@ -194,16 +194,30 @@ export function useDueWords() {
   return useQuery({
     queryKey: ['due_words', user?.id, newCardsPerDay],
     queryFn: async () => {
-      const now = new Date().toISOString();
+      const now = new Date();
+      const nowIso = now.toISOString();
+      const startOfToday = new Date(now);
+      startOfToday.setHours(0, 0, 0, 0);
 
-      const [{ data: reviewStats, error: reviewError }, { data: newStats, error: newError }] = await Promise.all([
-        supabase.from('word_stats').select('*').eq('user_id', user!.id).neq('state', 0).lte('next_review_at', now).order('next_review_at', { ascending: true }),
-        supabase.from('word_stats').select('*').eq('user_id', user!.id).eq('state', 0).lte('next_review_at', now).order('next_review_at', { ascending: true }).limit(newCardsPerDay),
+      // A card's first-ever review is logged with state_before=0, so this
+      // counts new cards already introduced today — making the cap truly
+      // per-day instead of per-session.
+      const [reviewRes, introducedRes] = await Promise.all([
+        supabase.from('word_stats').select('*').eq('user_id', user!.id).neq('state', 0).lte('next_review_at', nowIso).order('next_review_at', { ascending: true }),
+        supabase.from('review_events').select('*', { count: 'exact', head: true }).eq('user_id', user!.id).eq('state_before', 0).gte('reviewed_at', startOfToday.toISOString()),
       ]);
-      if (reviewError) throw reviewError;
-      if (newError) throw newError;
+      if (reviewRes.error) throw reviewRes.error;
+      if (introducedRes.error) throw introducedRes.error;
 
-      const stats = [...(reviewStats ?? []), ...(newStats ?? [])];
+      const newBudget = Math.max(0, newCardsPerDay - (introducedRes.count ?? 0));
+      let newStats: WordStats[] = [];
+      if (newBudget > 0) {
+        const newRes = await supabase.from('word_stats').select('*').eq('user_id', user!.id).eq('state', 0).lte('next_review_at', nowIso).order('next_review_at', { ascending: true }).limit(newBudget);
+        if (newRes.error) throw newRes.error;
+        newStats = (newRes.data ?? []) as WordStats[];
+      }
+
+      const stats = [...(reviewRes.data ?? []), ...newStats];
       if (stats.length === 0) return [];
 
       const wordIds = stats.map(s => s.word_id);

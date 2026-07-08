@@ -22,7 +22,7 @@ function detectTechnique(breakdown: string): string | null {
   if (/\+.*→/.test(breakdown)) return TECHNIQUE_LABELS.phonetic_split;
   if (/sounds? like/i.test(breakdown)) return TECHNIQUE_LABELS.sound_alike;
   if (/=.*\+/.test(breakdown)) return TECHNIQUE_LABELS.formula;
-  if (/NOT /i.test(breakdown)) return TECHNIQUE_LABELS.contrast_anchor;
+  if (/\bNOT\b/.test(breakdown)) return TECHNIQUE_LABELS.contrast_anchor;
   if (/like .* but/i.test(breakdown)) return TECHNIQUE_LABELS.analogy_bridge;
   return null;
 }

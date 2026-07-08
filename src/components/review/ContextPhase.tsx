@@ -19,6 +19,25 @@ interface ContextPhaseProps {
   onClozeNext: () => void;
 }
 
+// Mask every token that looks like a form of the target word so inflections
+// ("making" for make, "flies" for fly) can't leak the answer. Over-masking a
+// neighbouring word is acceptable; showing the answer is not.
+function maskTargetWord(sentence: string, word: string): string {
+  const w = word.toLowerCase().trim();
+  if (!/^[a-z]+$/.test(w)) {
+    // Phrase or hyphenated entry: exact (escaped) match only.
+    const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return sentence.replace(new RegExp(escaped, 'gi'), '______');
+  }
+  const stems = [w];
+  if (w.endsWith('e')) stems.push(w.slice(0, -1));       // make → making
+  if (w.endsWith('y')) stems.push(w.slice(0, -1) + 'i'); // fly → flies
+  return sentence.replace(/[A-Za-z]+/g, token => {
+    const t = token.toLowerCase();
+    return stems.some(s => t.startsWith(s) && t.length - s.length <= 4) ? '______' : token;
+  });
+}
+
 export function ContextPhase({
   currentItem, currentIndex, clozeContext, clozeLoading,
   clozeAnswer, clozeSubmitted, onClozeAnswerChange, onClozeSubmit, onClozeNext,
@@ -26,9 +45,9 @@ export function ContextPhase({
   const [winPhrase]  = useState(() => WIN_PHRASES[Math.floor(Math.random()  * WIN_PHRASES.length)]);
   const [lossPhrase] = useState(() => LOSS_PHRASES[Math.floor(Math.random() * LOSS_PHRASES.length)]);
 
-  const clozeSentence = clozeContext?.sentence.replace(
-    new RegExp(currentItem.word.word, 'gi'), '______'
-  );
+  const clozeSentence = clozeContext
+    ? maskTargetWord(clozeContext.sentence, currentItem.word.word)
+    : undefined;
   const isClozeCorrect = clozeAnswer.toLowerCase().trim() === currentItem.word.word.toLowerCase();
 
   return (

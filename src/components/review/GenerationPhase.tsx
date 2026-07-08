@@ -838,7 +838,7 @@ export function GenerationPhase({
               )}
 
               {aiError && (
-                <p className="text-sm text-zinc-500">AI feedback unavailable — your sentence was saved.</p>
+                <p className="text-sm text-zinc-500">AI feedback unavailable — tap Next Word to save your sentence and continue.</p>
               )}
 
               {!aiLoading && (

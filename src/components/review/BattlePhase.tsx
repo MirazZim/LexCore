@@ -24,9 +24,7 @@ const LOSS_PHRASES = ['Not this time.', 'Study it deeper.', 'Almost.', 'It happe
 interface BattlePhaseProps {
   currentItem: DueWordItem;
   currentIndex: number;
-  revealed: boolean;
-  onReveal: () => void;
-  onRate: (rating: Rating, confidence: 'sure' | 'unsure' | null) => void;
+  onRate: (rating: Rating, confidence: 'sure' | 'unsure' | null) => void | Promise<void>;
   allWords: Word[];
   streak: number;
 }
@@ -71,11 +69,16 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
     setStep('quiz-result');
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     const overconfident = !isCorrect && (bufferedRating === Rating.Good || bufferedRating === Rating.Easy);
-    onRate(overconfident ? Rating.Hard : bufferedRating!, confidence);
+    try {
+      await onRate(overconfident ? Rating.Hard : bufferedRating!, confidence);
+    } finally {
+      // Re-enable Continue if the save failed and we're still mounted.
+      setIsSubmitting(false);
+    }
   };
 
   return (

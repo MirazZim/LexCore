@@ -32,7 +32,9 @@ const INTERVAL_PRESETS = [
 ];
 
 function estimateDailyReviews(retention: number, base = 100): number {
-  const factor = Math.log(retention) / Math.log(0.90);
+  // FSRS intervals scale with ln(R)/ln(0.9), so daily review load scales with
+  // the inverse: higher retention target → shorter intervals → more reviews.
+  const factor = Math.log(0.90) / Math.log(retention);
   return Math.max(1, Math.round(base * 0.12 * factor));
 }
 
