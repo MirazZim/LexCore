@@ -491,7 +491,7 @@ export function GenerationPhase({
     POWER_PHRASES.find(c => c.id === activeConnector) ??
     null;
 
-  // Mint a trophy on a 10/10 score. Fires once per saved sentence.
+  // Mint a trophy on a 9+ score. Fires once per saved sentence.
   const mintedRef = useRef<string | null>(null);
   useEffect(() => {
     if (!aiFeedback || aiFeedback.score < 9) return;
@@ -503,6 +503,7 @@ export function GenerationPhase({
       wordId: currentItem.word.id,
       sentence: generationText.trim(),
       topic: topic.title,
+      score: aiFeedback.score,
     });
   }, [aiFeedback, currentItem.word.id, currentItem.word.word, generationText, topic.title]);
 
@@ -838,7 +839,7 @@ export function GenerationPhase({
               )}
 
               {aiError && (
-                <p className="text-sm text-zinc-500">AI feedback unavailable — your sentence was saved.</p>
+                <p className="text-sm text-zinc-500">AI feedback unavailable — tap Next Word to save your sentence and continue.</p>
               )}
 
               {!aiLoading && (

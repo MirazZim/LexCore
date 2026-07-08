@@ -41,7 +41,19 @@ serve(async (req) => {
     })
   }
 
-  const body = await req.json()
+  const body = await req.json().catch(() => null)
+  if (!body || !Array.isArray(body.messages) || body.messages.length === 0) {
+    return new Response(JSON.stringify({ error: 'Bad request: messages[] required' }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
+  // Whitelist request fields — never spread the client body, or any signed-in
+  // user could override the model / token limits and run up costs on this key.
+  const temperature = typeof body.temperature === 'number'
+    ? Math.min(Math.max(body.temperature, 0), 1)
+    : 0.7
 
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
@@ -50,8 +62,10 @@ serve(async (req) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-     model: 'google/gemini-2.5-pro-exp-03-25:free',  // ← current free model
-      ...body,
+      model: 'google/gemini-2.5-pro-exp-03-25:free',  // ← current free model
+      messages: body.messages,
+      temperature,
+      max_tokens: 4096,
     }),
   })
 

@@ -4,7 +4,7 @@ import { BarChart2, Calendar, ChevronLeft, ChevronRight, Target, TrendingUp, Zap
 import { AppLayout } from '@/components/AppLayout';
 import { EaseBadge } from '@/components/EaseBadge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useWords, useWordStats, useReviewSessions, useUserPreferences } from '@/hooks/useWords';
+import { useWords, useWordStats, useReviewSessions, useUserPreferences, useReviewEvents } from '@/hooks/useWords';
 import { dateKey, normalizeKey } from '@/lib/streak';
 import { Tooltip as UITooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import {
@@ -35,6 +35,7 @@ export default function ProgressPage() {
   const { data: words = [], isLoading: wordsLoading } = useWords();
   const { data: wordStats = [], isLoading: statsLoading } = useWordStats();
   const { data: sessions = [], isLoading: sessionsLoading } = useReviewSessions();
+  const { data: reviewEvents = [], isLoading: eventsLoading } = useReviewEvents();
   const { data: prefs } = useUserPreferences();
   const now = useMemo(() => new Date(), []);
 
@@ -89,34 +90,41 @@ export default function ProgressPage() {
     return months.reverse();
   }, [sessions, recoveredDateKey, now]);
 
+  // Reconstruct mastery at each weekly cutoff from the review log: a word
+  // counts as mastered if its latest review before the cutoff left it in
+  // Review state with stability >= 21 days.
   const masteryData = useMemo(() => {
     const weeks = [];
     for (let i = 3; i >= 0; i--) {
       const cutoff = new Date(now);
       cutoff.setDate(cutoff.getDate() - i * 7);
-      const label = i === 0 ? 'Now' : `W${4 - i}`;
-      const mastered = wordStats.filter(s =>
-        s.state === 2 &&
-        s.stability >= 21 &&
-        s.last_reviewed_at &&
-        new Date(s.last_reviewed_at) <= cutoff
-      ).length;
-      weeks.push({ name: label, mastered });
+      const latest = new Map<string, { state_after: number; stability_after: number }>();
+      for (const e of reviewEvents) {
+        if (new Date(e.reviewed_at) > cutoff) break; // sorted ascending
+        latest.set(e.word_id, e);
+      }
+      let mastered = 0;
+      latest.forEach(e => {
+        if (e.state_after === 2 && e.stability_after >= 21) mastered++;
+      });
+      weeks.push({ name: i === 0 ? 'Now' : `W${4 - i}`, mastered });
     }
     return weeks;
-  }, [wordStats]);
+  }, [reviewEvents, now]);
 
+  // Real per-rating counts from the review log (ts-fsrs: Again=1 … Easy=4).
   const qualityDist = useMemo(() => {
-    const total = sessions.reduce((acc, s) => acc + s.words_reviewed, 0);
-    const correct = sessions.reduce((acc, s) => acc + s.words_correct, 0);
-    const incorrect = total - correct;
+    const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    for (const e of reviewEvents) {
+      if (counts[e.rating] !== undefined) counts[e.rating]++;
+    }
     return [
-      { name: 'Again', value: Math.round(incorrect * 0.4) || 0 },
-      { name: 'Hard',  value: Math.round(incorrect * 0.6) || 0 },
-      { name: 'Good',  value: Math.round(correct * 0.6)   || 0 },
-      { name: 'Easy',  value: Math.round(correct * 0.4)   || 0 },
+      { name: 'Again', value: counts[1] },
+      { name: 'Hard',  value: counts[2] },
+      { name: 'Good',  value: counts[3] },
+      { name: 'Easy',  value: counts[4] },
     ];
-  }, [sessions]);
+  }, [reviewEvents]);
 
   const hardestWords = useMemo(() => {
     return [...wordStats]
@@ -138,14 +146,15 @@ export default function ProgressPage() {
       const dayStart = new Date(d); dayStart.setHours(0, 0, 0);
       const due = wordStats.filter(s => {
         const reviewDate = new Date(s.next_review_at);
-        return reviewDate >= dayStart && reviewDate <= dayEnd;
+        // The overdue backlog belongs to "Today", not to no day at all.
+        return reviewDate <= dayEnd && (i === 0 || reviewDate >= dayStart);
       }).length;
       days.push({ name: i === 0 ? 'Today' : dayNames[d.getDay()], due });
     }
     return days;
   }, [wordStats]);
 
-  const isLoading = wordsLoading || statsLoading || sessionsLoading;
+  const isLoading = wordsLoading || statsLoading || sessionsLoading || eventsLoading;
 
   if (isLoading) {
     return (
@@ -212,7 +221,7 @@ export default function ProgressPage() {
                 Progress
               </h1>
               <p className="text-zinc-500 text-sm mt-1">
-                {activeDays} active day{activeDays !== 1 ? 's' : ''} in the last 30
+                {activeDays} active day{activeDays !== 1 ? 's' : ''} total
               </p>
             </div>
             <span

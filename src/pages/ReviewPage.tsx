@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { ArrowLeft, Moon, CheckCircle2, Flame, X, Brain, Zap, Clock3 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Rating } from 'ts-fsrs';
@@ -30,18 +31,17 @@ export default function ReviewPage() {
   const sessionStartRef = useRef(new Date().toISOString());
 
   const { data: dueWordsData = [], isLoading } = useDueWords();
-  const { data: allWords = [] } = useWords();
-  const { data: allStats = [] } = useWordStats();
+  const { data: allWords = [], isLoading: wordsLoading } = useWords();
+  const { data: allStats = [], isLoading: statsLoading } = useWordStats();
   const updateWordStats = useUpdateWordStats();
   const saveContext = useSaveWordContext();
   const { data: reviewSessions = [], isLoading: sessionsLoading } = useReviewSessions();
 
-  const { data: prefs } = useUserPreferences();
+  const { data: prefs, isLoading: prefsLoading } = useUserPreferences();
   const { streak } = calculateStreak(reviewSessions.map(s => s.started_at), prefs?.streak_recovery_date ?? null);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<ReviewPhase>('battle');
-  const [revealed, setRevealed] = useState(false);
   const [results, setResults] = useState<ReviewResult[]>([]);
   const [clozeAnswer, setClozeAnswer] = useState('');
   const [clozeSubmitted, setClozeSubmitted] = useState(false);
@@ -100,12 +100,19 @@ export default function ReviewPage() {
       .filter(item => item.word)
     : dueWordsData;
 
+  // Sleep prep builds its list from words + stats, and the normal queue
+  // depends on prefs (new-cards cap changes the due_words query key) — so
+  // gate the one-time session snapshot on the sources it actually uses.
+  const sourcesReady = isSleepPrep
+    ? !wordsLoading && !statsLoading
+    : !isLoading && !prefsLoading;
+
   useEffect(() => {
-    if (!isLoading && !sessionReady) {
+    if (sourcesReady && !sessionReady) {
       setSessionWords(liveDueWords);
       setSessionReady(true);
     }
-  }, [isLoading, liveDueWords, sessionReady]);
+  }, [sourcesReady, liveDueWords, sessionReady]);
 
   const currentItem = sessionWords[currentIndex];
   const totalWords = sessionWords.length;
@@ -126,14 +133,13 @@ export default function ReviewPage() {
   }, [currentItem?.word.id]);
 
   useEffect(() => {
-    setRevealed(false);
     setClozeAnswer('');
     setClozeSubmitted(false);
     setClozeContext(null);
     setClozeLoading(false);
   }, [currentIndex]);
 
-  if (isLoading || sessionsLoading || !sessionReady) {
+  if (sessionsLoading || !sessionReady) {
     return (
       <div className="min-h-screen px-4 pt-8 pb-24 max-w-lg mx-auto space-y-4">
         <Skeleton className="h-8 w-full rounded-2xl bg-zinc-800/60" />
@@ -465,13 +471,18 @@ export default function ReviewPage() {
 
     const cardBefore = dbStateToCard(currentItem.stats);
 
-    await updateWordStats.mutateAsync({
-      wordStatsId: currentItem.stats.id,
-      wordId: currentItem.word.id,
-      rating,
-      cardBefore,
-      confidence,
-    });
+    try {
+      await updateWordStats.mutateAsync({
+        wordStatsId: currentItem.stats.id,
+        wordId: currentItem.word.id,
+        rating,
+        cardBefore,
+        confidence,
+      });
+    } catch {
+      toast.error("Couldn't save your rating — check your connection and tap Continue again.");
+      return;
+    }
 
     setResults(prev => [...prev, {
       wordId: currentItem.word.id,
@@ -479,8 +490,6 @@ export default function ReviewPage() {
       quality: rating,
       correct: rating !== Rating.Again,
     }]);
-
-    setRevealed(false);
 
     // Pre-load cloze in the background so it's ready when the learner continues past the trick phase
     if (contexts.length > 0) {
@@ -573,9 +582,10 @@ export default function ReviewPage() {
 
   const priorSentence = (() => {
     if (!currentItem) return null;
+    // Newest first — ids are random UUIDs, so only created_at orders these.
     const mine = contexts
       .filter(c => c.source_label === 'My sentence' && c.sentence?.trim())
-      .sort((a, b) => (a.id < b.id ? 1 : -1));
+      .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
     return mine[0]?.sentence ?? null;
   })();
 
@@ -689,8 +699,6 @@ export default function ReviewPage() {
               key={currentItem.word.id}
               currentItem={currentItem}
               currentIndex={currentIndex}
-              revealed={revealed}
-              onReveal={() => setRevealed(true)}
               onRate={handleRate}
               allWords={allWords}
               streak={streak}
@@ -816,7 +824,10 @@ export default function ReviewPage() {
             />
           )}
 
-          {phase === 'generation' && (
+        </AnimatePresence>
+
+        {/* Outside AnimatePresence — mode="wait" supports only one child */}
+        {phase === 'generation' && (
             <button
               onClick={() => setPhase('synonyms')}
               className="group relative w-full mt-2 overflow-hidden"
@@ -885,7 +896,6 @@ export default function ReviewPage() {
               </span>
             </button>
           )}
-        </AnimatePresence>
       </div>
     </div>
   );

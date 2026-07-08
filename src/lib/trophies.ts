@@ -10,6 +10,8 @@ export interface Trophy {
   wordId: string;
   sentence: string;
   topic: string | null;
+  /** AI score at mint time; trophies minted before this field existed lack it. */
+  score?: number;
   mintedAt: string; // ISO
 }
 

@@ -26,6 +26,8 @@ export interface WordContext {
   id: string;
   sentence: string;
   source_label: string;
+  /** Present on rows from the DB; absent on freshly generated cloze sentences. */
+  created_at?: string;
 }
 
 export interface WordCollocation {
