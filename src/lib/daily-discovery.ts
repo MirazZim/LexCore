@@ -1,7 +1,11 @@
+import { dateKey } from './streak';
+
 const KEY = 'lexcore.daily-discovery.v1';
 
+// Local calendar day — must match the streak logic, otherwise the discovery
+// counter resets at UTC midnight (6 AM in Dhaka) instead of local midnight.
 function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  return dateKey(new Date());
 }
 
 export function getDiscoveryGoal(): number {

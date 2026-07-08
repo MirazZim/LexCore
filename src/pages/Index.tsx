@@ -1061,7 +1061,7 @@ export default function Dashboard() {
                     <h3 className="id-gold-text text-lg font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                       Greatest Hits
                     </h3>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">Sentences scored a perfect 10</p>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">Your top-scored sentences (9+)</p>
                   </div>
                 </div>
                 <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'rgba(240,201,106,0.6)' }}>
@@ -1079,7 +1079,7 @@ export default function Dashboard() {
                       <span className="id-gold-text text-sm font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                         {t.word}
                       </span>
-                      <span className="text-[10px] tabular-nums" style={{ color: 'rgba(240,201,106,0.55)' }}>10/10</span>
+                      <span className="text-[10px] tabular-nums" style={{ color: 'rgba(240,201,106,0.55)' }}>{t.score ?? 10}/10</span>
                     </div>
                     <p className="text-zinc-300 text-sm italic leading-snug line-clamp-3">
                       "{t.sentence}"

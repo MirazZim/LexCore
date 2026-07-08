@@ -354,6 +354,8 @@ export function useUpdateWordStats() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['word_stats'] });
       queryClient.invalidateQueries({ queryKey: ['due_words'] });
+      queryClient.invalidateQueries({ queryKey: ['review_events'] });
+      queryClient.invalidateQueries({ queryKey: ['calibration'] });
     },
   });
 }
@@ -383,6 +385,29 @@ export function useSaveReviewSession() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['review_sessions'] });
+    },
+  });
+}
+
+export function useReviewEvents() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['review_events', user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('review_events')
+        .select('word_id, reviewed_at, rating, state_after, stability_after')
+        .eq('user_id', user!.id)
+        .order('reviewed_at', { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as {
+        word_id: string;
+        reviewed_at: string;
+        rating: number;
+        state_after: number;
+        stability_after: number;
+      }[];
     },
   });
 }

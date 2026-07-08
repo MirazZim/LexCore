@@ -7,6 +7,7 @@ import oxfordWordsRaw from '@/data/oxford_words.json';
 import ieltsWordsRaw  from '@/data/ilets_advanced_words.json';
 import { useWords } from '@/hooks/useWords';
 import { generatePOSTips } from '@/lib/llm';
+import { dateKey } from '@/lib/streak';
 
 type OxfordWord = { word: string; cefr: string; pos: string };
 type WordSource  = 'oxford' | 'ielts';
@@ -39,10 +40,6 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
   return result;
 }
 
-const d = new Date();
-const TODAY_SEED = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
-const DATE_LABEL = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-
 const activeStyle = {
   background: 'rgba(0,255,200,0.15)',
   color: '#00FFC8',
@@ -57,6 +54,15 @@ const inactiveStyle = {
 export default function DailyShufflePage() {
   const navigate = useNavigate();
   const source = (sessionStorage.getItem('dict_source') as WordSource) ?? 'oxford';
+
+  // Recomputed per render (not at module load) so the shuffle rolls over at
+  // midnight even in a long-lived tab; memoized on the calendar day.
+  const todayKey = dateKey(new Date());
+  const todaySeed = useMemo(() => Number(todayKey.replace(/-/g, '')), [todayKey]);
+  const dateLabel = useMemo(
+    () => new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }),
+    [todayKey],
+  );
 
   const SOURCE_WORDS = source === 'oxford' ? OXFORD_WORDS : IELTS_WORDS;
   const POS_OPTIONS  = source === 'oxford' ? OXFORD_POS   : IELTS_POS;
@@ -104,8 +110,8 @@ export default function DailyShufflePage() {
       if (pos && w.pos !== pos) return false;
       return true;
     });
-    return seededShuffle(pool, TODAY_SEED);
-  }, [SOURCE_WORDS, cefr, pos]);
+    return seededShuffle(pool, todaySeed);
+  }, [SOURCE_WORDS, cefr, pos, todaySeed]);
 
   // Total unconquered count (for header display)
   const remaining = useMemo(
@@ -212,7 +218,7 @@ export default function DailyShufflePage() {
           </div>
           <div className="flex items-center justify-between gap-3">
             <p className="text-zinc-500 text-xs flex items-center gap-2">
-              {DATE_LABEL} · {remaining.length} left
+              {dateLabel} · {remaining.length} left
               {source === 'ielts' && (
                 <span
                   className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
@@ -412,7 +418,7 @@ export default function DailyShufflePage() {
                   ← Prev
                 </button>
                 <span className="text-zinc-600 text-[11px] font-bold tabular-nums">
-                  {page * shuffleLimit + 1}–{Math.min(page * shuffleLimit + shuffleLimit, remaining.length)} of {remaining.length}
+                  {page * shuffleLimit + 1}–{Math.min((page + 1) * shuffleLimit, shuffledPool.length)} of {shuffledPool.length}
                 </span>
                 <button
                   onClick={() => setPage(p => p + 1)}
@@ -420,7 +426,7 @@ export default function DailyShufflePage() {
                   className="px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-25 disabled:cursor-not-allowed"
                   style={hasMore ? activeStyle : { background: 'transparent', color: '#3f3f46', border: '1px solid transparent' }}
                 >
-                  Next 5 →
+                  Next {shuffleLimit} →
                 </button>
               </div>
             </>
