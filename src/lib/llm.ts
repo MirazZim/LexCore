@@ -19,10 +19,29 @@ export async function callLLM(messages: Message[], temperature = 0.9): Promise<s
     }
   )
 
-  if (!response.ok) throw new Error('LLM request failed')
+  if (!response.ok) throw new Error(`LLM request failed (HTTP ${response.status})`)
 
   const data = await response.json()
   return data.choices?.[0]?.message?.content || ''
+}
+
+// Strip code fences and parse the model's JSON reply. If prose surrounds the
+// JSON, fall back to the outermost {...} block. Throws a labelled error
+// instead of a bare SyntaxError so failures are traceable per feature.
+function parseLLMJson<T = unknown>(content: string, context: string): T {
+  const clean = content.replace(/```json|```/gi, '').trim()
+  try {
+    return JSON.parse(clean) as T
+  } catch {
+    const start = clean.indexOf('{')
+    const end = clean.lastIndexOf('}')
+    if (start !== -1 && end > start) {
+      try {
+        return JSON.parse(clean.slice(start, end + 1)) as T
+      } catch { /* fall through */ }
+    }
+    throw new Error(`${context}: model returned malformed JSON`)
+  }
 }
 
 export type GenerationStyle = 'formal' | 'casual' | 'daily' | 'ielts';
@@ -65,8 +84,7 @@ Respond ONLY with this JSON:
     },
   ])
 
-  const clean = content.replace(/```json|```/g, '').trim()
-  const parsed = JSON.parse(clean)
+  const parsed = parseLLMJson<{ word: string }>(content, 'generateWord')
   return parsed.word
 }
 
@@ -143,8 +161,13 @@ Respond ONLY with this JSON:
     },
   ], 0.2)
 
-  const clean = content.replace(/```json|```/g, '').trim()
-  const parsed = JSON.parse(clean)
+  const parsed = parseLLMJson<{
+    verdict: string;
+    score: number;
+    what_worked: string;
+    fix: string | null;
+    better_example: string | null;
+  }>(content, 'scoreSentence')
 
   // Defensive: the better_example must actually contain the target word.
   // If the LLM ignored the constraint, drop the misleading suggestion rather
@@ -195,8 +218,7 @@ Respond ONLY with this JSON:
     },
   ])
 
-  const clean = content.replace(/```json|```/g, '').trim()
-  const parsed = JSON.parse(clean)
+  const parsed = parseLLMJson<{ sentences: string[] }>(content, 'generateExampleSentences')
   return parsed.sentences
 }
 
@@ -228,8 +250,7 @@ Respond ONLY with this JSON:
     },
   ])
 
-  const clean = content.replace(/```json|```/g, '').trim()
-  const parsed = JSON.parse(clean)
+  const parsed = parseLLMJson<{ collocations: string[] }>(content, 'generateCollocations')
   return parsed.collocations
 }
 
@@ -268,8 +289,7 @@ Respond ONLY with this JSON:
     },
   ])
 
-  const clean = content.replace(/```json|```/g, '').trim()
-  const parsed = JSON.parse(clean)
+  const parsed = parseLLMJson<{ synonyms: string[] }>(content, 'generateSynonyms')
   return parsed.synonyms
 }
 
@@ -307,8 +327,13 @@ Respond ONLY with this JSON:
     },
   ], 0.85)
 
-  const clean = content.replace(/```json|```/g, '').trim()
-  return JSON.parse(clean)
+  return parseLLMJson<{
+    headline: string;
+    why: string;
+    strategy: string;
+    power_insight: string;
+    focus_score: number;
+  }>(content, 'generatePOSTips')
 }
 
 // --- Generate a fresh cloze sentence ---
@@ -335,8 +360,7 @@ Respond ONLY with this JSON:
     },
   ])
 
-  const clean = content.replace(/```json|```/g, '').trim()
-  const parsed = JSON.parse(clean)
+  const parsed = parseLLMJson<{ sentence: string }>(content, 'generateClozeSentence')
   return parsed.sentence
 }
 
@@ -430,8 +454,11 @@ Respond ONLY with this JSON:
     },
   ], 0.85)
 
-  const clean = content.replace(/```json|```/g, '').trim()
-  return JSON.parse(clean)
+  return parseLLMJson<{
+    technique: string;
+    breakdown: string;
+    clarification: string;
+  }>(content, 'generateMemoryTrick')
 }
 
 export async function generateDefinition(
@@ -527,8 +554,11 @@ Respond ONLY with this JSON — no extra fields, no markdown:
     0.9
   )
 
-  const clean = content.replace(/```json|```/g, '').trim()
-  const parsed = JSON.parse(clean)
+  const parsed = parseLLMJson<{
+    definition: string;
+    emotion_anchor: string;
+    part_of_speech: string;
+  }>(content, 'generateDefinition')
 
   return {
     ...parsed,
@@ -714,8 +744,13 @@ Grade per the rubric above. Return JSON only.`;
     0.2,
   );
 
-  const clean = content.replace(/```json|```/g, '').trim();
-  const raw = JSON.parse(clean);
+  const raw = parseLLMJson<{
+    bands?: Record<string, unknown>;
+    verdict?: unknown;
+    per_criterion?: Record<string, { diagnosis?: unknown; example_fix?: unknown } | undefined>;
+    flagged_issues?: unknown;
+    band9_rewrite?: { original_sentence?: unknown; rewritten?: unknown; why_better?: unknown } | null;
+  }>(content, 'scoreCREI');
 
   // ── Defensive parsing ─────────────────────────────────────────────
   const tr = clampBand(raw?.bands?.task_response);
@@ -911,8 +946,7 @@ Return JSON only.`;
     0.85,
   );
 
-  const clean = content.replace(/```json|```/g, '').trim();
-  const raw = JSON.parse(clean);
+  const raw = parseLLMJson<{ prompt?: unknown; tip?: unknown }>(content, 'generateCREIPrompt');
 
   const prompt = typeof raw?.prompt === 'string' ? raw.prompt.trim() : '';
   const tip = typeof raw?.tip === 'string' ? raw.tip.trim() : '';

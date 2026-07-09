@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { getEaseLabel } from '@/lib/mock-data';
+import { getEaseLabel } from '@/lib/ease';
 
 export function EaseBadge({ difficulty, className }: { difficulty: number; className?: string }) {
   const label = getEaseLabel(difficulty);

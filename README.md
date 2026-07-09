@@ -53,7 +53,7 @@ The competitive edge: an **AI-powered sentence scoring pipeline** that evaluates
 | Data Fetching | TanStack Query |
 | Styling | Tailwind CSS, shadcn/ui, Framer Motion |
 | Backend | Supabase (PostgreSQL + Auth + RLS) |
-| AI Scoring | OpenRouter (`stepfun/step-3.5-flash`) |
+| AI Scoring | OpenRouter via `llm-proxy` Supabase Edge Function |
 | Algorithm | FSRS v6 (`ts-fsrs`) — user-configurable retention target (default 90%) |
 | Build | Vite, Bun |
 
@@ -385,7 +385,14 @@ Create a `.env` file in the root:
 ```env
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_OPENROUTER_API_KEY=your_openrouter_api_key
+```
+
+The OpenRouter key never ships to the browser — it lives on the `llm-proxy`
+Supabase Edge Function:
+
+```bash
+supabase secrets set OPENROUTER_API_KEY=your_openrouter_api_key
+supabase functions deploy llm-proxy
 ```
 
 ### Run Locally

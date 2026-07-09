@@ -263,15 +263,17 @@ export function useAddWord() {
       if (error) throw error;
 
       if (wordData.collocations && wordData.collocations.length > 0) {
-        await supabase.from('word_collocations').insert(
+        const { error: colError } = await supabase.from('word_collocations').insert(
           wordData.collocations.map(c => ({ word_id: data.id, collocation: c }))
         );
+        if (colError) throw colError;
       }
 
       if (wordData.synonyms && wordData.synonyms.length > 0) {
-        await supabase.from('semantic_connections').insert(
+        const { error: synError } = await supabase.from('semantic_connections').insert(
           wordData.synonyms.map(s => ({ word_id: data.id, connected_word: s, connection_type: 'synonym' }))
         );
+        if (synError) throw synError;
       }
 
       return data;
@@ -280,8 +282,6 @@ export function useAddWord() {
       queryClient.invalidateQueries({ queryKey: ['words'] });
       queryClient.invalidateQueries({ queryKey: ['word_stats'] });
       queryClient.invalidateQueries({ queryKey: ['due_words'] });
-      queryClient.invalidateQueries({ queryKey: ['due-words'] });
-      queryClient.invalidateQueries({ queryKey: ['word-stats'] });
     },
   });
 }
@@ -457,10 +457,13 @@ export function useDeleteWord() {
 
   return useMutation({
     mutationFn: async (wordId: string) => {
-      await supabase.from('word_stats').delete().eq('word_id', wordId);
-      await supabase.from('word_contexts').delete().eq('word_id', wordId);
-      await supabase.from('word_collocations').delete().eq('word_id', wordId);
-      await supabase.from('semantic_connections').delete().eq('word_id', wordId);
+      const childDeletes = await Promise.all([
+        supabase.from('word_stats').delete().eq('word_id', wordId),
+        supabase.from('word_contexts').delete().eq('word_id', wordId),
+        supabase.from('word_collocations').delete().eq('word_id', wordId),
+        supabase.from('semantic_connections').delete().eq('word_id', wordId),
+      ]);
+      for (const res of childDeletes) if (res.error) throw res.error;
       const { error } = await supabase.from('words').delete().eq('id', wordId);
       if (error) throw error;
     },
@@ -498,18 +501,22 @@ export function useUpdateWord() {
         .eq('id', wordData.id);
       if (error) throw error;
 
-      await supabase.from('word_collocations').delete().eq('word_id', wordData.id);
+      const { error: colDelError } = await supabase.from('word_collocations').delete().eq('word_id', wordData.id);
+      if (colDelError) throw colDelError;
       if (wordData.collocations.length > 0) {
-        await supabase.from('word_collocations').insert(
+        const { error: colInsError } = await supabase.from('word_collocations').insert(
           wordData.collocations.map(c => ({ word_id: wordData.id, collocation: c }))
         );
+        if (colInsError) throw colInsError;
       }
 
-      await supabase.from('semantic_connections').delete().eq('word_id', wordData.id).eq('connection_type', 'synonym');
+      const { error: synDelError } = await supabase.from('semantic_connections').delete().eq('word_id', wordData.id).eq('connection_type', 'synonym');
+      if (synDelError) throw synDelError;
       if (wordData.synonyms.length > 0) {
-        await supabase.from('semantic_connections').insert(
+        const { error: synInsError } = await supabase.from('semantic_connections').insert(
           wordData.synonyms.map(s => ({ word_id: wordData.id, connected_word: s, connection_type: 'synonym' }))
         );
+        if (synInsError) throw synInsError;
       }
     },
     onSuccess: (_, vars) => {

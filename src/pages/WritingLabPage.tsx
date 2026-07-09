@@ -165,10 +165,6 @@ export default function WritingLabPage() {
             : '#00FFC8';
 
   const showTimerButton = started && !feedback && userText.trim().length > 0 && timerSeconds === null;
-  const timerBarHeight = 56;
-  const panelHeight = timerSeconds !== null
-    ? `calc(100dvh - 56px - ${timerBarHeight}px)`
-    : 'calc(100dvh - 56px)';
 
   // ── Prompt panel content ─────────────────────────────────────────
   const promptPanel = genLoading && !currentPrompt ? (

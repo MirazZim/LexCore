@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Brain, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { seedWordsIfEmpty } from '@/lib/seed-words';
 import { toast } from 'sonner';
 import { memeToast } from '@/lib/meme-toast';
+
+// Seeding happens on the dashboard (Index) after the words query settles —
+// seeding here too raced it and could insert the starter words twice.
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,14 +18,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn, signUp, user } = useAuth();
-
-  // Seed words after login
-  useEffect(() => {
-    if (user) {
-      seedWordsIfEmpty(user.id).catch(console.error);
-    }
-  }, [user]);
+  const { signIn, signUp } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

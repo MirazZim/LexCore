@@ -132,7 +132,18 @@ const SEED_WORDS = [
   },
 ];
 
-export async function seedWordsIfEmpty(userId: string) {
+// Guard against concurrent callers double-inserting the starter words —
+// the count check below isn't atomic.
+let inFlight: Promise<void> | null = null;
+
+export function seedWordsIfEmpty(userId: string): Promise<void> {
+  if (!inFlight) {
+    inFlight = doSeed(userId).finally(() => { inFlight = null; });
+  }
+  return inFlight;
+}
+
+async function doSeed(userId: string) {
   // Check if user has any words
   const { count } = await supabase
     .from('words')
