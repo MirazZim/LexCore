@@ -395,19 +395,30 @@ export function useReviewEvents() {
     queryKey: ['review_events', user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('review_events')
-        .select('word_id, reviewed_at, rating, state_after, stability_after')
-        .eq('user_id', user!.id)
-        .order('reviewed_at', { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as {
+      type ReviewEvent = {
         word_id: string;
         reviewed_at: string;
         rating: number;
         state_after: number;
         stability_after: number;
-      }[];
+      };
+      // PostgREST caps each response at 1000 rows; the full log is bigger, so
+      // page through it — otherwise only the *oldest* 1000 reviews come back
+      // and today's activity silently disappears.
+      const PAGE = 1000;
+      const all: ReviewEvent[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from('review_events')
+          .select('word_id, reviewed_at, rating, state_after, stability_after')
+          .eq('user_id', user!.id)
+          .order('reviewed_at', { ascending: true })
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        all.push(...((data ?? []) as ReviewEvent[]));
+        if (!data || data.length < PAGE) break;
+      }
+      return all;
     },
   });
 }
@@ -418,17 +429,25 @@ export function useCalibration() {
     queryKey: ['calibration', user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('review_events')
-        .select('confidence, rating')
-        .eq('user_id', user!.id)
-        .not('confidence', 'is', null);
-      if (error) throw error;
+      // Same 1000-row PostgREST cap as useReviewEvents — page through so the
+      // calibration score reflects all bets, not just the oldest 1000.
+      const PAGE = 1000;
       let sureTotal = 0, sureCorrect = 0, guessTotal = 0, guessCorrect = 0;
-      for (const e of data ?? []) {
-        const correct = e.rating !== 1;
-        if (e.confidence === 'sure') { sureTotal++; if (correct) sureCorrect++; }
-        else { guessTotal++; if (correct) guessCorrect++; }
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from('review_events')
+          .select('confidence, rating')
+          .eq('user_id', user!.id)
+          .not('confidence', 'is', null)
+          .order('reviewed_at', { ascending: true })
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        for (const e of data ?? []) {
+          const correct = e.rating !== 1;
+          if (e.confidence === 'sure') { sureTotal++; if (correct) sureCorrect++; }
+          else { guessTotal++; if (correct) guessCorrect++; }
+        }
+        if (!data || data.length < PAGE) break;
       }
       return { sureTotal, sureCorrect, guessTotal, guessCorrect };
     },
