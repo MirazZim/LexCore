@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Flame } from 'lucide-react';
 import { Rating } from 'ts-fsrs';
-import { useSaveReviewSession, useReviewSessions, useUserPreferences } from '@/hooks/useWords';
+import { useSaveReviewSession, useReviewSessions, useReviewEvents, useUserPreferences } from '@/hooks/useWords';
 import { RV_STYLES } from '@/lib/rv-styles';
 import { getIdentity } from '@/lib/identity';
 import { calculateStreak, dateKey } from '@/lib/streak';
@@ -33,6 +33,7 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
   const saveSession = useSaveReviewSession();
   const savedRef    = useRef(false);
   const { data: reviewSessions = [] } = useReviewSessions();
+  const { data: reviewEvents = [] } = useReviewEvents();
   const { data: prefs } = useUserPreferences();
 
   const correctCount = results.filter(r => r.correct).length;
@@ -43,8 +44,12 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
 
   // Inject today optimistically — the session just completed even if DB hasn't reflected yet
   const { streak } = useMemo(
-    () => calculateStreak(reviewSessions.map(s => s.started_at), prefs?.streak_recovery_date ?? null, dateKey(new Date())),
-    [reviewSessions, prefs?.streak_recovery_date],
+    () => calculateStreak(
+      [...reviewSessions.map(s => s.started_at), ...reviewEvents.map(e => e.reviewed_at)],
+      prefs?.streak_recovery_date ?? null,
+      dateKey(new Date()),
+    ),
+    [reviewSessions, reviewEvents, prefs?.streak_recovery_date],
   );
 
   const identity    = getIdentity(Math.max(1, streak));

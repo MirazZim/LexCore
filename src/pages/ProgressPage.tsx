@@ -43,13 +43,19 @@ export default function ProgressPage() {
   const [monthIndex, setMonthIndex] = useState(0); // 0 = current month, increases going back
 
   const calendarMonths = useMemo(() => {
-    if (sessions.length === 0) return [];
-    const sessionKeys = new Set(sessions.map(s => dateKey(new Date(s.started_at))));
+    // A day counts as studied if any review happened (review_events), even a
+    // partial session; legacy review_sessions cover pre-event-log history.
+    const allActivityDates = [
+      ...sessions.map(s => s.started_at),
+      ...reviewEvents.map(e => e.reviewed_at),
+    ];
+    if (allActivityDates.length === 0) return [];
+    const sessionKeys = new Set(allActivityDates.map(d => dateKey(new Date(d))));
     const todayKey = dateKey(now);
 
-    const earliest = sessions.reduce(
-      (min, s) => (s.started_at < min ? s.started_at : min),
-      sessions[0].started_at,
+    const earliest = allActivityDates.reduce(
+      (min, d) => (d < min ? d : min),
+      allActivityDates[0],
     );
     const cursor = new Date(new Date(earliest).getFullYear(), new Date(earliest).getMonth(), 1);
     const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -88,7 +94,7 @@ export default function ProgressPage() {
     }
 
     return months.reverse();
-  }, [sessions, recoveredDateKey, now]);
+  }, [sessions, reviewEvents, recoveredDateKey, now]);
 
   // Reconstruct mastery at each weekly cutoff from the review log: a word
   // counts as mastered if its latest review before the cutoff left it in

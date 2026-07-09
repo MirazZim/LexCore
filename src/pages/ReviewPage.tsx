@@ -6,7 +6,7 @@ import { ArrowLeft, Moon, CheckCircle2, Flame, X, Brain, Zap, Clock3 } from 'luc
 import { Skeleton } from '@/components/ui/skeleton';
 import { Rating } from 'ts-fsrs';
 import { dbStateToCard, getReviewTier, currentRetrievability } from '@/lib/fsrs';
-import { useDueWords, useUpdateWordStats, useSaveWordContext, useWords, useWordStats, useReviewSessions, useUserPreferences } from '@/hooks/useWords';
+import { useDueWords, useUpdateWordStats, useSaveWordContext, useWords, useWordStats, useReviewSessions, useReviewEvents, useUserPreferences } from '@/hooks/useWords';
 import { supabase } from '@/lib/supabase';
 import { BattlePhase } from '@/components/review/BattlePhase';
 import { ContextPhase } from '@/components/review/ContextPhase';
@@ -38,7 +38,11 @@ export default function ReviewPage() {
   const { data: reviewSessions = [], isLoading: sessionsLoading } = useReviewSessions();
 
   const { data: prefs, isLoading: prefsLoading } = useUserPreferences();
-  const { streak } = calculateStreak(reviewSessions.map(s => s.started_at), prefs?.streak_recovery_date ?? null);
+  const { data: reviewEvents = [] } = useReviewEvents();
+  const { streak } = calculateStreak(
+    [...reviewSessions.map(s => s.started_at), ...reviewEvents.map(e => e.reviewed_at)],
+    prefs?.streak_recovery_date ?? null,
+  );
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<ReviewPhase>('battle');

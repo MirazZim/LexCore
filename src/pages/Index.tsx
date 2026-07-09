@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { AppLayout } from '@/components/AppLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EaseBadge } from '@/components/EaseBadge';
-import { useWords, useWordStats, useDueWords, useReviewSessions, useCalibration, useUserPreferences, useApplyStreakRecovery } from '@/hooks/useWords';
+import { useWords, useWordStats, useDueWords, useReviewSessions, useReviewEvents, useCalibration, useUserPreferences, useApplyStreakRecovery } from '@/hooks/useWords';
 import { useAuth } from '@/contexts/AuthContext';
 import { seedWordsIfEmpty } from '@/lib/seed-words';
 import { getIdentity } from '@/lib/identity';
@@ -310,6 +310,7 @@ export default function Dashboard() {
   const { data: wordStats = [], isLoading: statsLoading } = useWordStats();
   const { data: dueWords = [] } = useDueWords();
   const { data: reviewSessions = [] } = useReviewSessions();
+  const { data: reviewEvents = [] } = useReviewEvents();
 
   const now = new Date();
   const hour = now.getHours();
@@ -360,9 +361,14 @@ export default function Dashboard() {
   const applyStreakRecovery = useApplyStreakRecovery();
   const recoveredDate = prefs?.streak_recovery_date ?? null;
 
+  // Every rating logs a review_event immediately, so partial sessions still
+  // earn the day; legacy review_sessions cover history predating the event log.
   const { streak, recoverable, recoverableStreak } = useMemo(
-    () => calculateStreak(reviewSessions.map(s => s.started_at), recoveredDate),
-    [reviewSessions, recoveredDate],
+    () => calculateStreak(
+      [...reviewSessions.map(s => s.started_at), ...reviewEvents.map(e => e.reviewed_at)],
+      recoveredDate,
+    ),
+    [reviewSessions, reviewEvents, recoveredDate],
   );
 
   const handleRecover = () => {
@@ -402,18 +408,27 @@ export default function Dashboard() {
 
   /* ── Velocity chart (last 7 days) ────────────────────────────────── */
   const velocityBars = useMemo(() => {
+    const eventCounts = new Map<string, number>();
+    for (const e of reviewEvents) {
+      const k = dateKey(new Date(e.reviewed_at));
+      eventCounts.set(k, (eventCounts.get(k) ?? 0) + 1);
+    }
     const bars = Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
       const key = dateKey(d);
-      const value = reviewSessions
+      const fromSessions = reviewSessions
         .filter(s => dateKey(new Date(s.started_at)) === key)
         .reduce((sum, s) => sum + s.words_reviewed, 0);
+      // max() instead of sum: a completed session's reviews are also in
+      // review_events, so adding both would double-count. Sessions only win
+      // for history predating the event log.
+      const value = Math.max(eventCounts.get(key) ?? 0, fromSessions);
       return { day: DAY_LABELS[d.getDay()], value, active: i === 6 };
     });
     const max = Math.max(...bars.map(b => b.value), 1);
     return bars.map(b => ({ ...b, heightPx: Math.max(Math.round((b.value / max) * 128), 6) }));
-  }, [reviewSessions]);
+  }, [reviewSessions, reviewEvents]);
 
   /* ── Calibration ─────────────────────────────────────────────────── */
   const { data: cal } = useCalibration();
