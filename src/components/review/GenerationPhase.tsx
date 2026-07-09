@@ -15,7 +15,7 @@ interface GenerationPhaseProps {
   generationSaved: boolean;
   aiFeedback: AiFeedback | null;
   aiLoading: boolean;
-  aiError: boolean;
+  aiError: string | null;
   isSaving: boolean;
   activeConnector: string | null;
   onConnectorChange: (id: string | null) => void;
@@ -839,7 +839,15 @@ export function GenerationPhase({
               )}
 
               {aiError && (
-                <p className="text-sm text-zinc-500">AI feedback unavailable — tap Next Word to save your sentence and continue.</p>
+                <div
+                  className="rounded-xl px-4 py-3 space-y-1"
+                  style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.18)' }}
+                >
+                  <p className="text-sm text-zinc-400">
+                    AI feedback unavailable — tap Next Word to save your sentence and continue.
+                  </p>
+                  <p className="text-xs text-red-400/80 font-mono break-words">{aiError}</p>
+                </div>
               )}
 
               {!aiLoading && (

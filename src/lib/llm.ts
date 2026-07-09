@@ -19,7 +19,11 @@ export async function callLLM(messages: Message[], temperature = 0.9): Promise<s
     }
   )
 
-  if (!response.ok) throw new Error(`LLM request failed (HTTP ${response.status})`)
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => null)
+    const detail = errBody?.error?.message ?? errBody?.error
+    throw new Error(`LLM request failed (HTTP ${response.status})${detail ? `: ${detail}` : ''}`)
+  }
 
   const data = await response.json()
   return data.choices?.[0]?.message?.content || ''

@@ -31,7 +31,7 @@ The competitive edge: an **AI-powered sentence scoring pipeline** that evaluates
 - 🔗 **Collocation Phase** — Review natural word pairings and usage patterns.
 - ✍️ **Generation Phase** — Write your own sentence; AI scores it on the spot.
 - 🔄 **Synonyms Phase** — Review semantically related words to build a richer mental web.
-- 🤖 **AI Auto-Scoring** — OpenRouter-powered sentence evaluation. No self-rating bias.
+- 🤖 **AI Auto-Scoring** — Gemini-powered sentence evaluation. No self-rating bias.
 - 🔁 **FSRS v6 Spaced Repetition** — State-machine scheduling (New → Learning → Review → Relearning) driven by actual memory stability, not fixed intervals.
 - 🌙 **Sleep Prep Mode** — Evening review session (8 PM–3 AM) that leverages sleep consolidation.
 - 📚 **Word Library** — Add words with definitions, collocations, synonyms, and emotion anchors. Claude auto-generates content.
@@ -53,7 +53,7 @@ The competitive edge: an **AI-powered sentence scoring pipeline** that evaluates
 | Data Fetching | TanStack Query |
 | Styling | Tailwind CSS, shadcn/ui, Framer Motion |
 | Backend | Supabase (PostgreSQL + Auth + RLS) |
-| AI Scoring | OpenRouter via `llm-proxy` Supabase Edge Function |
+| AI Scoring | Google Gemini via `llm-proxy` Supabase Edge Function |
 | Algorithm | FSRS v6 (`ts-fsrs`) — user-configurable retention target (default 90%) |
 | Build | Vite, Bun |
 
@@ -113,7 +113,7 @@ graph TB
     end
 
     subgraph "AI Layer"
-        OpenRouter[OpenRouter API<br/>stepfun/step-3.5-flash]
+        Gemini[Gemini API<br/>gemini-3.1-flash-lite]
     end
 
     ReviewPage --> BattlePhase
@@ -124,7 +124,7 @@ graph TB
     ReviewPage --> SummaryPhase
 
     BattlePhase --> FSRS
-    GenerationPhase --> OpenRouter
+    GenerationPhase --> Gemini
     SettingsPage --> CustomHooks
 
     CustomHooks --> QueryClient
@@ -136,7 +136,7 @@ graph TB
     Database --> RLS
 
     style FSRS fill:#fff4e1
-    style OpenRouter fill:#ffe1f5
+    style Gemini fill:#ffe1f5
     style Database fill:#f0f0f0
     style AuthContext fill:#e1f5ff
     style SettingsPage fill:#e1ffe1
@@ -363,7 +363,7 @@ graph TD
 
 - Node.js 18+ or Bun
 - A Supabase project
-- An OpenRouter API key
+- A Google Gemini API key
 
 ### Installation
 
@@ -387,11 +387,11 @@ VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-The OpenRouter key never ships to the browser — it lives on the `llm-proxy`
+The Gemini key never ships to the browser — it lives on the `llm-proxy`
 Supabase Edge Function:
 
 ```bash
-supabase secrets set OPENROUTER_API_KEY=your_openrouter_api_key
+supabase secrets set GEMINI_API_KEY=your_gemini_api_key
 supabase functions deploy llm-proxy
 ```
 
@@ -417,7 +417,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 - [x] Collocation phase — natural word pairings
 - [x] Generation phase — write your own sentence
 - [x] Synonyms phase — semantic network review
-- [x] AI sentence scoring via OpenRouter
+- [x] AI sentence scoring via Gemini
 - [x] Word library with collocations, synonyms, emotion anchors
 - [x] Claude-powered auto-generation of definitions and examples
 - [x] Review session tracking and streak system

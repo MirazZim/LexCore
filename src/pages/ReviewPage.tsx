@@ -53,7 +53,7 @@ export default function ReviewPage() {
   const [generationSaved, setGenerationSaved] = useState(false);
   const [aiFeedback, setAiFeedback] = useState<AiFeedback | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [contexts, setContexts] = useState<WordContext[]>([]);
   const [clozeContext, setClozeContext] = useState<WordContext | null>(null);
   const [clozeLoading, setClozeLoading] = useState(false);
@@ -558,7 +558,7 @@ export default function ReviewPage() {
     setGenerationSaved(false);
     setAiFeedback(null);
     setAiLoading(false);
-    setAiError(false);
+    setAiError(null);
     if (currentIndex + 1 >= totalWords) {
       setPhase('summary');
     } else {
@@ -572,7 +572,7 @@ export default function ReviewPage() {
     setGenerationSaved(false);
     setAiFeedback(null);
     setAiLoading(false);
-    setAiError(false);
+    setAiError(null);
   };
 
   const topic = getTopicOfDay();
@@ -597,7 +597,7 @@ export default function ReviewPage() {
     if (!currentItem) return;
     setGenerationSaved(true);
     setAiLoading(true);
-    setAiError(false);
+    setAiError(null);
     try {
       const parsed = await scoreSentence(
         currentItem.word.word,
@@ -606,8 +606,8 @@ export default function ReviewPage() {
         { roast: roastMode, topic: topic.prompt },
       );
       setAiFeedback(parsed);
-    } catch {
-      setAiError(true);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'AI request failed for an unknown reason.');
     } finally {
       setAiLoading(false);
     }
@@ -629,7 +629,7 @@ export default function ReviewPage() {
       setGenerationSaved(false);
       setAiFeedback(null);
       setAiLoading(false);
-      setAiError(false);
+      setAiError(null);
       if (currentIndex + 1 >= totalWords) {
         setPhase('summary');
       } else {
@@ -654,7 +654,7 @@ export default function ReviewPage() {
       setGenerationSaved(false);
       setAiFeedback(null);
       setAiLoading(false);
-      setAiError(false);
+      setAiError(null);
       if (currentIndex + 1 >= totalWords) {
         setPhase('summary');
       } else {
