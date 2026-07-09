@@ -24,7 +24,7 @@ const LOSS_PHRASES = ['Not this time.', 'Study it deeper.', 'Almost.', 'It happe
 interface BattlePhaseProps {
   currentItem: DueWordItem;
   currentIndex: number;
-  onRate: (rating: Rating, confidence: 'sure' | 'unsure' | null) => void | Promise<void>;
+  onRate: (rating: Rating, confidence: 'sure' | 'unsure' | null) => void;
   allWords: Word[];
   streak: number;
 }
@@ -69,16 +69,14 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
     setStep('quiz-result');
   };
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
+    // onRate advances the phase synchronously (no network wait — the save
+    // happens in the background), so this only guards against a double-tap
+    // firing before the component unmounts into the next phase.
     if (isSubmitting) return;
     setIsSubmitting(true);
     const overconfident = !isCorrect && (bufferedRating === Rating.Good || bufferedRating === Rating.Easy);
-    try {
-      await onRate(overconfident ? Rating.Hard : bufferedRating!, confidence);
-    } finally {
-      // Re-enable Continue if the save failed and we're still mounted.
-      setIsSubmitting(false);
-    }
+    onRate(overconfident ? Rating.Hard : bufferedRating!, confidence);
   };
 
   return (

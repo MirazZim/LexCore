@@ -470,23 +470,23 @@ export default function ReviewPage() {
   };
 
 
-  const handleRate = async (rating: Rating, confidence: 'sure' | 'unsure' | null) => {
+  const handleRate = (rating: Rating, confidence: 'sure' | 'unsure' | null) => {
     if (!currentItem) return;
 
     const cardBefore = dbStateToCard(currentItem.stats);
+    const vars = { wordStatsId: currentItem.stats.id, wordId: currentItem.word.id, rating, cardBefore, confidence };
 
-    try {
-      await updateWordStats.mutateAsync({
-        wordStatsId: currentItem.stats.id,
-        wordId: currentItem.word.id,
-        rating,
-        cardBefore,
-        confidence,
-      });
-    } catch {
-      toast.error("Couldn't save your rating — check your connection and tap Continue again.");
-      return;
-    }
+    // Fire-and-forget: the phase transition below is a local state update and
+    // shouldn't wait on a network round trip (that's what made Battle→Memory
+    // Hook feel like it stalled while every other phase change was instant).
+    // A failed save doesn't block the review — it surfaces a retry toast.
+    updateWordStats.mutate(vars, {
+      onError: () => {
+        toast.error("Couldn't save your rating — tap to retry.", {
+          action: { label: 'Retry', onClick: () => updateWordStats.mutate(vars) },
+        });
+      },
+    });
 
     setResults(prev => [...prev, {
       wordId: currentItem.word.id,
