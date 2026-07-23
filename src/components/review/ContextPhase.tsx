@@ -48,21 +48,20 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
 
-// ── Goal Net Visualization ──────────────────────────────────────
+// ── FIFA Goal Post Visualization ──────────────────────────────────
 
 /**
- * FIFA Penalty Kick Goal Net
+ * FIFA Penalty Kick Goal Post
  *
- * A soccer goal with a hexagonal net pattern. Each of the last 5 attempts
- * is shown as a colored circle positioned within the goal area:
- * - Green circle  = correct (scored penalty)
- * - Red circle    = misspelled (saved/missed penalty)
- * - Gray circle   = empty slot (not yet taken)
+ * Visual metaphor:
+ * - CORRECT   → ball in the net (subtle green dot inside the goal)
+ * - MISSPELLED → ball HITS THE CROSSBAR / POST (loud red segment on the bar)
  *
- * Circles are positioned pseudo-randomly within the goal net so they
- * don't overlap, mimicking real penalty kick placement scatter.
+ * The crossbar is divided into 5 segments. Each segment corresponds to
+ * one of the last 5 attempts. Misspellings light up the bar in
+ * aggressive red. Correct answers are quiet dots inside the net.
  */
-function GoalNet({
+function GoalPost({
   attempts,
   repeatedMistakes,
 }: {
@@ -70,16 +69,6 @@ function GoalNet({
   repeatedMistakes: Record<string, number>;
 }) {
   const MAX_SLOTS = 5;
-
-  // Pre-defined positions within the goal net (percent-based: left%, top%)
-  // These spread the 5 kicks across the goal area without overlap
-  const POSITIONS = [
-    { left: 18, top: 22 },   // upper left
-    { left: 50, top: 18 },   // upper center
-    { left: 78, top: 30 },   // upper right
-    { left: 32, top: 62 },   // lower left
-    { left: 65, top: 55 },   // lower right
-  ];
 
   const slots = Array.from({ length: MAX_SLOTS }, (_, i) => attempts[i] || null);
   const scoredCount = slots.filter(a => a?.wasCorrect).length;
@@ -94,145 +83,206 @@ function GoalNet({
       transition={{ delay: 0.4, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className="mt-6 select-none"
     >
-      {/* ── Goal Frame + Net ─────────────────────────────────────── */}
-      <div className="relative mx-auto" style={{ maxWidth: 320 }}>
-        {/* Goal posts (white frame) */}
-        <div
-          className="relative rounded-t-lg overflow-hidden"
-          style={{
-            border: '3px solid rgba(255,255,255,0.85)',
-            borderBottom: 'none',
-            aspectRatio: '2 / 1.3',
-            background: 'rgba(20,20,25,0.6)',
-          }}
-        >
-          {/* Hexagonal net pattern */}
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='24' viewBox='0 0 14 24'%3E%3Cpath d='M7 0L14 4v8L7 16 0 12V4z' fill='none' stroke='rgba(255,255,255,0.12)' stroke-width='0.8'/%3E%3C/svg%3E")
-              `,
-              backgroundSize: '14px 24px',
-              opacity: 0.7,
-            }}
-          />
+      {/* ── Goal Structure ─────────────────────────────────────────── */}
+      <div className="relative mx-auto" style={{ maxWidth: 340 }}>
 
-          {/* Kick circles positioned in the net */}
-          {slots.map((attempt, index) => {
-            const pos = POSITIONS[index];
-            const isFilled = attempt !== null;
-            const isMiss = isFilled && !attempt.wasCorrect;
-            const isRepeated = isMiss && repeatedMistakes[attempt.word.toLowerCase()] >= 2;
+        {/* Crossbar + Posts Frame */}
+        <div className="relative" style={{ aspectRatio: '2 / 1.15' }}>
 
-            return (
-              <div
-                key={isFilled ? attempt.id : `slot-${index}`}
-                className="absolute"
-                style={{
-                  left: `${pos.left}%`,
-                  top: `${pos.top}%`,
-                  transform: 'translate(-50%, -50%)',
-                }}
-              >
-                <AnimatePresence>
-                  {isFilled ? (
+          {/* Top Crossbar */}
+          <div className="absolute top-0 left-0 right-0 h-3 flex gap-1 px-0.5">
+            {slots.map((attempt, index) => {
+              const isFilled = attempt !== null;
+              const isMiss = isFilled && !attempt.wasCorrect;
+              const isRepeated = isMiss && repeatedMistakes[attempt.word.toLowerCase()] >= 2;
+
+              return (
+                <motion.div
+                  key={isFilled ? attempt.id : `bar-${index}`}
+                  className="flex-1 rounded-sm relative overflow-hidden"
+                  style={{
+                    background: isMiss
+                      ? isRepeated
+                        ? 'linear-gradient(180deg, #f43f5e 0%, #e11d48 100%)'
+                        : 'linear-gradient(180deg, #fb7185 0%, #f43f5e 100%)'
+                      : 'rgba(255,255,255,0.08)',
+                    boxShadow: isMiss
+                      ? isRepeated
+                        ? '0 0 20px rgba(244,63,94,0.6), inset 0 1px 0 rgba(255,255,255,0.2)'
+                        : '0 0 12px rgba(244,63,94,0.4), inset 0 1px 0 rgba(255,255,255,0.15)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.05)',
+                    border: isMiss
+                      ? '1px solid rgba(244,63,94,0.5)'
+                      : '1px solid rgba(255,255,255,0.06)',
+                  }}
+                  initial={isFilled ? { scaleY: 0.3, opacity: 0 } : {}}
+                  animate={{ scaleY: 1, opacity: 1 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 500,
+                    damping: 20,
+                    delay: index * 0.06,
+                  }}
+                >
+                  {/* Miss label inside the bar segment */}
+                  {isMiss && (
                     <motion.div
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0, opacity: 0 }}
-                      transition={{
-                        type: 'spring',
-                        stiffness: 400,
-                        damping: 18,
-                        delay: index * 0.08,
-                      }}
-                      className="relative"
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 + index * 0.06 }}
+                      className="absolute inset-0 flex items-center justify-center"
                     >
-                      {/* Outer ring */}
-                      <div
-                        className={`
-                          w-8 h-8 rounded-full flex items-center justify-center
-                          ${attempt.wasCorrect
-                            ? 'bg-emerald-500/20 border-2 border-emerald-400'
-                            : isRepeated
-                              ? 'bg-rose-500/25 border-2 border-rose-400 shadow-[0_0_14px_rgba(244,63,94,0.45)]'
-                              : 'bg-rose-500/15 border-2 border-rose-400/70'
-                          }
-                        `}
+                      <span
+                        className="text-[9px] font-bold uppercase tracking-wider truncate px-1"
+                        style={{
+                          color: isRepeated ? '#fff' : 'rgba(255,255,255,0.9)',
+                          textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                        }}
                       >
-                        {/* Inner solid circle */}
-                        <div
-                          className={`
-                            w-4 h-4 rounded-full
-                            ${attempt.wasCorrect
-                              ? 'bg-emerald-400'
-                              : isRepeated
-                                ? 'bg-rose-400'
-                                : 'bg-rose-400/80'
-                            }
-                          `}
-                        />
-                      </div>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="w-8 h-8 rounded-full border-2 border-white/10 bg-white/[0.03] flex items-center justify-center"
-                    >
-                      <div className="w-3.5 h-3.5 rounded-full bg-white/[0.06]" />
+                        {attempt.word}
+                      </span>
                     </motion.div>
                   )}
-                </AnimatePresence>
+
+                  {/* Pulse ring for repeated misses */}
+                  {isRepeated && (
+                    <motion.div
+                      className="absolute inset-0 rounded-sm"
+                      style={{ border: '2px solid #f43f5e' }}
+                      animate={{ opacity: [0.6, 0, 0.6] }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Side Posts */}
+          <div
+            className="absolute top-3 left-0 w-1.5 h-full rounded-b-sm"
+            style={{ background: 'rgba(255,255,255,0.12)' }}
+          />
+          <div
+            className="absolute top-3 right-0 w-1.5 h-full rounded-b-sm"
+            style={{ background: 'rgba(255,255,255,0.12)' }}
+          />
+
+          {/* Goal Net Area */}
+          <div
+            className="absolute top-3 left-1.5 right-1.5 bottom-0 rounded-b-sm overflow-hidden"
+            style={{
+              background: 'rgba(20,20,25,0.5)',
+              borderLeft: '1px solid rgba(255,255,255,0.06)',
+              borderRight: '1px solid rgba(255,255,255,0.06)',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}
+          >
+            {/* Hexagonal net pattern */}
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='24' viewBox='0 0 14 24'%3E%3Cpath d='M7 0L14 4v8L7 16 0 12V4z' fill='none' stroke='rgba(255,255,255,0.1)' stroke-width='0.8'/%3E%3C/svg%3E")`,
+                backgroundSize: '14px 24px',
+                opacity: 0.6,
+              }}
+            />
+
+            {/* Correct shots — subtle dots in the net */}
+            <div className="absolute inset-0 flex items-center justify-center gap-6">
+              {slots.map((attempt, index) => {
+                if (!attempt?.wasCorrect) return null;
+                // Scatter correct dots slightly
+                const offsets = [
+                  { x: -30, y: -15 },
+                  { x: 0, y: -25 },
+                  { x: 30, y: -10 },
+                  { x: -20, y: 15 },
+                  { x: 25, y: 20 },
+                ];
+                const off = offsets[index] || { x: 0, y: 0 };
+
+                return (
+                  <motion.div
+                    key={attempt.id}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 0.5 }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 400,
+                      damping: 20,
+                      delay: 0.2 + index * 0.05,
+                    }}
+                    className="absolute w-2.5 h-2.5 rounded-full bg-emerald-400"
+                    style={{
+                      transform: `translate(${off.x}px, ${off.y}px)`,
+                      boxShadow: '0 0 8px rgba(52,211,153,0.3)',
+                    }}
+                  />
+                );
+              })}
+            </div>
+
+            {/* Empty state hint */}
+            {slots.every(s => s === null) && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[10px] text-white/10 uppercase tracking-widest">
+                  5 attempts
+                </span>
               </div>
-            );
-          })}
+            )}
+          </div>
         </div>
 
-        {/* Ground line */}
+        {/* Ground / Goal Line */}
         <div
-          className="h-2 rounded-b-full mx-auto"
+          className="h-1.5 mx-auto rounded-full mt-1"
           style={{
-            width: '110%',
-            marginLeft: '-5%',
-            background: 'linear-gradient(to bottom, rgba(16,185,129,0.35), rgba(16,185,129,0.1))',
+            width: '108%',
+            marginLeft: '-4%',
+            background: 'linear-gradient(to bottom, rgba(255,255,255,0.08), transparent)',
           }}
         />
       </div>
 
-      {/* ── Legend / Stats Row ───────────────────────────────────── */}
-      <div className="flex items-center justify-center gap-8 mt-5">
-        {/* Scored */}
+      {/* ── Stats Row ──────────────────────────────────────────────── */}
+      <div className="flex items-center justify-center gap-10 mt-5">
+        {/* Missed — EMPHASIZED */}
         <div className="flex flex-col items-center gap-1.5">
-          <span className="text-lg font-bold text-emerald-400 tabular-nums">{scoredCount}</span>
-          <div className="w-6 h-6 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center">
-            <div className="w-3 h-3 rounded-full bg-emerald-400" />
-          </div>
-          <span className="text-[10px] text-emerald-400/70 uppercase tracking-wider font-medium">
-            Correct
+          <motion.span
+            key={missedCount}
+            initial={{ scale: 1.3 }}
+            animate={{ scale: 1 }}
+            className="text-2xl font-black text-rose-500 tabular-nums"
+            style={{ textShadow: '0 0 16px rgba(244,63,94,0.35)' }}
+          >
+            {missedCount}
+          </motion.span>
+          <div className="w-7 h-2 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.4)]" />
+          <span className="text-[10px] text-rose-400/80 uppercase tracking-wider font-bold">
+            Missed
           </span>
         </div>
 
-        {/* Missed (saved) */}
-        <div className="flex flex-col items-center gap-1.5">
-          <span className="text-lg font-bold text-rose-400 tabular-nums">{missedCount}</span>
-          <div className="w-6 h-6 rounded-full bg-rose-500/20 border-2 border-rose-400 flex items-center justify-center">
-            <div className="w-3 h-3 rounded-full bg-rose-400" />
-          </div>
-          <span className="text-[10px] text-rose-400/70 uppercase tracking-wider font-medium">
-            Misspelled
+        {/* Correct — subtle */}
+        <div className="flex flex-col items-center gap-1.5 opacity-50">
+          <span className="text-lg font-semibold text-emerald-400/60 tabular-nums">
+            {scoredCount}
+          </span>
+          <div className="w-2 h-2 rounded-full bg-emerald-400/40" />
+          <span className="text-[10px] text-emerald-400/40 uppercase tracking-wider font-medium">
+            Scored
           </span>
         </div>
 
-        {/* Empty / Remaining */}
-        <div className="flex flex-col items-center gap-1.5">
-          <span className="text-lg font-bold text-white/25 tabular-nums">{emptyCount}</span>
-          <div className="w-6 h-6 rounded-full border-2 border-white/10 bg-white/[0.03] flex items-center justify-center">
-            <div className="w-3 h-3 rounded-full bg-white/[0.06]" />
-          </div>
-          <span className="text-[10px] text-white/25 uppercase tracking-wider font-medium">
-            Remaining
+        {/* Empty */}
+        <div className="flex flex-col items-center gap-1.5 opacity-30">
+          <span className="text-lg font-semibold text-white/20 tabular-nums">
+            {emptyCount}
+          </span>
+          <div className="w-2 h-2 rounded-full bg-white/[0.06]" />
+          <span className="text-[10px] text-white/20 uppercase tracking-wider font-medium">
+            Left
           </span>
         </div>
       </div>
@@ -247,16 +297,16 @@ function GoalNet({
             transition={{ duration: 0.3, delay: 0.2 }}
             className="mt-5 overflow-hidden"
           >
-            <div className="rounded-xl p-3.5 bg-rose-500/[0.05] border border-rose-500/15">
+            <div className="rounded-xl p-3.5 bg-rose-500/[0.06] border border-rose-500/20">
               <div className="flex items-start gap-2.5">
                 <RotateCcw className="h-3.5 w-3.5 text-rose-400 flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-rose-400/80 uppercase tracking-wider">
+                  <p className="text-[10px] font-bold text-rose-400/90 uppercase tracking-wider">
                     Recurring Misses
                   </p>
                   {repeatedWords.map(([word, count]) => (
-                    <p key={word} className="text-[11px] text-rose-300/60">
-                      "<span className="font-semibold text-rose-300/80">{word}</span>" — missed{' '}
+                    <p key={word} className="text-[11px] text-rose-300/70">
+                      "<span className="font-semibold text-rose-300">{word}</span>" — missed{' '}
                       <span className="font-bold text-rose-400">{count}</span> times
                     </p>
                   ))}
@@ -278,7 +328,7 @@ export function ContextPhase({
   const [winPhrase] = useState(() => WIN_PHRASES[Math.floor(Math.random() * WIN_PHRASES.length)]);
   const [lossPhrase] = useState(() => LOSS_PHRASES[Math.floor(Math.random() * LOSS_PHRASES.length)]);
 
-  // FIFA Penalty Kick History State
+  // Penalty Kick History State
   const [attemptHistory, setAttemptHistory] = useState<SpellingAttempt[]>([]);
   const [repeatedMistakes, setRepeatedMistakes] = useState<Record<string, number>>({});
 
@@ -481,8 +531,8 @@ export function ContextPhase({
                 </motion.div>
               )}
 
-              {/* ── FIFA Goal Net ───────────────────────────────────────── */}
-              <GoalNet
+              {/* ── FIFA Goal Post ──────────────────────────────────────── */}
+              <GoalPost
                 attempts={attemptHistory}
                 repeatedMistakes={repeatedMistakes}
               />
