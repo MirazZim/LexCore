@@ -411,6 +411,11 @@ export function ContextPhase({
 
         {/* Hairline */}
         <div className="mx-8 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+        {/* ── FIFA Goal Post ──────────────────────────────────────── */}
+        <GoalPost
+          attempts={attemptHistory}
+          repeatedMistakes={repeatedMistakes}
+        />
 
         {/* ── Content ────────────────────────────────────────────────── */}
         <div className="px-8 pt-6 pb-8">
@@ -530,12 +535,6 @@ export function ContextPhase({
                   </motion.button>
                 </motion.div>
               )}
-
-              {/* ── FIFA Goal Post ──────────────────────────────────────── */}
-              <GoalPost
-                attempts={attemptHistory}
-                repeatedMistakes={repeatedMistakes}
-              />
             </>
           ) : (
             <motion.div
