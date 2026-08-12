@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useClozeAttemptHistoryForWord } from '@/hooks/useClozeAttempts';
 import type { DueWordItem, WordContext } from './types';
 
 const WIN_PHRASES = ['In context. Owned.', 'Nailed it.', 'Sharp recall.', 'Perfect.', 'Locked in.'];
@@ -26,6 +27,8 @@ interface ContextPhaseProps {
   onClozeAnswerChange: (value: string) => void;
   onClozeSubmit: () => void;
   onClozeNext: () => void;
+  /** Wrong answer: reset for another attempt on the SAME word, without advancing. */
+  onClozeRetry: () => void;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────
@@ -53,28 +56,24 @@ function generateId(): string {
 /**
  * FIFA Penalty Kick Goal Post
  *
+ * Scoped to ONE target word. Shows that word's last 5 cloze attempts
+ * (pulled from cloze_attempts, across all past sessions) so repeated
+ * mistakes on the same word are visible and reinforced over time.
+ *
  * Visual metaphor:
  * - CORRECT   → ball in the net (subtle green dot inside the goal)
- * - MISSPELLED → ball HITS THE CROSSBAR / POST (loud red segment on the bar)
- *
- * The crossbar is divided into 5 segments. Each segment corresponds to
- * one of the last 5 attempts. Misspellings light up the bar in
- * aggressive red. Correct answers are quiet dots inside the net.
+ * - MISSPELLED → ball HITS THE CROSSBAR / POST (loud red segment on the bar,
+ *   labeled with what was actually typed that attempt)
  */
-function GoalPost({
-  attempts,
-  repeatedMistakes,
-}: {
-  attempts: SpellingAttempt[];
-  repeatedMistakes: Record<string, number>;
-}) {
+function GoalPost({ attempts, targetWord }: { attempts: SpellingAttempt[]; targetWord: string }) {
   const MAX_SLOTS = 5;
 
   const slots = Array.from({ length: MAX_SLOTS }, (_, i) => attempts[i] || null);
   const scoredCount = slots.filter(a => a?.wasCorrect).length;
   const missedCount = slots.filter(a => a && !a.wasCorrect).length;
   const emptyCount = MAX_SLOTS - scoredCount - missedCount;
-  const repeatedWords = Object.entries(repeatedMistakes).filter(([_, count]) => count >= 2);
+  const pastMisses = slots.filter((a): a is SpellingAttempt => !!a && !a.wasCorrect);
+  const isRepeatedMiss = missedCount >= 2;
 
   return (
     <motion.div
@@ -84,17 +83,18 @@ function GoalPost({
       className="mt-6 select-none"
     >
       {/* ── Goal Structure ─────────────────────────────────────────── */}
-      <div className="relative mx-auto" style={{ maxWidth: 340 }}>
+      <div className="relative mx-auto" style={{ maxWidth: 420 }}>
 
         {/* Crossbar + Posts Frame */}
-        <div className="relative" style={{ aspectRatio: '2 / 1.15' }}>
+        <div className="relative" style={{ aspectRatio: '2 / 1.3' }}>
 
           {/* Top Crossbar */}
-          <div className="absolute top-0 left-0 right-0 h-3 flex gap-1 px-0.5">
+          <div className="absolute top-0 left-0 right-0 h-16 flex gap-1 px-0.5">
             {slots.map((attempt, index) => {
               const isFilled = attempt !== null;
               const isMiss = isFilled && !attempt.wasCorrect;
-              const isRepeated = isMiss && repeatedMistakes[attempt.word.toLowerCase()] >= 2;
+              const isCorrect = isFilled && attempt.wasCorrect;
+              const isRepeated = isMiss && isRepeatedMiss;
 
               return (
                 <motion.div
@@ -105,15 +105,21 @@ function GoalPost({
                       ? isRepeated
                         ? 'linear-gradient(180deg, #f43f5e 0%, #e11d48 100%)'
                         : 'linear-gradient(180deg, #fb7185 0%, #f43f5e 100%)'
-                      : 'rgba(255,255,255,0.08)',
+                      : isCorrect
+                        ? 'linear-gradient(180deg, #34d399 0%, #10b981 100%)'
+                        : 'rgba(255,255,255,0.08)',
                     boxShadow: isMiss
                       ? isRepeated
                         ? '0 0 20px rgba(244,63,94,0.6), inset 0 1px 0 rgba(255,255,255,0.2)'
                         : '0 0 12px rgba(244,63,94,0.4), inset 0 1px 0 rgba(255,255,255,0.15)'
-                      : 'inset 0 1px 0 rgba(255,255,255,0.05)',
+                      : isCorrect
+                        ? '0 0 12px rgba(16,185,129,0.4), inset 0 1px 0 rgba(255,255,255,0.15)'
+                        : 'inset 0 1px 0 rgba(255,255,255,0.05)',
                     border: isMiss
                       ? '1px solid rgba(244,63,94,0.5)'
-                      : '1px solid rgba(255,255,255,0.06)',
+                      : isCorrect
+                        ? '1px solid rgba(16,185,129,0.5)'
+                        : '1px solid rgba(255,255,255,0.06)',
                   }}
                   initial={isFilled ? { scaleY: 0.3, opacity: 0 } : {}}
                   animate={{ scaleY: 1, opacity: 1 }}
@@ -133,14 +139,29 @@ function GoalPost({
                       className="absolute inset-0 flex items-center justify-center"
                     >
                       <span
-                        className="text-[9px] font-bold uppercase tracking-wider truncate px-1"
+                        className="block text-[8.5px] font-bold uppercase tracking-tighter truncate max-w-full px-0.5"
                         style={{
                           color: isRepeated ? '#fff' : 'rgba(255,255,255,0.9)',
                           textShadow: '0 1px 2px rgba(0,0,0,0.3)',
                         }}
                       >
-                        {attempt.word}
+                        {attempt.userAnswer || '—'}
                       </span>
+                    </motion.div>
+                  )}
+
+                  {/* Correct checkmark inside the bar segment */}
+                  {isCorrect && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 + index * 0.06 }}
+                      className="absolute inset-0 flex items-center justify-center"
+                    >
+                      <CheckCircle2
+                        className="h-5 w-5"
+                        style={{ color: 'rgba(255,255,255,0.9)' }}
+                      />
                     </motion.div>
                   )}
 
@@ -160,17 +181,17 @@ function GoalPost({
 
           {/* Side Posts */}
           <div
-            className="absolute top-3 left-0 w-1.5 h-full rounded-b-sm"
+            className="absolute top-16 left-0 w-1.5 h-full rounded-b-sm"
             style={{ background: 'rgba(255,255,255,0.12)' }}
           />
           <div
-            className="absolute top-3 right-0 w-1.5 h-full rounded-b-sm"
+            className="absolute top-16 right-0 w-1.5 h-full rounded-b-sm"
             style={{ background: 'rgba(255,255,255,0.12)' }}
           />
 
           {/* Goal Net Area */}
           <div
-            className="absolute top-3 left-1.5 right-1.5 bottom-0 rounded-b-sm overflow-hidden"
+            className="absolute top-16 left-1.5 right-1.5 bottom-0 rounded-b-sm overflow-hidden"
             style={{
               background: 'rgba(20,20,25,0.5)',
               borderLeft: '1px solid rgba(255,255,255,0.06)',
@@ -287,9 +308,9 @@ function GoalPost({
         </div>
       </div>
 
-      {/* ── Recurring Misses Alert ───────────────────────────────── */}
+      {/* ── Recurring Miss Alert — this specific word ──────────────── */}
       <AnimatePresence>
-        {repeatedWords.length > 0 && (
+        {isRepeatedMiss && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -297,19 +318,32 @@ function GoalPost({
             transition={{ duration: 0.3, delay: 0.2 }}
             className="mt-5 overflow-hidden"
           >
-            <div className="rounded-xl p-3.5 bg-rose-500/[0.06] border border-rose-500/20">
-              <div className="flex items-start gap-2.5">
-                <RotateCcw className="h-3.5 w-3.5 text-rose-400 flex-shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-rose-400/90 uppercase tracking-wider">
-                    Recurring Misses
+            <div
+              className="rounded-xl p-4 bg-rose-500/10 border-2 border-rose-500/40"
+              style={{ boxShadow: '0 0 24px rgba(244,63,94,0.15)' }}
+            >
+              <div className="flex items-start gap-3">
+                <motion.div
+                  animate={{ opacity: [1, 0.5, 1] }}
+                  transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                  className="flex-shrink-0 mt-0.5"
+                >
+                  <RotateCcw className="h-4 w-4 text-rose-400" />
+                </motion.div>
+                <div className="space-y-1.5">
+                  <p className="text-xs font-black text-rose-400 uppercase tracking-wider">
+                    You keep missing "{targetWord}" — Focus Here
                   </p>
-                  {repeatedWords.map(([word, count]) => (
-                    <p key={word} className="text-[11px] text-rose-300/70">
-                      "<span className="font-semibold text-rose-300">{word}</span>" — missed{' '}
-                      <span className="font-bold text-rose-400">{count}</span> times
-                    </p>
-                  ))}
+                  <p className="text-sm text-rose-200/90">
+                    Missed <span className="font-black text-rose-400">{missedCount}</span> of your
+                    last {slots.filter(s => s !== null).length} attempts. Past typos:{' '}
+                    {pastMisses.map((a, i) => (
+                      <span key={a.id}>
+                        <span className="font-bold text-rose-300">"{a.userAnswer || '(blank)'}"</span>
+                        {i < pastMisses.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
+                  </p>
                 </div>
               </div>
             </div>
@@ -323,21 +357,45 @@ function GoalPost({
 // ── Main Component ────────────────────────────────────────────────
 export function ContextPhase({
   currentItem, currentIndex, clozeContext, clozeLoading,
-  clozeAnswer, clozeSubmitted, onClozeAnswerChange, onClozeSubmit, onClozeNext,
+  clozeAnswer, clozeSubmitted, onClozeAnswerChange, onClozeSubmit, onClozeNext, onClozeRetry,
 }: ContextPhaseProps) {
   const [winPhrase] = useState(() => WIN_PHRASES[Math.floor(Math.random() * WIN_PHRASES.length)]);
   const [lossPhrase] = useState(() => LOSS_PHRASES[Math.floor(Math.random() * LOSS_PHRASES.length)]);
 
-  // Penalty Kick History State
+  // Penalty Kick History State — scoped to THIS word only
   const [attemptHistory, setAttemptHistory] = useState<SpellingAttempt[]>([]);
-  const [repeatedMistakes, setRepeatedMistakes] = useState<Record<string, number>>({});
+
+  // Seed from this word's persisted history (across all past sessions)
+  const { data: pastAttemptsForWord } = useClozeAttemptHistoryForWord(currentItem.word.id, 5);
+
+  // Reset immediately on word change so we never show the previous word's bar
+  useEffect(() => {
+    setAttemptHistory([]);
+  }, [currentItem.word.id]);
+
+  // Fill in once this word's history resolves (react-query caches per word_id,
+  // so revisiting an already-fetched word is instant)
+  useEffect(() => {
+    if (!pastAttemptsForWord) return;
+    setAttemptHistory(
+      pastAttemptsForWord.map(a => ({
+        id: a.id,
+        word: currentItem.word.word,
+        userAnswer: a.userAnswer,
+        wasCorrect: a.wasCorrect,
+        timestamp: a.timestamp,
+      }))
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pastAttemptsForWord, currentItem.word.id]);
 
   const clozeSentence = clozeContext
     ? maskTargetWord(clozeContext.sentence, currentItem.word.word)
     : undefined;
   const isClozeCorrect = clozeAnswer.toLowerCase().trim() === currentItem.word.word.toLowerCase();
 
-  // Track attempt when submitted
+  // Track attempt when submitted — prepend locally for instant feedback
+  // (the DB write + refetch happens in parallel via useSaveClozeAttempt)
   useEffect(() => {
     if (clozeSubmitted) {
       const newAttempt: SpellingAttempt = {
@@ -350,16 +408,21 @@ export function ContextPhase({
 
       // Keep only last 5 (FIFO — newest first)
       setAttemptHistory(prev => [newAttempt, ...prev].slice(0, 5));
-
-      // Track repeated mistakes
-      if (!isClozeCorrect) {
-        setRepeatedMistakes(prev => ({
-          ...prev,
-          [currentItem.word.word.toLowerCase()]: (prev[currentItem.word.word.toLowerCase()] || 0) + 1,
-        }));
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clozeSubmitted]);
+
+  // Make sure Continue is always reachable — scroll it into view once the
+  // feedback + shake animation has had time to settle (card can be tall
+  // when the recurring-miss panel is showing).
+  const continueButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (clozeSubmitted) {
+      const t = setTimeout(() => {
+        continueButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 550);
+      return () => clearTimeout(t);
+    }
   }, [clozeSubmitted]);
 
   return (
@@ -414,7 +477,7 @@ export function ContextPhase({
         {/* ── FIFA Goal Post ──────────────────────────────────────── */}
         <GoalPost
           attempts={attemptHistory}
-          repeatedMistakes={repeatedMistakes}
+          targetWord={currentItem.word.word}
         />
 
         {/* ── Content ────────────────────────────────────────────────── */}
@@ -522,17 +585,33 @@ export function ContextPhase({
                     </motion.div>
                   )}
 
-                  <motion.button
-                    onClick={onClozeNext}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: isClozeCorrect ? 0.2 : 0.46, duration: 0.22 }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="rv-btn-mint"
-                  >
-                    Continue
-                  </motion.button>
+                  {isClozeCorrect ? (
+                    <motion.button
+                      ref={continueButtonRef}
+                      onClick={onClozeNext}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2, duration: 0.22 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="rv-btn-mint"
+                    >
+                      Continue
+                    </motion.button>
+                  ) : (
+                    <motion.button
+                      ref={continueButtonRef}
+                      onClick={onClozeRetry}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.46, duration: 0.22 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="rv-btn-mint"
+                    >
+                      Try Again — Type It Correctly
+                    </motion.button>
+                  )}
                 </motion.div>
               )}
             </>

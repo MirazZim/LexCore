@@ -24,6 +24,9 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const TestCREI = import.meta.env.DEV
   ? lazy(() => import("./pages/__dev/TestCREI"))
   : null;
+const TestClozeAttempts = import.meta.env.DEV
+  ? lazy(() => import("./pages/__dev/TestClozeAttempts"))
+  : null;
 
 const queryClient = new QueryClient();
 
@@ -57,6 +60,9 @@ function AppRoutes() {
       <Route path="/writing" element={<ProtectedRoute><WritingLabPage /></ProtectedRoute>} />
       {import.meta.env.DEV && TestCREI && (
         <Route path="/dev/test-crei" element={<ProtectedRoute><TestCREI /></ProtectedRoute>} />
+      )}
+      {import.meta.env.DEV && TestClozeAttempts && (
+        <Route path="/dev/test-cloze" element={<ProtectedRoute><TestClozeAttempts /></ProtectedRoute>} />
       )}
       <Route path="*" element={<NotFound />} />
     </Routes>

@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Rating } from 'ts-fsrs';
 import { dbStateToCard, getReviewTier, currentRetrievability } from '@/lib/fsrs';
 import { useDueWords, useUpdateWordStats, useSaveWordContext, useWords, useWordStats, useReviewSessions, useReviewEvents, useUserPreferences } from '@/hooks/useWords';
+import { useSaveClozeAttempt } from '@/hooks/useClozeAttempts';
 import { supabase } from '@/lib/supabase';
 import { BattlePhase } from '@/components/review/BattlePhase';
 import { ContextPhase } from '@/components/review/ContextPhase';
@@ -35,6 +36,7 @@ export default function ReviewPage() {
   const { data: allStats = [], isLoading: statsLoading } = useWordStats();
   const updateWordStats = useUpdateWordStats();
   const saveContext = useSaveWordContext();
+  const saveClozeAttempt = useSaveClozeAttempt();
   const { data: reviewSessions = [], isLoading: sessionsLoading } = useReviewSessions();
 
   const { data: prefs, isLoading: prefsLoading } = useUserPreferences();
@@ -539,7 +541,20 @@ export default function ReviewPage() {
     }
   };
 
-  const handleClozeSubmit = () => setClozeSubmitted(true);
+  const handleClozeSubmit = () => {
+    setClozeSubmitted(true);
+    const wasCorrect = clozeAnswer.toLowerCase().trim() === currentItem!.word.word.toLowerCase();
+    saveClozeAttempt.mutate({
+      wordId: currentItem!.word.id,
+      userAnswer: clozeAnswer,
+      wasCorrect,
+    }, {
+      onError: (error) => {
+        console.error('Failed to save cloze attempt:', error);
+        toast.error('Attempt not saved: ' + error.message);
+      },
+    });
+  };
 
   const handleClozeNext = () => {
     setClozeAnswer('');
@@ -549,6 +564,12 @@ export default function ReviewPage() {
     } else {
       resolveGenerationPhase(currentItem!.word.id, currentTier);
     }
+  };
+
+  // Wrong answer: reset for another attempt on the SAME word — does NOT advance the phase.
+  const handleClozeRetry = () => {
+    setClozeAnswer('');
+    setClozeSubmitted(false);
   };
 
   const handleCollocationNext = () => resolveGenerationPhase(currentItem!.word.id, currentTier);
@@ -728,6 +749,7 @@ export default function ReviewPage() {
               onClozeAnswerChange={setClozeAnswer}
               onClozeSubmit={handleClozeSubmit}
               onClozeNext={handleClozeNext}
+              onClozeRetry={handleClozeRetry}
             />
           )}
 
