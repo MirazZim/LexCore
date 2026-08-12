@@ -817,13 +817,19 @@ export function GenerationPhase({
                       {aiFeedback.score}<span className="text-base text-zinc-500">/10</span>
                     </motion.span>
                   </div>
+                  {aiFeedback.mistake && (
+                    <p className="text-sm text-zinc-300">
+                      <span className="font-semibold" style={{ color: '#ef4444' }}>Your mistake: </span>
+                      {aiFeedback.mistake}
+                    </p>
+                  )}
                   <p className="text-sm text-zinc-300">
-                    <span className="font-semibold" style={{ color: '#00FFC8' }}>What worked: </span>
+                    <span className="font-semibold" style={{ color: '#00FFC8' }}>What's working: </span>
                     {aiFeedback.what_worked}
                   </p>
                   {aiFeedback.fix && (
                     <p className="text-sm text-zinc-300">
-                      <span className="font-semibold" style={{ color: '#f97316' }}>Fix: </span>
+                      <span className="font-semibold" style={{ color: '#f97316' }}>Change this: </span>
                       {aiFeedback.fix}
                     </p>
                   )}

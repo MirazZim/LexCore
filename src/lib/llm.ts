@@ -107,10 +107,22 @@ export async function scoreSentence(
 ) {
   const { roast = false, topic = null } = options;
 
-  const hardRules = `CRITICAL RULES (apply to BOTH "fix" and "better_example"):
-1. The learner is practicing the TARGET WORD. Your "better_example" MUST contain the target word (or a natural inflection: plural, past tense, -ing, -ly, etc.). NEVER replace the target word with a synonym in your better_example. If the learner used the wrong part of speech, show the correct part of speech of the SAME WORD (e.g. "rhetoric" → "rhetorical", "decide" → "decision") — not a different word.
-2. "fix" must teach the learner how to use the TARGET WORD correctly. Do not suggest abandoning the word. If the word does not fit the context they wrote, suggest a different context where it does fit — keep the word, change the sentence around it.
-3. "what_worked" must be a real short sentence. If there is genuinely nothing positive, write "Nothing yet — see the fix below." Never output the literal string "null" for this field.`;
+  const hardRules = `CRITICAL RULES — the feedback has three separate jobs. Do not blur them together:
+
+1. "mistake" = DIAGNOSIS. Name the exact, concrete error and nothing else — the specific word, phrase, or grammar point that's wrong, and why. Point at it like a doctor naming a symptom, not a vague summary.
+   BAD (vague): "The grammar could be better."
+   GOOD (concrete): "'Audacious' is an adjective, but you used it like a verb — it can't take an object the way you wrote it."
+   If the sentence has no real mistake (score 8+), set "mistake" to null. Never invent a nitpick just to fill the field.
+
+2. "what_worked" = STRENGTH. Name ONE specific, real thing the learner did right — a word choice, a structure, a natural phrasing — and say why it works. Never generic praise ("good job", "nice sentence").
+   BAD (vague): "Good use of the word."
+   GOOD (concrete): "Placing 'audacious' right after the subject gives the sentence a strong, direct rhythm."
+   If there is genuinely nothing to praise, write "Nothing yet — see the fix below." Never output the literal string "null" for this field.
+
+3. "fix" = ACTION. The one specific change to make, stated as an instruction, not a re-diagnosis of the mistake. This is what the learner should DO differently next time — not what went wrong (that's "mistake"'s job).
+   The learner is practicing the TARGET WORD — "fix" must teach them to use THAT WORD correctly, never suggest abandoning it. If the word doesn't fit the context they wrote, suggest a different context where it does fit — keep the word, change the sentence around it.
+
+4. "better_example" MUST contain the target word (or a natural inflection: plural, past tense, -ing, -ly, etc.). NEVER replace the target word with a synonym. If the learner used the wrong part of speech, show the correct part of speech of the SAME WORD (e.g. "rhetoric" → "rhetorical", "decide" → "decision") — not a different word.`;
 
   const systemCoach = `You are an expert English language coach. A learner is practicing vocabulary by writing sentences.
 Evaluate their sentence briefly and naturally — like a friendly native speaker coach, not a grammar robot.
@@ -131,8 +143,8 @@ Style:
 - Address the learner directly. Use second person.
 - If their sentence is a direct Bengali/Hindi calque ("because of that", "do the needful", "discuss about"), name it as such — say it sounds like translation, not English.
 - If they used a connector incorrectly, say which band that mistake costs them.
-- If they used the wrong part of speech of the target word, name that explicitly (e.g. "'rhetoric' is a noun; you used it as an adjective — the adjective is 'rhetorical'").
-- "fix" must be specific: name the exact word or pattern to change, not vague advice.
+- If they used the wrong part of speech of the target word, name that explicitly (e.g. "'rhetoric' is a noun; you used it as an adjective — the adjective is 'rhetorical'") in "mistake".
+- "fix" must be an instruction, not a diagnosis: tell them what to DO, not what they got wrong again.
 - The "better_example" must be one band higher than what the learner wrote.
 - Never use exclamation marks. Never call the learner "you" warmly — clinical, not friendly.
 Always respond with valid JSON only — no markdown, no backticks, no extra text.
@@ -159,8 +171,9 @@ Respond ONLY with this JSON:
 {
   "verdict": "natural" | "unnatural" | "close",
   "score": 1-10,
-  "what_worked": "one short sentence",
-  "fix": "one short sentence or null",
+  "mistake": "one short sentence naming the exact error, or null if there genuinely isn't one",
+  "what_worked": "one short sentence naming something specific that was done right",
+  "fix": "one short sentence — the specific action to take, or null",
   "better_example": "a better sentence or null"
 }`,
     },
@@ -169,6 +182,7 @@ Respond ONLY with this JSON:
   const parsed = parseLLMJson<{
     verdict: string;
     score: number;
+    mistake: string | null;
     what_worked: string;
     fix: string | null;
     better_example: string | null;
@@ -187,6 +201,12 @@ Respond ONLY with this JSON:
   // Normalize literal "null" string and empty values
   if (typeof parsed.what_worked !== 'string' || parsed.what_worked.trim().toLowerCase() === 'null' || !parsed.what_worked.trim()) {
     parsed.what_worked = 'Nothing yet — see the fix below.';
+  }
+  if (typeof parsed.mistake === 'string' && parsed.mistake.trim().toLowerCase() === 'null') {
+    parsed.mistake = null;
+  }
+  if (!parsed.mistake || !parsed.mistake.trim()) {
+    parsed.mistake = null;
   }
   if (typeof parsed.fix === 'string' && parsed.fix.trim().toLowerCase() === 'null') {
     parsed.fix = null;

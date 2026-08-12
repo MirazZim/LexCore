@@ -17,6 +17,7 @@ export interface DueWordItem {
 export interface AiFeedback {
   verdict: string;
   score: number;
+  mistake: string | null;
   what_worked: string;
   fix: string | null;
   better_example: string | null;
