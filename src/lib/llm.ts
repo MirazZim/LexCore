@@ -465,108 +465,74 @@ Respond ONLY with this JSON:
   }>(content, 'generateMemoryTrick')
 }
 
+export type DetectedRegister = 'formal' | 'casual' | 'literary' | 'slang';
+
+const REGISTERS: readonly DetectedRegister[] = ['formal', 'casual', 'literary', 'slang'] as const;
+
 export async function generateDefinition(
   word: string,
   style: GenerationStyle = 'daily',
   excludeDefinition = ''
 ): Promise<{
   definition: string
-  emotion_anchor: string
   part_of_speech: string
-  format_used: string  // expose this so UI can style differently if needed
+  register: DetectedRegister
 }> {
   const seed = Math.random().toString(36).slice(2, 8)
-
-  const formats = [
-    {
-      name: 'synonym_flash',
-      instruction: `DEFINITION RULE: 1–3 razor-sharp synonyms only. Format: "= word1, word2". No sentence. No explanation. Just the core equivalents a smart person would already know.`,
-      example: `Word: audacious → "definition": "= bold, shameless, gutsy"`,
-    },
-    {
-      name: 'gut_fragment',
-      instruction: `DEFINITION RULE: 3–6 words. A compressed snapshot of the word's soul — no verb required, no full sentence. Think: what's the FEELING of this word in the fewest words possible.`,
-      example: `Word: melancholy → "definition": "sadness with no clear reason"`,
-    },
-    {
-      name: 'sentence',
-      instruction: `DEFINITION RULE: One punchy sentence. Write like you're texting a smart friend who's never heard this word. Zero dictionary energy. The reader should "get" it in one read.`,
-      example: `Word: condescending → "definition": "Talking to someone like they're lucky you're even explaining it."`,
-    },
-    {
-      name: 'contrast',
-      instruction: `DEFINITION RULE: Define by what it's NOT, then what it IS. Format: "Not [wrong idea] — [correct sharp truth]." One sentence max. This works best for words people commonly misuse or misunderstand.`,
-      example: `Word: frugal → "definition": "Not being cheap — just refusing to spend money on things that don't matter."`,
-    },
-    {
-      name: 'scenario',
-      instruction: `DEFINITION RULE: Paint a 1-sentence real-life micro-scene where this word lives. The scene should make the meaning obvious without ever defining it directly. Start with "When..." or "That moment when..." or "The person who..."`,
-      example: `Word: procrastinate → "definition": "When you know exactly what you need to do and open YouTube instead."`,
-    },
-    {
-      name: 'analogy',
-      instruction: `DEFINITION RULE: Explain the word using a comparison to something universally familiar. Format: "Like [familiar thing], but [key difference that captures the word's meaning]." Keep it to one sentence.`,
-      example: `Word: stoic → "definition": "Like having emotions but choosing not to let them drive the car."`,
-    },
-    {
-      name: 'basically',
-      instruction: `DEFINITION RULE: Start with "Basically:" and give the most brutally honest, no-pretense explanation possible. Like you're explaining to a sharp friend who hates unnecessary complexity. Max 10 words after "Basically:".`,
-      example: `Word: verbose → "definition": "Basically: using 100 words when 10 would do."`,
-    },
-    {
-      name: 'root_flash',
-      instruction: `DEFINITION RULE: Give the Latin/Greek root meaning + what the word means today. Format: "[root] = [root meaning] → today it means [sharp 3-5 word meaning]". Skip the root if it's not interesting or helpful.`,
-      example: `Word: philanthropy → "definition": "philos + anthropos = love of humans → giving money to help people at scale."`,
-    },
-  ]
-
-  const format = formats[Math.floor(Math.random() * formats.length)]
 
   const content = await callLLM(
     [
       {
         role: 'system',
-        content: `You are a vocabulary coach who makes words stick — not by explaining more, but by explaining smarter.
+        content: `You are a plain-English dictionary. Your only job is to make the reader instantly understand what a word means — nothing more.
 Style context: ${styleGuide[style]}
 Always respond with valid JSON only — no markdown, no backticks, no extra text.
-Each call must produce a FRESH definition — never repeat or closely paraphrase a previous one.
 
-ACTIVE FORMAT THIS CALL: ${format.name}
-${format.instruction}
+DEFINITION RULE:
+- One simple, clear sentence (or a short clause) that states what the word means — plain dictionary meaning, not a riddle, metaphor, joke, or creative flourish.
+- Use plain, everyday words to explain it. Avoid using rarer synonyms of the word itself to define it.
+- No gimmicks: no "Not X — Y" contrast tricks, no forced analogies, no "Basically:" prefixes, no root-word breakdowns. Just say what it means.
+- Keep it short — roughly 4–14 words. Long enough to be accurate, short enough to read in one glance.
+- Each call must produce a fresh phrasing — never repeat or closely paraphrase a previous one.
 
-EXAMPLE OF CORRECT OUTPUT FOR THIS FORMAT:
-${format.example}
-
-EMOTION ANCHOR RULE: The emotion_anchor is a vivid, sensory one-liner that creates a mental image or personal feeling tied to the word. Not a repeat of the definition. Should feel like a memory trigger — something the reader has felt before.`,
+REGISTER DETECTION RULE:
+Classify how this word is actually used in real English, independent of the style context above:
+- "formal" — professional, academic, or written register (e.g. "commence", "utilize")
+- "casual" — everyday spoken conversation (e.g. "grab", "awesome")
+- "literary" — poetic, old-fashioned, or found mainly in literature (e.g. "forsooth", "beguile")
+- "slang" — informal/colloquial, often region- or generation-specific (e.g. "lit", "sus")
+Pick the ONE register that best matches how people actually use this word most of the time.`,
       },
       {
         role: 'user',
         content: `Word: ${word}
 Style: ${style}
-Format mode this call: ${format.name}
 Variation seed (ensure uniqueness): ${seed}
 ${excludeDefinition ? `Do NOT reuse or closely paraphrase this definition: "${excludeDefinition}"` : ''}
 
 Respond ONLY with this JSON — no extra fields, no markdown:
 {
-  "definition": "follow the active format rule exactly — no exceptions",
+  "definition": "a simple, plain-English sentence stating what the word means",
   "part_of_speech": "noun | verb | adjective | adverb | etc",
-  "emotion_anchor": "vivid sensory memory hook — makes the word unforgettable"
+  "register": "formal | casual | literary | slang"
 }`,
       },
     ],
-    0.9
+    0.5
   )
 
   const parsed = parseLLMJson<{
     definition: string;
-    emotion_anchor: string;
     part_of_speech: string;
+    register: string;
   }>(content, 'generateDefinition')
 
   return {
-    ...parsed,
-    format_used: format.name,
+    definition: parsed.definition,
+    part_of_speech: parsed.part_of_speech,
+    register: REGISTERS.includes(parsed.register as DetectedRegister)
+      ? (parsed.register as DetectedRegister)
+      : 'formal',
   }
 }
 

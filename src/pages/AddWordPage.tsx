@@ -92,7 +92,7 @@ export default function AddWordPage() {
     setLoadingDefinition(true);
     try {
       const r = await generateDefinition(word.trim(), generationStyle, definition);
-      setDefinition(r.definition); memeToast.definitionGenerated();
+      setDefinition(r.definition); setRegister(r.register); memeToast.definitionGenerated();
     } catch { toast.error('Failed to generate definition'); }
     finally { setLoadingDefinition(false); }
   };
@@ -140,7 +140,7 @@ export default function AddWordPage() {
     setLoadingAutofill(true);
     try {
       const result = await generateDefinition(word.trim(), generationStyle);
-      setDefinition(result.definition);
+      setDefinition(result.definition); setRegister(result.register);
       const [sentences, syns, cols, trick] = await Promise.all([
         generateExampleSentences(word.trim(), result.definition, generationStyle),
         generateSynonyms(word.trim(), result.definition, generationStyle),
