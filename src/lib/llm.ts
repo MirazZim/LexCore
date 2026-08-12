@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { CREI_PROMPT_BANK } from './crei-prompts'
 
 type Message = { role: 'system' | 'user' | 'assistant'; content: string }
 
@@ -816,13 +817,6 @@ const CREI_DOMAINS = [
   'society',
 ] as const;
 
-const CREI_QUESTION_TYPES: readonly CREIQuestionType[] = [
-  'opinion',
-  'discussion',
-  'problem-solution',
-  'two-part',
-] as const;
-
 export type CREIDomain = typeof CREI_DOMAINS[number];
 
 export interface CREIPromptOptions {
@@ -837,48 +831,27 @@ export interface CREIPrompt {
   tip: string;
 }
 
+// Topics come from a fixed, curated bank (CREI_PROMPT_BANK) rather than being
+// LLM-generated — real IELTS titles are more reliable than model-invented ones.
+// The model's only job here is writing the per-prompt examiner tip.
 export async function generateCREIPrompt(opts: CREIPromptOptions = {}): Promise<CREIPrompt> {
-  // Domain + (when omitted) question type are picked client-side via Math.random
-  // BEFORE the API call. The model receives both as fixed inputs — it never
-  // chooses the domain, which prevents topic bias.
-  const domain: CREIDomain = CREI_DOMAINS[Math.floor(Math.random() * CREI_DOMAINS.length)];
-  const questionType: CREIQuestionType = opts.questionType
-    ?? CREI_QUESTION_TYPES[Math.floor(Math.random() * CREI_QUESTION_TYPES.length)];
-  console.log('[generateCREIPrompt]', { domain, questionType, passedQuestionType: opts.questionType });
   const exclude = opts.exclude ?? [];
-  const seed = Math.random().toString(36).slice(2, 8);
 
-  const system = `You are an IELTS Task 2 question setter with 15 years of experience writing official-style exam prompts. Your prompts match the register, length, and structure of real IELTS Academic Writing Task 2 questions.
+  const candidates = CREI_PROMPT_BANK.filter(p =>
+    (!opts.questionType || p.questionType === opts.questionType) && !exclude.includes(p.prompt)
+  );
+  // Fall back to ignoring the exclude list (never the questionType filter) if
+  // everything matching the requested type has been used recently.
+  const pool = candidates.length > 0
+    ? candidates
+    : CREI_PROMPT_BANK.filter(p => !opts.questionType || p.questionType === opts.questionType);
 
-QUESTION TYPE FORMATS:
-  • opinion — A statement followed by "To what extent do you agree or disagree?" OR "Do you think this is a positive or negative development?"
-  • discussion — A statement presenting two contrasting views, followed by "Discuss both views and give your own opinion."
-  • problem-solution — A trend or situation, followed by direct questions about its problems and/or solutions.
-  • two-part — A statement followed by two related direct questions (e.g. "Why is this happening? What measures could address it?").
+  const fixture = pool[Math.floor(Math.random() * pool.length)];
+  const { prompt, questionType, domain } = fixture;
 
-LENGTH: 35–60 words for the entire prompt. Match real exam length — never one-line, never essay-length.
+  const system = `You are an IELTS Task 2 examiner with 15 years of experience coaching learners. You are given a fixed exam prompt — do not alter, paraphrase, or repeat it. Your only job is to write ONE sharp framing tip for the learner.
 
-TONE: formal, neutral, exam-register. No casual phrasing. No exclamation marks.
-
-CONSTRAINTS:
-  • The prompt must clearly fall within the given domain.
-  • The prompt must match the given question type format exactly.
-  • Do NOT name political parties, living individuals, or culturally inflammatory framings. Use general societal trends.
-
-FORBIDDEN OPENERS — your generated prompt MUST NOT start with any of these stock phrases. Vary the opening style across calls:
-  FORBIDDEN: "In many parts of the world..."
-  FORBIDDEN: "Nowadays..."
-  FORBIDDEN: "These days..."
-  FORBIDDEN: "In the modern world..."
-  FORBIDDEN: "In recent years..."
-  FORBIDDEN: "Currently..."
-
-Open instead with the topic noun, a statistic, a comparison, or a direct claim. Examples of acceptable opener styles (do NOT copy verbatim, just match the variety):
-  "Electronic waste has become one of the fastest-growing waste streams..."
-  "Plastic waste in the world's oceans has tripled since 2000..."
-  "More children than ever are being diagnosed with type 2 diabetes..."
-
-TIP — you must also produce ONE sharp framing tip for the learner. The tip teaches them how to score higher on THIS specific prompt. Voice contract:
+TIP — teaches the learner how to score higher on THIS specific prompt. Voice contract:
   • Imperative, not advisory.
   • Tied to a Band consequence where possible.
   • Concrete, not abstract.
@@ -893,21 +866,15 @@ OUTPUT: valid JSON only — no markdown, no backticks, no extra prose.
 
 Respond with EXACTLY this shape:
 {
-  "prompt": "<the IELTS Task 2 prompt, 35-60 words>",
   "tip": "<one sharp framing tip in imperative voice with a Band consequence>"
 }`;
 
-  const user = `Domain: ${domain}
+  const user = `Prompt: ${prompt}
 Question type: ${questionType}
-Variation seed (ensure uniqueness): ${seed}
-${exclude.length > 0 ? `Do NOT reuse or closely paraphrase these recent prompts:\n${exclude.map(p => `"${p}"`).join('\n')}` : ''}
+Domain: ${domain}
 
-Generate one fresh IELTS Task 2 prompt in the ${domain} domain, following the ${questionType} format exactly. Then write one sharp framing tip per the voice contract.
+Write one sharp framing tip for this exact prompt, per the voice contract. Return JSON only.`;
 
-Return JSON only.`;
-
-  // Higher temperature here than scoreCREI: we WANT variety in prompts, not stability.
-  // Matches generateMemoryTrick / generatePOSTips which are similarly "creative but structured."
   const content = await callLLM(
     [
       { role: 'system', content: system },
@@ -916,12 +883,9 @@ Return JSON only.`;
     0.85,
   );
 
-  const raw = parseLLMJson<{ prompt?: unknown; tip?: unknown }>(content, 'generateCREIPrompt');
-
-  const prompt = typeof raw?.prompt === 'string' ? raw.prompt.trim() : '';
+  const raw = parseLLMJson<{ tip?: unknown }>(content, 'generateCREIPrompt');
   const tip = typeof raw?.tip === 'string' ? raw.tip.trim() : '';
 
-  if (!prompt) throw new Error('generateCREIPrompt: empty prompt from model');
   if (!tip) throw new Error('generateCREIPrompt: empty tip from model');
 
   return { prompt, questionType, domain, tip };
