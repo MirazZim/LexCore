@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
-import { Lightbulb } from 'lucide-react';
+import { Lightbulb, Shuffle, Loader2 } from 'lucide-react';
 import type { CREIPrompt } from '@/lib/llm';
 
 export interface PromptCardProps {
   prompt: CREIPrompt;
+  onChangeTopic?: () => void;
+  changingTopic?: boolean;
 }
 
 const QUESTION_TYPE_LABELS: Record<string, string> = {
@@ -20,7 +22,7 @@ const FOOTER_INSTRUCTION: Record<string, string> = {
   'two-part': 'Give a full and balanced answer to both parts of the question.',
 };
 
-export default function PromptCard({ prompt }: PromptCardProps) {
+export default function PromptCard({ prompt, onChangeTopic, changingTopic }: PromptCardProps) {
   const footer = FOOTER_INSTRUCTION[prompt.questionType]
     ?? 'Give reasons for your answer and include any relevant examples.';
 
@@ -63,6 +65,18 @@ export default function PromptCard({ prompt }: PromptCardProps) {
             >
               {prompt.domain}
             </span>
+            {onChangeTopic && (
+              <button
+                type="button"
+                onClick={onChangeTopic}
+                disabled={changingTopic}
+                className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.15em] font-bold px-2.5 py-1 rounded-full transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+                style={{ background: 'rgba(255,255,255,0.05)', color: '#a1a1aa', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                {changingTopic ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Shuffle className="h-2.5 w-2.5" />}
+                {changingTopic ? 'Loading…' : 'Change Topic'}
+              </button>
+            )}
           </div>
         </div>
 

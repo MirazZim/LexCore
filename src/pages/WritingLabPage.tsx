@@ -155,6 +155,13 @@ export default function WritingLabPage() {
     generate();
   }
 
+  // Change topic mid-draft — same reset as "New Prompt", plus the timer since
+  // it was tied to the essay being abandoned.
+  function handleChangeTopic() {
+    stopTimer();
+    handleNewPrompt();
+  }
+
   const count = todayCount.data ?? 0;
 
   const timerColor =
@@ -197,7 +204,11 @@ export default function WritingLabPage() {
       </button>
     </div>
   ) : currentPrompt ? (
-    <PromptCard prompt={currentPrompt} />
+    <PromptCard
+      prompt={currentPrompt}
+      onChangeTopic={!feedback ? handleChangeTopic : undefined}
+      changingTopic={genLoading}
+    />
   ) : null;
 
   // ── Landing screen ───────────────────────────────────────────────
