@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSaveClozeAttempt } from '@/hooks/useClozeAttempts';
 import { ContextPhase } from '@/components/review/ContextPhase';
 import type { Word, WordStats } from '@/lib/types';
-import type { DueWordItem, WordContext } from '@/components/review/types';
+import type { DueWordItem, ClozeDialogue } from '@/components/review/types';
 
 function stubStats(wordId: string, userId: string): WordStats {
   return {
@@ -77,11 +77,10 @@ export default function TestClozeAttempts() {
     ? { word, stats: stubStats(word.id, user?.id ?? '') }
     : null;
 
-  const clozeContext: WordContext | null = word
+  const clozeDialogue: ClozeDialogue | null = word
     ? {
-        id: 'test-context',
-        sentence: word.example_sentence ?? `This situation could be described as ${word.word}.`,
-        source_label: 'test',
+        setup: '',
+        response: word.example_sentence ?? `This situation could be described as ${word.word}.`,
       }
     : null;
 
@@ -136,11 +135,11 @@ export default function TestClozeAttempts() {
           </p>
         </section>
 
-        {currentItem && clozeContext && (
+        {currentItem && clozeDialogue && (
           <ContextPhase
             currentItem={currentItem}
             currentIndex={0}
-            clozeContext={clozeContext}
+            clozeDialogue={clozeDialogue}
             clozeLoading={false}
             clozeAnswer={clozeAnswer}
             clozeSubmitted={clozeSubmitted}

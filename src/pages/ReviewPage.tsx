@@ -16,7 +16,7 @@ import { GenerationPhase } from '@/components/review/GenerationPhase';
 import { SummaryPhase } from '@/components/review/SummaryPhase';
 import { SynonymsPhase } from '@/components/review/SynonymsPhase';
 import { MemoryTrickPhase } from '@/components/review/MemoryTrickPhase';
-import type { ReviewPhase, ReviewResult, AiFeedback, WordContext, WordCollocation } from '@/components/review/types';
+import type { ReviewPhase, ReviewResult, AiFeedback, WordContext, WordCollocation, ClozeDialogue, DueWordItem } from '@/components/review/types';
 import { scoreSentence, generateClozeSentence } from '@/lib/llm';
 import { RV_STYLES } from '@/lib/rv-styles';
 import { getTopicOfDay } from '@/lib/topic-of-day';
@@ -57,9 +57,8 @@ export default function ReviewPage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [contexts, setContexts] = useState<WordContext[]>([]);
-  const [clozeContext, setClozeContext] = useState<WordContext | null>(null);
+  const [clozeDialogue, setClozeDialogue] = useState<ClozeDialogue | null>(null);
   const [clozeLoading, setClozeLoading] = useState(false);
-  const [lastClozeId, setLastClozeId] = useState<string | null>(null);
   const [collocations, setCollocations] = useState<WordCollocation[]>([]);
   const [synonyms, setSynonyms] = useState<string[]>([]);
   const [sessionWords, setSessionWords] = useState<typeof dueWordsData>([]);
@@ -123,25 +122,49 @@ export default function ReviewPage() {
   const currentItem = sessionWords[currentIndex];
   const totalWords = sessionWords.length;
 
-  const loadWordData = async (wordId: string) => {
+  const loadWordData = async (item: DueWordItem) => {
+    const wordId = item.word.id;
     const [ctxRes, colRes, synRes] = await Promise.all([
       supabase.from('word_contexts').select('*').eq('word_id', wordId),
       supabase.from('word_collocations').select('*').eq('word_id', wordId),
       supabase.from('semantic_connections').select('connected_word').eq('word_id', wordId).eq('connection_type', 'synonym'),
     ]);
-    setContexts(ctxRes.data || []);
+    const loadedContexts = ctxRes.data || [];
+    setContexts(loadedContexts);
     setCollocations(colRes.data || []);
     setSynonyms((synRes.data || []).map((r: { connected_word: string }) => r.connected_word));
+
+    // Kick off cloze generation the moment this word's stored examples land —
+    // right as Battle mounts, well before the learner reaches the quiz step —
+    // so the LLM round trip has the whole Battle phase to finish in the
+    // background instead of racing the few seconds before Context Theater.
+    if (loadedContexts.length > 0) {
+      setClozeLoading(true);
+      setClozeDialogue(null);
+      generateClozeSentence(
+        item.word.word,
+        item.word.definition,
+        loadedContexts.map(c => c.sentence),
+      )
+        .then(dialogue => setClozeDialogue(dialogue))
+        .catch(() => {
+          // AI unavailable: fall back to a randomly picked stored example so the
+          // exercise still works offline, instead of always the same first one.
+          const pick = loadedContexts[Math.floor(Math.random() * loadedContexts.length)];
+          setClozeDialogue({ setup: '', response: pick.sentence });
+        })
+        .finally(() => setClozeLoading(false));
+    }
   };
 
   useEffect(() => {
-    if (currentItem) loadWordData(currentItem.word.id);
+    if (currentItem) loadWordData(currentItem);
   }, [currentItem?.word.id]);
 
   useEffect(() => {
     setClozeAnswer('');
     setClozeSubmitted(false);
-    setClozeContext(null);
+    setClozeDialogue(null);
     setClozeLoading(false);
   }, [currentIndex]);
 
@@ -471,7 +494,6 @@ export default function ReviewPage() {
     }
   };
 
-
   const handleRate = (rating: Rating, confidence: 'sure' | 'unsure' | null) => {
     if (!currentItem) return;
 
@@ -496,28 +518,6 @@ export default function ReviewPage() {
       quality: rating,
       correct: rating !== Rating.Again,
     }]);
-
-    // Pre-load cloze in the background so it's ready when the learner continues past the trick phase
-    if (contexts.length > 0) {
-      if (contexts.length >= 2) {
-        const candidates = contexts.filter(c => c.id !== lastClozeId);
-        const pick = candidates[Math.floor(Math.random() * candidates.length)];
-        setLastClozeId(pick.id);
-        setClozeContext(pick);
-      } else {
-        // Single stored context: always generate a fresh sentence so bigram cues don't leak
-        setClozeLoading(true);
-        setClozeContext(null);
-        generateClozeSentence(
-          currentItem.word.word,
-          currentItem.word.definition,
-          contexts.map(c => c.sentence),
-        )
-          .then(sentence => setClozeContext({ id: 'generated', sentence, source_label: 'Generated' }))
-          .catch(() => setClozeContext(contexts[0]))
-          .finally(() => setClozeLoading(false));
-      }
-    }
 
     // Show memory trick first (if the word has one), then proceed to context/collocation/generation
     if (currentItem.word.emotion_anchor) {
@@ -742,7 +742,7 @@ export default function ReviewPage() {
             <ContextPhase
               currentItem={currentItem}
               currentIndex={currentIndex}
-              clozeContext={clozeContext}
+              clozeDialogue={clozeDialogue}
               clozeLoading={clozeLoading}
               clozeAnswer={clozeAnswer}
               clozeSubmitted={clozeSubmitted}

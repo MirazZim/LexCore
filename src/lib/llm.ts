@@ -361,32 +361,32 @@ Respond ONLY with this JSON:
   }>(content, 'generatePOSTips')
 }
 
-// --- Generate a fresh cloze sentence ---
-export async function generateClozeSentence(word: string, definition: string, exclude: string[] = []): Promise<string> {
+// --- Generate a natural two-line conversational exchange for cloze practice ---
+export async function generateClozeSentence(word: string, definition: string, exclude: string[] = []): Promise<{ setup: string; response: string }> {
   const seed = Math.random().toString(36).slice(2, 8)
   const content = await callLLM([
     {
       role: 'system',
-      content: `You are a vocabulary teacher creating cloze (fill-in-the-blank) exercises. Generate a single natural sentence that uses the target word clearly and unambiguously. Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
+      content: `You are helping someone practice using vocabulary in real spoken conversation. Generate a short, natural two-line exchange between two people — the kind of thing that could actually happen in conversation or a text thread. Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
     },
     {
       role: 'user',
       content: `Word: ${word}
 Definition: ${definition}
 Variation seed (for uniqueness): ${seed}
-${exclude.length > 0 ? `Do NOT reuse or closely paraphrase these existing sentences:\n${exclude.map(s => `"${s}"`).join('\n')}` : ''}
+${exclude.length > 0 ? `Do NOT reuse or closely paraphrase these existing lines:\n${exclude.map(s => `"${s}"`).join('\n')}` : ''}
 
-Write one natural sentence using "${word}" where the word's meaning is clear from context.
+Write a short, casual two-line exchange between two people — contractions, everyday phrasing, no textbook language. The FIRST line sets up a situation or asks something. The SECOND line is a natural reply that uses "${word}" clearly, so its meaning is obvious from context and the learner could reuse the phrasing themselves in real life.
 
 Respond ONLY with this JSON:
 {
-  "sentence": "the generated sentence"
+  "setup": "the first person's line",
+  "response": "the second person's line, using \\"${word}\\""
 }`,
     },
   ])
 
-  const parsed = parseLLMJson<{ sentence: string }>(content, 'generateClozeSentence')
-  return parsed.sentence
+  return parseLLMJson<{ setup: string; response: string }>(content, 'generateClozeSentence')
 }
 
 // --- Generate a memory trick (structured mnemonic with 7 techniques) ---

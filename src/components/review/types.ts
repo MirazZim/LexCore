@@ -31,6 +31,14 @@ export interface WordContext {
   created_at?: string;
 }
 
+/** A short two-line conversational exchange used for Context Theater's cloze practice. */
+export interface ClozeDialogue {
+  /** First speaker's line — shown in full, sets up the moment. */
+  setup: string;
+  /** Second speaker's reply — contains the target word, shown with it blanked out. */
+  response: string;
+}
+
 export interface WordCollocation {
   id: string;
   collocation: string;

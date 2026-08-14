@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useClozeAttemptHistoryForWord } from '@/hooks/useClozeAttempts';
-import type { DueWordItem, WordContext } from './types';
+import type { DueWordItem, ClozeDialogue } from './types';
 
 const WIN_PHRASES = ['In context. Owned.', 'Nailed it.', 'Sharp recall.', 'Perfect.', 'Locked in.'];
 const LOSS_PHRASES = ['Not quite.', 'Read it again.', 'Study the context.', 'Almost.'];
@@ -20,7 +20,7 @@ interface SpellingAttempt {
 interface ContextPhaseProps {
   currentItem: DueWordItem;
   currentIndex: number;
-  clozeContext: WordContext | null;
+  clozeDialogue: ClozeDialogue | null;
   clozeLoading: boolean;
   clozeAnswer: string;
   clozeSubmitted: boolean;
@@ -356,7 +356,7 @@ function GoalPost({ attempts, targetWord }: { attempts: SpellingAttempt[]; targe
 
 // ── Main Component ────────────────────────────────────────────────
 export function ContextPhase({
-  currentItem, currentIndex, clozeContext, clozeLoading,
+  currentItem, currentIndex, clozeDialogue, clozeLoading,
   clozeAnswer, clozeSubmitted, onClozeAnswerChange, onClozeSubmit, onClozeNext, onClozeRetry,
 }: ContextPhaseProps) {
   const [winPhrase] = useState(() => WIN_PHRASES[Math.floor(Math.random() * WIN_PHRASES.length)]);
@@ -389,8 +389,11 @@ export function ContextPhase({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pastAttemptsForWord, currentItem.word.id]);
 
-  const clozeSentence = clozeContext
-    ? maskTargetWord(clozeContext.sentence, currentItem.word.word)
+  const maskedSetup = clozeDialogue?.setup
+    ? maskTargetWord(clozeDialogue.setup, currentItem.word.word)
+    : undefined;
+  const maskedResponse = clozeDialogue?.response
+    ? maskTargetWord(clozeDialogue.response, currentItem.word.word)
     : undefined;
   const isClozeCorrect = clozeAnswer.toLowerCase().trim() === currentItem.word.word.toLowerCase();
 
@@ -488,17 +491,38 @@ export function ContextPhase({
               <Skeleton className="h-4 w-4/5 rounded-lg bg-zinc-800/60" />
               <Skeleton className="h-4 w-3/5 rounded-lg bg-zinc-800/60" />
             </div>
-          ) : clozeSentence ? (
+          ) : maskedResponse ? (
             <>
-              <motion.p
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.14, duration: 0.28 }}
-                className="text-zinc-300 text-base leading-relaxed mb-6 p-5 rounded-2xl italic"
-                style={{ background: 'rgba(56,189,248,0.04)', border: '1px solid rgba(56,189,248,0.1)' }}
-              >
-                "{clozeSentence}"
-              </motion.p>
+              <div className="mb-6 space-y-2.5">
+                {maskedSetup && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, x: -8 }}
+                    animate={{ opacity: 1, y: 0, x: 0 }}
+                    transition={{ delay: 0.1, duration: 0.28 }}
+                    className="flex"
+                  >
+                    <p
+                      className="text-zinc-300 text-sm leading-relaxed px-4 py-3 rounded-2xl rounded-bl-md max-w-[85%]"
+                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    >
+                      {maskedSetup}
+                    </p>
+                  </motion.div>
+                )}
+                <motion.div
+                  initial={{ opacity: 0, y: 8, x: 8 }}
+                  animate={{ opacity: 1, y: 0, x: 0 }}
+                  transition={{ delay: 0.2, duration: 0.28 }}
+                  className="flex justify-end"
+                >
+                  <p
+                    className="text-zinc-100 text-sm leading-relaxed px-4 py-3 rounded-2xl rounded-br-md max-w-[85%] text-right"
+                    style={{ background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.25)' }}
+                  >
+                    {maskedResponse}
+                  </p>
+                </motion.div>
+              </div>
 
               {!clozeSubmitted ? (
                 <motion.div
