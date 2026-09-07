@@ -6,7 +6,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { EaseBadge } from '@/components/EaseBadge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useWords, useWordStats, useWordContexts, useWordCollocations, useSemanticConnections, useDeleteWord, useUpdateWord } from '@/hooks/useWords';
+import { useWords, useWordStats, useDueWords, useWordContexts, useWordCollocations, useSemanticConnections, useDeleteWord, useUpdateWord } from '@/hooks/useWords';
 import { generateMemoryTrick } from '@/lib/llm';
 import { toast } from 'sonner';
 import { memeToast } from '@/lib/meme-toast';
@@ -137,10 +137,16 @@ export default function LibraryPage() {
   useEffect(() => {
     const wordParam = searchParams.get('word');
     if (wordParam) setSelectedWordId(wordParam);
+    
+    const filterParam = searchParams.get('filter');
+    if (filterParam && ['all', 'due', 'mastered', 'formal', 'neutral', 'informal'].includes(filterParam)) {
+      setFilter(filterParam);
+    }
   }, [searchParams]);
 
   const { data: words = [], isLoading: wordsLoading } = useWords();
   const { data: wordStats = [], isLoading: statsLoading } = useWordStats();
+  const { data: dueWords = [] } = useDueWords();
   const { data: selectedContexts = [] } = useWordContexts(selectedWordId ?? undefined);
   const { data: selectedCollocations = [] } = useWordCollocations(selectedWordId ?? undefined);
   const { data: selectedConnections = [] } = useSemanticConnections(selectedWordId ?? undefined);
@@ -248,7 +254,7 @@ export default function LibraryPage() {
 
   /* ── Derived stats ──────────────────────────────────────────────── */
   const totalWords = words.length;
-  const dueCount = wordStats.filter(s => new Date(s.next_review_at) <= now).length;
+  const dueCount = dueWords.length;
   const masteredCount = wordStats.filter(s => s.state === 2 && s.stability >= 21).length;
 
   const isLoading = wordsLoading || statsLoading;

@@ -838,7 +838,10 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors">
+                <div 
+                  className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors cursor-pointer active:scale-[0.98]"
+                  onClick={() => navigate('/library?filter=due')}
+                >
                   <div className="flex items-center justify-between">
                     <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Due Today</span>
                     <Clock className="h-4 w-4 text-zinc-600" />
@@ -847,7 +850,7 @@ export default function Dashboard() {
                     <span className="text-5xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                       {dueToday}
                     </span>
-                    <p className="text-zinc-500 text-xs mt-1">cards pending</p>
+                    <p className="text-zinc-500 text-xs mt-1">cards pending · click to view</p>
                   </div>
                 </div>
 
