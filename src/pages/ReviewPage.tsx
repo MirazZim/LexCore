@@ -854,74 +854,74 @@ export default function ReviewPage() {
 
         {/* Outside AnimatePresence — mode="wait" supports only one child */}
         {phase === 'generation' && (
-            <button
-              onClick={() => setPhase('synonyms')}
-              className="group relative w-full mt-2 overflow-hidden"
+          <button
+            onClick={() => setPhase('synonyms')}
+            className="group relative w-full mt-2 overflow-hidden"
+            style={{
+              padding: '0',
+              border: 'none',
+              borderRadius: '16px',
+              background: 'transparent',
+              cursor: 'pointer',
+            }}
+          >
+            {/* Glow layer */}
+            <span
               style={{
-                padding: '0',
-                border: 'none',
+                position: 'absolute',
+                inset: 0,
                 borderRadius: '16px',
-                background: 'transparent',
-                cursor: 'pointer',
+                background: 'linear-gradient(135deg, #2cffca, #00c896)',
+                filter: 'blur(8px)',
+                opacity: 0.45,
+                transform: 'scaleY(0.85) translateY(4px)',
+                transition: 'opacity 0.25s ease, transform 0.25s ease',
+                pointerEvents: 'none',
               }}
-            >
-              {/* Glow layer */}
-              <span
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  borderRadius: '16px',
-                  background: 'linear-gradient(135deg, #2cffca, #00c896)',
-                  filter: 'blur(8px)',
-                  opacity: 0.45,
-                  transform: 'scaleY(0.85) translateY(4px)',
-                  transition: 'opacity 0.25s ease, transform 0.25s ease',
-                  pointerEvents: 'none',
-                }}
-                className="group-hover:opacity-70 group-hover:scale-105"
-              />
+              className="group-hover:opacity-70 group-hover:scale-105"
+            />
 
-              {/* Button face */}
-              <span
-                style={{
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  padding: '11px 20px',
-                  borderRadius: '16px',
-                  background: 'linear-gradient(135deg, #2cffca 0%, #00c896 100%)',
-                  color: '#071a14',
-                  fontSize: '13px',
-                  fontWeight: '700',
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
-                  transition: 'filter 0.2s ease, transform 0.2s ease',
-                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25)',
-                }}
-                className="group-hover:brightness-110 group-active:scale-95"
+            {/* Button face */}
+            <span
+              style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '11px 20px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, #2cffca 0%, #00c896 100%)',
+                color: '#071a14',
+                fontSize: '13px',
+                fontWeight: '700',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                transition: 'filter 0.2s ease, transform 0.2s ease',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25)',
+              }}
+              className="group-hover:brightness-110 group-active:scale-95"
+            >
+              Skip to Synonyms
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                fill="none"
+                style={{ transition: 'transform 0.2s ease' }}
+                className="group-hover:translate-x-1"
               >
-                Skip to Synonyms
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  style={{ transition: 'transform 0.2s ease' }}
-                  className="group-hover:translate-x-1"
-                >
-                  <path
-                    d="M3 8h10M9 4l4 4-4 4"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-            </button>
-          )}
+                <path
+                  d="M3 8h10M9 4l4 4-4 4"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );

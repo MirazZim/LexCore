@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Check, X, MapPin, Star, Zap, BookOpen, Brain, Feather, Search, Layers, Infinity as InfinityIcon } from 'lucide-react';
+import { Lock, Check, X, ChevronLeft, MapPin, Star, Zap, BookOpen, Brain, Feather, Search, Layers, Infinity as InfinityIcon } from 'lucide-react';
 
 /* ─── Identity data ──────────────────────────────────────────────── */
 const IDENTITIES = [
@@ -605,6 +605,9 @@ export function IdentityJourneyMap({ currentDay, onClose }: Props) {
 
   const currentIdentity = IDENTITIES.find(i => getStatus(currentDay, i.dayStart, i.dayEnd) === 'current');
   const [selectedId, setSelectedId] = useState<IdentityId>(currentIdentity?.id ?? 'apprentice');
+  // Below lg the side panel is hidden, so tapping a card opens the details as a full-screen sheet
+  const [mobileDetailId, setMobileDetailId] = useState<IdentityId | null>(null);
+  const mobileEntry = mobileDetailId ? IDENTITIES.find(i => i.id === mobileDetailId)! : null;
 
   const shownId = hoveredId ?? selectedId;
   const shownEntry = IDENTITIES.find(i => i.id === shownId)!;
@@ -745,9 +748,14 @@ export function IdentityJourneyMap({ currentDay, onClose }: Props) {
 
                               <motion.div
                                 animate={isShaking ? { x: [0, -10, 10, -7, 7, -3, 3, 0], transition: { duration: 0.5 } } : { x: 0 }}
-                                onMouseEnter={() => setHoveredId(identity.id)}
-                                onMouseLeave={() => setHoveredId(null)}
+                                onPointerEnter={e => { if (e.pointerType === 'mouse') setHoveredId(identity.id); }}
+                                onPointerLeave={e => { if (e.pointerType === 'mouse') setHoveredId(null); }}
                                 onClick={() => {
+                                  if (window.matchMedia('(max-width: 1023px)').matches) {
+                                    if (isLocked) shake(identity.id);
+                                    setMobileDetailId(identity.id);
+                                    return;
+                                  }
                                   if (isLocked) shake(identity.id);
                                   else setSelectedId(identity.id);
                                 }}
@@ -936,6 +944,48 @@ export function IdentityJourneyMap({ currentDay, onClose }: Props) {
 
           </div>
         </div>
+
+        {/* Mobile: full-screen detail sheet */}
+        <AnimatePresence>
+          {mobileEntry && (
+            <motion.div
+              key="mobile-detail"
+              className="lg:hidden fixed inset-0 z-[60] flex flex-col"
+              style={{ background: 'rgb(4,3,8)' }}
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div
+                className="flex items-center justify-between px-4 py-3 shrink-0"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+              >
+                <button
+                  onClick={() => setMobileDetailId(null)}
+                  className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Journey
+                </button>
+                <button
+                  onClick={onClose}
+                  className="w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+                  style={{ border: '1px solid rgba(255,255,255,0.09)' }}
+                >
+                  <X className="w-4 h-4 text-zinc-400" />
+                </button>
+              </div>
+              <div className="flex-1 min-h-0">
+                <DetailPanel
+                  identity={mobileEntry}
+                  status={getStatus(currentDay, mobileEntry.dayStart, mobileEntry.dayEnd)}
+                  currentDay={currentDay}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );
