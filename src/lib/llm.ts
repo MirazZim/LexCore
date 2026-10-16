@@ -49,6 +49,35 @@ function parseLLMJson<T = unknown>(content: string, context: string): T {
   }
 }
 
+// The proxy already forces JSON output (responseMimeType), so this line and the
+// code-fence stripping above are a safety net rather than the main guarantee.
+const JSON_ONLY = 'Always respond with valid JSON only — no markdown, no backticks, no extra text.'
+
+const newSeed = () => Math.random().toString(36).slice(2, 8)
+
+// Keep only non-empty strings from a model-returned list.
+function toStringList(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string' && !!s.trim()) : []
+}
+
+// Same, but throw instead of handing the page an empty/undefined list.
+function requireStringList(v: unknown, context: string): string[] {
+  const list = toStringList(v)
+  if (list.length === 0) throw new Error(`${context}: model returned no usable items`)
+  return list
+}
+
+// Read a numeric field the model may send as 8, "8" or "8/10"; NaN if absent.
+function toNumber(v: unknown): number {
+  return typeof v === 'number' ? v : parseFloat(String(v))
+}
+
+function clampScore(v: unknown, min: number, max: number, context: string): number {
+  const n = toNumber(v)
+  if (!Number.isFinite(n)) throw new Error(`${context}: model returned no valid number`)
+  return Math.min(max, Math.max(min, n))
+}
+
 export type GenerationStyle = 'formal' | 'casual' | 'daily' | 'ielts';
 
 const styleGuide: Record<GenerationStyle, string> = {
@@ -64,13 +93,13 @@ export async function generateWord(
   style: GenerationStyle,
   exclude: string[] = [],
 ): Promise<string> {
-  const seed = Math.random().toString(36).slice(2, 8)
+  const seed = newSeed()
   const content = await callLLM([
     {
       role: 'system',
       content: `You are a vocabulary coach. Suggest a single English word for a learner to study.
 Style context: ${styleGuide[style]}
-Always respond with valid JSON only — no markdown, no backticks, no extra text.
+${JSON_ONLY}
 Vary your suggestions widely — do not default to common or obvious words.`,
     },
     {
@@ -94,6 +123,40 @@ Respond ONLY with this JSON:
 }
 
 // --- Sentence scoring ---
+const SENTENCE_VERDICTS = ['natural', 'unnatural', 'close'] as const;
+
+// Irregular forms a prefix check can't see (seek → sought). Short verbs only:
+// longer words share a prefix with their forms (undertake → undertook).
+const IRREGULAR_FORMS: Record<string, string[]> = {
+  be: ['was', 'were', 'been', 'is', 'are', 'am'],
+  bear: ['bore', 'borne'], begin: ['began', 'begun'], bind: ['bound'], bite: ['bit', 'bitten'],
+  bring: ['brought'], build: ['built'], buy: ['bought'], catch: ['caught'], choose: ['chose', 'chosen'],
+  cling: ['clung'], dig: ['dug'], do: ['did', 'done'], draw: ['drew', 'drawn'], drive: ['drove', 'driven'],
+  eat: ['ate', 'eaten'], fall: ['fell', 'fallen'], feel: ['felt'], fight: ['fought'], find: ['found'],
+  flee: ['fled'], fly: ['flew', 'flown'], forget: ['forgot', 'forgotten'], freeze: ['froze', 'frozen'],
+  give: ['gave', 'given'], go: ['went', 'gone'], grind: ['ground'], grow: ['grew', 'grown'],
+  hold: ['held'], keep: ['kept'], know: ['knew', 'known'], lay: ['laid'], lead: ['led'], leave: ['left'],
+  lend: ['lent'], lie: ['lay', 'lain', 'lying'], lose: ['lost'], make: ['made'], mean: ['meant'],
+  meet: ['met'], ride: ['rode', 'ridden'], rise: ['rose', 'risen'], run: ['ran'], say: ['said'],
+  see: ['saw', 'seen'], seek: ['sought'], sell: ['sold'], send: ['sent'], shake: ['shook', 'shaken'],
+  shine: ['shone'], shrink: ['shrank', 'shrunk'], sing: ['sang', 'sung'], sink: ['sank', 'sunk'],
+  slay: ['slew', 'slain'], speak: ['spoke', 'spoken'], spend: ['spent'], spin: ['spun'],
+  stand: ['stood'], steal: ['stole', 'stolen'], sting: ['stung'], stink: ['stank', 'stunk'],
+  strike: ['struck'], strive: ['strove', 'striven'], swear: ['swore', 'sworn'], swim: ['swam', 'swum'],
+  take: ['took', 'taken'], teach: ['taught'], tear: ['tore', 'torn'], tell: ['told'], think: ['thought'],
+  throw: ['threw', 'thrown'], tread: ['trod', 'trodden'], wake: ['woke', 'woken'], wear: ['wore', 'worn'],
+  weave: ['wove', 'woven'], weep: ['wept'], win: ['won'], wind: ['wound'], write: ['wrote', 'written'],
+  die: ['dying'],
+};
+
+function containsWordForm(text: string, word: string): boolean {
+  const lower = text.toLowerCase();
+  const w = word.toLowerCase().trim();
+  const stem = w.slice(0, Math.max(4, w.length - 3));
+  if (lower.includes(stem)) return true;
+  return (IRREGULAR_FORMS[w] ?? []).some(form => new RegExp(`\\b${form}\\b`).test(lower));
+}
+
 export interface ScoreOptions {
   roast?: boolean;
   topic?: string | null;
@@ -126,7 +189,7 @@ export async function scoreSentence(
 
   const systemCoach = `You are an expert English language coach. A learner is practicing vocabulary by writing sentences.
 Evaluate their sentence briefly and naturally — like a friendly native speaker coach, not a grammar robot.
-Be honest but encouraging. Always respond with valid JSON only — no markdown, no backticks, no extra text.
+Be honest but encouraging. ${JSON_ONLY}
 
 Scoring rubric (use this to calibrate, do not add to response):
 - 1–3: Wrong word use, or sentence is broken / incomprehensible.
@@ -147,7 +210,7 @@ Style:
 - "fix" must be an instruction, not a diagnosis: tell them what to DO, not what they got wrong again.
 - The "better_example" must be one band higher than what the learner wrote.
 - Never use exclamation marks. Never call the learner "you" warmly — clinical, not friendly.
-Always respond with valid JSON only — no markdown, no backticks, no extra text.
+${JSON_ONLY}
 
 ${hardRules}`;
 
@@ -188,12 +251,17 @@ Respond ONLY with this JSON:
     better_example: string | null;
   }>(content, 'scoreSentence')
 
+  // Score drives the trophy wall (>= 9), so never pass through "8/10", 11 or a missing value.
+  parsed.score = Math.round(clampScore(parsed.score, 1, 10, 'scoreSentence'));
+  if (!(SENTENCE_VERDICTS as readonly string[]).includes(parsed.verdict)) {
+    parsed.verdict = parsed.score >= 8 ? 'natural' : parsed.score >= 5 ? 'close' : 'unnatural';
+  }
+
   // Defensive: the better_example must actually contain the target word.
   // If the LLM ignored the constraint, drop the misleading suggestion rather
   // than show the learner a "better" sentence that abandons the word they're practicing.
   if (parsed.better_example && typeof parsed.better_example === 'string') {
-    const stem = word.toLowerCase().slice(0, Math.max(4, word.length - 3));
-    if (!parsed.better_example.toLowerCase().includes(stem)) {
+    if (!containsWordForm(parsed.better_example, word)) {
       parsed.better_example = null;
     }
   }
@@ -202,10 +270,7 @@ Respond ONLY with this JSON:
   if (typeof parsed.what_worked !== 'string' || parsed.what_worked.trim().toLowerCase() === 'null' || !parsed.what_worked.trim()) {
     parsed.what_worked = 'Nothing yet — see the fix below.';
   }
-  if (typeof parsed.mistake === 'string' && parsed.mistake.trim().toLowerCase() === 'null') {
-    parsed.mistake = null;
-  }
-  if (!parsed.mistake || !parsed.mistake.trim()) {
+  if (typeof parsed.mistake !== 'string' || !parsed.mistake.trim() || parsed.mistake.trim().toLowerCase() === 'null') {
     parsed.mistake = null;
   }
   if (typeof parsed.fix === 'string' && parsed.fix.trim().toLowerCase() === 'null') {
@@ -215,16 +280,16 @@ Respond ONLY with this JSON:
   return parsed;
 }
 
-// --- Generate example sentences ---
-export async function generateExampleSentences(word: string, definition: string, style: GenerationStyle = 'daily', exclude: string[] = []): Promise<string[]> {
-  const seed = Math.random().toString(36).slice(2, 8)
+// --- Generate an example sentence ---
+export async function generateExampleSentence(word: string, definition: string, style: GenerationStyle = 'daily', exclude: string[] = []): Promise<string> {
+  const seed = newSeed()
   const content = await callLLM([
     {
       role: 'system',
       content: `You are a vocabulary teacher. Generate example sentences for English learners.
 Style context: ${styleGuide[style]}
-Always respond with valid JSON only — no markdown, no backticks, no extra text.
-Each call must produce fresh, distinct sentences — never repeat previously generated ones.`,
+${JSON_ONLY}
+Each call must produce a fresh sentence — never repeat previously generated ones.`,
     },
     {
       role: 'user',
@@ -234,28 +299,31 @@ Style: ${style}
 Variation seed (ensure uniqueness): ${seed}
 ${exclude.length > 0 ? `Do NOT reuse or closely paraphrase these sentences: ${exclude.map(s => `"${s}"`).join(', ')}` : ''}
 
-Generate 3 natural example sentences that clearly show the meaning of this word in a ${style} context.
+Generate 1 natural example sentence that clearly shows the meaning of this word in a ${style} context.
 
 Respond ONLY with this JSON:
 {
-  "sentences": ["sentence 1", "sentence 2", "sentence 3"]
+  "sentence": "the example sentence"
 }`,
     },
   ])
 
-  const parsed = parseLLMJson<{ sentences: string[] }>(content, 'generateExampleSentences')
-  return parsed.sentences
+  const parsed = parseLLMJson<{ sentence?: unknown }>(content, 'generateExampleSentence')
+  if (typeof parsed.sentence !== 'string' || !parsed.sentence.trim()) {
+    throw new Error('generateExampleSentence: model returned no sentence')
+  }
+  return parsed.sentence
 }
 
 // --- Auto-generate collocations ---
 export async function generateCollocations(word: string, definition: string, style: GenerationStyle = 'daily', exclude: string[] = []): Promise<string[]> {
-  const seed = Math.random().toString(36).slice(2, 8)
+  const seed = newSeed()
   const content = await callLLM([
     {
       role: 'system',
       content: `You are a vocabulary coach. Generate common collocations for English learners.
 Style context: ${styleGuide[style]}
-Always respond with valid JSON only — no markdown, no backticks, no extra text.
+${JSON_ONLY}
 Each call must produce fresh collocations — never repeat previously generated ones.`,
     },
     {
@@ -275,19 +343,19 @@ Respond ONLY with this JSON:
     },
   ])
 
-  const parsed = parseLLMJson<{ collocations: string[] }>(content, 'generateCollocations')
-  return parsed.collocations
+  const parsed = parseLLMJson<{ collocations?: unknown }>(content, 'generateCollocations')
+  return requireStringList(parsed.collocations, 'generateCollocations')
 }
 
 // --- Auto-generate synonyms ---
 export async function generateSynonyms(word: string, definition: string, style: GenerationStyle = 'daily', exclude: string[] = []): Promise<string[]> {
-  const seed = Math.random().toString(36).slice(2, 8)
+  const seed = newSeed()
   const content = await callLLM([
     {
       role: 'system',
       content: `You are a vocabulary depth coach. Your job is to expand a learner's understanding of a word — not just replace it.
 Style context: ${styleGuide[style]}
-Always respond with valid JSON only — no markdown, no backticks, no extra text.
+${JSON_ONLY}
 Each call must produce fresh synonyms — never repeat previously generated ones.`,
     },
     {
@@ -314,8 +382,8 @@ Respond ONLY with this JSON:
     },
   ])
 
-  const parsed = parseLLMJson<{ synonyms: string[] }>(content, 'generateSynonyms')
-  return parsed.synonyms
+  const parsed = parseLLMJson<{ synonyms?: unknown }>(content, 'generateSynonyms')
+  return requireStringList(parsed.synonyms, 'generateSynonyms')
 }
 
 // --- POS + CEFR learning intelligence ---
@@ -326,12 +394,12 @@ export async function generatePOSTips(pos: string | null, cefr: string): Promise
   power_insight: string;
   focus_score: number;
 }> {
-  const seed = Math.random().toString(36).slice(2, 8)
+  const seed = newSeed()
   const posLabel = pos ?? 'all parts of speech'
   const content = await callLLM([
     {
       role: 'system',
-      content: `You are a dark, analytical vocabulary intelligence system. You give cold, data-driven insights about language learning strategy — no fluff, no encouragement, just sharp analysis. Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
+      content: `You are a dark, analytical vocabulary intelligence system. You give cold, data-driven insights about language learning strategy — no fluff, no encouragement, just sharp analysis. ${JSON_ONLY}`,
     },
     {
       role: 'user',
@@ -352,22 +420,23 @@ Respond ONLY with this JSON:
     },
   ], 0.85)
 
-  return parseLLMJson<{
+  const parsed = parseLLMJson<{
     headline: string;
     why: string;
     strategy: string;
     power_insight: string;
-    focus_score: number;
+    focus_score: unknown;
   }>(content, 'generatePOSTips')
+  return { ...parsed, focus_score: Math.round(clampScore(parsed.focus_score, 1, 10, 'generatePOSTips')) }
 }
 
 // --- Generate a natural two-line conversational exchange for cloze practice ---
 export async function generateClozeSentence(word: string, definition: string, exclude: string[] = []): Promise<{ setup: string; response: string }> {
-  const seed = Math.random().toString(36).slice(2, 8)
+  const seed = newSeed()
   const content = await callLLM([
     {
       role: 'system',
-      content: `You are helping someone practice using vocabulary in real spoken conversation. Generate a short, natural two-line exchange between two people — the kind of thing that could actually happen in conversation or a text thread. Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
+      content: `You are helping someone practice using vocabulary in real spoken conversation. Generate a short, natural two-line exchange between two people — the kind of thing that could actually happen in conversation or a text thread. ${JSON_ONLY}`,
     },
     {
       role: 'user',
@@ -395,7 +464,7 @@ export async function generateMemoryTrick(word: string, definition: string): Pro
   breakdown: string;
   clarification: string;
 }> {
-  const seed = Math.random().toString(36).slice(2, 8)
+  const seed = newSeed()
   const content = await callLLM([
     {
       role: 'system',
@@ -449,24 +518,18 @@ After the trick line always add a clarification in this format:
 
 Selection rules:
 - You MUST choose the technique that makes the meaning most memorable — not the easiest one
-- phonetic_split is NOT the default. Only use it if the word has parts that genuinely sound like real familiar words
-- The variation seed is: ${seed}. Use it to push yourself toward a less obvious technique
-- Rank all 7 techniques mentally for this specific word, then pick the highest-ranked one
-- NEVER default. If phonetic_split doesn't create a strong, accurate link — skip it entirely
+- phonetic_split is NOT the default. Only use it if the word has parts that genuinely sound like real familiar words and the link is strong and accurate — otherwise skip it entirely
+- Rank all 7 techniques mentally for this specific word, then pick the highest-ranked one; use the variation seed in the request to push toward a less obvious technique
 - The trick MUST match the given definition exactly — never invent or bend a meaning to fit a trick
 - Breakdown ≤ 18 words. Clarification ≤ 16 words. One emoji in the breakdown, max.
 
-Always respond with valid JSON only — no markdown, no backticks, no extra text.`,
+${JSON_ONLY}`,
     },
     {
       role: 'user',
       content: `Word: ${word}
 Definition: ${definition}
 Variation seed: ${seed}
-
-
-IMPORTANT: For this attempt, avoid phonetic_split unless it is clearly the strongest option.
-Prefer: root_hook, sound_alike, micro_story, formula, contrast_anchor, or analogy_bridge.
 
 Choose the best technique for "${word}" and create a trick that perfectly matches the definition above.
 
@@ -479,11 +542,19 @@ Respond ONLY with this JSON:
     },
   ], 0.85)
 
-  return parseLLMJson<{
-    technique: string;
-    breakdown: string;
-    clarification: string;
+  const parsed = parseLLMJson<{
+    technique?: unknown;
+    breakdown?: unknown;
+    clarification?: unknown;
   }>(content, 'generateMemoryTrick')
+  if (typeof parsed.breakdown !== 'string' || !parsed.breakdown.trim()) {
+    throw new Error('generateMemoryTrick: model returned no trick')
+  }
+  return {
+    technique: typeof parsed.technique === 'string' ? parsed.technique : '',
+    breakdown: parsed.breakdown,
+    clarification: typeof parsed.clarification === 'string' ? parsed.clarification : '',
+  }
 }
 
 export type DetectedRegister = 'formal' | 'casual' | 'literary' | 'slang';
@@ -496,10 +567,9 @@ export async function generateDefinition(
   excludeDefinition = ''
 ): Promise<{
   definition: string
-  part_of_speech: string
   register: DetectedRegister
 }> {
-  const seed = Math.random().toString(36).slice(2, 8)
+  const seed = newSeed()
 
   const content = await callLLM(
     [
@@ -507,7 +577,7 @@ export async function generateDefinition(
         role: 'system',
         content: `You are a plain-English dictionary. Your only job is to make the reader instantly understand what a word means — nothing more.
 Style context: ${styleGuide[style]}
-Always respond with valid JSON only — no markdown, no backticks, no extra text.
+${JSON_ONLY}
 
 DEFINITION RULE:
 - One simple, clear sentence (or a short clause) that states what the word means — plain dictionary meaning, not a riddle, metaphor, joke, or creative flourish.
@@ -534,7 +604,6 @@ ${excludeDefinition ? `Do NOT reuse or closely paraphrase this definition: "${ex
 Respond ONLY with this JSON — no extra fields, no markdown:
 {
   "definition": "a simple, plain-English sentence stating what the word means",
-  "part_of_speech": "noun | verb | adjective | adverb | etc",
   "register": "formal | casual | literary | slang"
 }`,
       },
@@ -543,14 +612,16 @@ Respond ONLY with this JSON — no extra fields, no markdown:
   )
 
   const parsed = parseLLMJson<{
-    definition: string;
-    part_of_speech: string;
-    register: string;
+    definition?: unknown;
+    register?: unknown;
   }>(content, 'generateDefinition')
+
+  if (typeof parsed.definition !== 'string' || !parsed.definition.trim()) {
+    throw new Error('generateDefinition: model returned no definition')
+  }
 
   return {
     definition: parsed.definition,
-    part_of_speech: parsed.part_of_speech,
     register: REGISTERS.includes(parsed.register as DetectedRegister)
       ? (parsed.register as DetectedRegister)
       : 'formal',
@@ -563,7 +634,6 @@ Respond ONLY with this JSON — no extra fields, no markdown:
 // limits. The per-field generators above stay for the individual regenerate buttons.
 export interface WordBundle {
   definition: string;
-  part_of_speech: string;
   register: DetectedRegister;
   example_sentence: string;
   synonyms: string[];
@@ -572,7 +642,7 @@ export interface WordBundle {
 }
 
 export async function generateWordBundle(word: string, style: GenerationStyle = 'daily'): Promise<WordBundle> {
-  const seed = Math.random().toString(36).slice(2, 8)
+  const seed = newSeed()
 
   const content = await callLLM(
     [
@@ -580,17 +650,16 @@ export async function generateWordBundle(word: string, style: GenerationStyle = 
         role: 'system',
         content: `You are a vocabulary coach building a complete study card for one English word.
 Style context: ${styleGuide[style]}
-Always respond with valid JSON only — no markdown, no backticks, no extra text.
+${JSON_ONLY}
 
 Fill the fields IN ORDER. Write the definition first; every later field must match that exact meaning.
 
 1. definition — one plain-English sentence, roughly 4–14 words, stating what the word means. No metaphors, no "Not X — Y" tricks, no root breakdowns, no rarer synonyms of the word itself.
-2. part_of_speech — noun | verb | adjective | adverb | etc.
-3. register — how the word is actually used in real English, independent of the style context: "formal" (commence), "casual" (grab), "literary" (beguile), or "slang" (sus). Pick ONE.
-4. example_sentence — one natural sentence that makes the meaning obvious from context, in the ${style} style.
-5. synonyms — 4–5 synonyms covering different shades (intensity, formality, connotation). At least 3 must be everyday conversational words; none obscure, archaic, or dictionary-only.
-6. collocations — 5 natural, common phrases or word pairings using the word, in the ${style} style.
-7. memory_trick — choose the ONE technique that makes the meaning most memorable for THIS word:
+2. register — how the word is actually used in real English, independent of the style context: "formal" (commence), "casual" (grab), "literary" (beguile), or "slang" (sus). Pick ONE.
+3. example_sentence — one natural sentence that makes the meaning obvious from context, in the ${style} style.
+4. synonyms — 4–5 synonyms covering different shades (intensity, formality, connotation). At least 3 must be everyday conversational words; none obscure, archaic, or dictionary-only.
+5. collocations — 5 natural, common phrases or word pairings using the word, in the ${style} style.
+6. memory_trick — choose the ONE technique that makes the meaning most memorable for THIS word:
    - root_hook: a recognizable Latin/Greek/French root ("bene (like benefit) + vol (wanting) → wanting good for others 💚")
    - sound_alike: a familiar similar-sounding word with a sharp link ("arid → 'a-rid' — rid of ALL moisture ☀️")
    - micro_story: one vivid sentence with a character + action ("He parks a gold Ferrari at his kid's school just so everyone stares 👀")
@@ -609,7 +678,6 @@ Variation seed (ensure uniqueness): ${seed}
 Respond ONLY with this JSON:
 {
   "definition": "...",
-  "part_of_speech": "...",
   "register": "formal | casual | literary | slang",
   "example_sentence": "...",
   "synonyms": ["...", "...", "...", "..."],
@@ -627,7 +695,6 @@ Respond ONLY with this JSON:
 
   const parsed = parseLLMJson<{
     definition?: unknown;
-    part_of_speech?: unknown;
     register?: unknown;
     example_sentence?: unknown;
     synonyms?: unknown;
@@ -638,9 +705,6 @@ Respond ONLY with this JSON:
   if (typeof parsed.definition !== 'string' || !parsed.definition.trim()) {
     throw new Error('generateWordBundle: model returned no definition')
   }
-
-  const strings = (v: unknown): string[] =>
-    Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string' && !!s.trim()) : []
 
   const mt = parsed.memory_trick
   const memory_trick = mt && typeof mt.breakdown === 'string' && mt.breakdown.trim()
@@ -653,13 +717,12 @@ Respond ONLY with this JSON:
 
   return {
     definition: parsed.definition,
-    part_of_speech: typeof parsed.part_of_speech === 'string' ? parsed.part_of_speech : '',
     register: REGISTERS.includes(parsed.register as DetectedRegister)
       ? (parsed.register as DetectedRegister)
       : 'formal',
     example_sentence: typeof parsed.example_sentence === 'string' ? parsed.example_sentence : '',
-    synonyms: strings(parsed.synonyms),
-    collocations: strings(parsed.collocations),
+    synonyms: toStringList(parsed.synonyms),
+    collocations: toStringList(parsed.collocations),
     memory_trick,
   }
 }
@@ -708,10 +771,10 @@ const FLAGGED_CODES: readonly CREIFlaggedCode[] = [
   'other',
 ] as const;
 
-function clampBand(n: unknown): number {
-  const x = typeof n === 'number' && Number.isFinite(n) ? n : 1;
-  const clamped = Math.max(1, Math.min(9, x));
-  return Math.round(clamped * 2) / 2;
+// Throws on a missing band instead of defaulting — a silent Band 1 looks like a
+// real (harsh) grade to the learner.
+function clampBand(n: unknown, field: string): number {
+  return Math.round(clampScore(n, 1, 9, `scoreCREI (${field})`) * 2) / 2;
 }
 
 // Whitespace-insensitive substring check — the model often re-wraps quotes
@@ -851,10 +914,10 @@ Grade per the rubric above. Return JSON only.`;
   }>(content, 'scoreCREI');
 
   // ── Defensive parsing ─────────────────────────────────────────────
-  const tr = clampBand(raw?.bands?.task_response);
-  const co = clampBand(raw?.bands?.coherence);
-  const lx = clampBand(raw?.bands?.lexical);
-  const gr = clampBand(raw?.bands?.grammar);
+  const tr = clampBand(raw?.bands?.task_response, 'task_response');
+  const co = clampBand(raw?.bands?.coherence, 'coherence');
+  const lx = clampBand(raw?.bands?.lexical, 'lexical');
+  const gr = clampBand(raw?.bands?.grammar, 'grammar');
   // Recompute overall — never trust the model's arithmetic.
   const overall = Math.round(((tr + co + lx + gr) / 4) * 2) / 2;
 
@@ -972,6 +1035,10 @@ export async function generateCREIPrompt(opts: CREIPromptOptions = {}): Promise<
   const pool = candidates.length > 0
     ? candidates
     : CREI_PROMPT_BANK.filter(p => !opts.questionType || p.questionType === opts.questionType);
+
+  if (pool.length === 0) {
+    throw new Error(`generateCREIPrompt: no prompts in the bank for question type "${opts.questionType}"`);
+  }
 
   const fixture = pool[Math.floor(Math.random() * pool.length)];
   const { prompt, questionType, domain } = fixture;

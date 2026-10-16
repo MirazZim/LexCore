@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { memeToast } from '@/lib/meme-toast';
 import { ArrowLeft, X, Sparkles, Loader2, Briefcase, MessageCircle, Sun, GraduationCap, BookPlus, RotateCcw, Zap, Brain, BookOpen } from 'lucide-react';
 import { useAddWord } from '@/hooks/useWords';
-import { generateDefinition, generateExampleSentences, generateCollocations, generateWord, generateSynonyms, generateMemoryTrick, generateWordBundle } from '@/lib/llm';
+import { generateDefinition, generateExampleSentence, generateCollocations, generateWord, generateSynonyms, generateMemoryTrick, generateWordBundle } from '@/lib/llm';
 import type { GenerationStyle } from '@/lib/llm';
 import type { Register } from '@/lib/types';
 
@@ -102,8 +102,8 @@ export default function AddWordPage() {
     if (!definition.trim()) { toast.error('Add a definition first'); return; }
     setLoadingExample(true);
     try {
-      const s = await generateExampleSentences(word.trim(), definition.trim(), generationStyle, exampleSentence ? [exampleSentence] : []);
-      setExampleSentence(s[0]); memeToast.exampleGenerated();
+      setExampleSentence(await generateExampleSentence(word.trim(), definition.trim(), generationStyle, exampleSentence ? [exampleSentence] : []));
+      memeToast.exampleGenerated();
     } catch { toast.error('Failed to generate example'); }
     finally { setLoadingExample(false); }
   };
