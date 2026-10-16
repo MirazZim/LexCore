@@ -5,7 +5,7 @@ const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
 
-const GEMINI_MODEL = 'gemini-3.1-flash-lite'
+const GEMINI_MODEL = 'gemini-3.5-flash-lite'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

@@ -557,6 +557,113 @@ Respond ONLY with this JSON — no extra fields, no markdown:
   }
 }
 
+// --- Autofill: every field for a new word in ONE request ---
+// Replaces the definition → (examples, synonyms, collocations, memory trick)
+// fan-out (5 requests) to stay inside the Gemini per-minute/per-day request
+// limits. The per-field generators above stay for the individual regenerate buttons.
+export interface WordBundle {
+  definition: string;
+  part_of_speech: string;
+  register: DetectedRegister;
+  example_sentence: string;
+  synonyms: string[];
+  collocations: string[];
+  memory_trick: { technique: string; breakdown: string; clarification: string } | null;
+}
+
+export async function generateWordBundle(word: string, style: GenerationStyle = 'daily'): Promise<WordBundle> {
+  const seed = Math.random().toString(36).slice(2, 8)
+
+  const content = await callLLM(
+    [
+      {
+        role: 'system',
+        content: `You are a vocabulary coach building a complete study card for one English word.
+Style context: ${styleGuide[style]}
+Always respond with valid JSON only — no markdown, no backticks, no extra text.
+
+Fill the fields IN ORDER. Write the definition first; every later field must match that exact meaning.
+
+1. definition — one plain-English sentence, roughly 4–14 words, stating what the word means. No metaphors, no "Not X — Y" tricks, no root breakdowns, no rarer synonyms of the word itself.
+2. part_of_speech — noun | verb | adjective | adverb | etc.
+3. register — how the word is actually used in real English, independent of the style context: "formal" (commence), "casual" (grab), "literary" (beguile), or "slang" (sus). Pick ONE.
+4. example_sentence — one natural sentence that makes the meaning obvious from context, in the ${style} style.
+5. synonyms — 4–5 synonyms covering different shades (intensity, formality, connotation). At least 3 must be everyday conversational words; none obscure, archaic, or dictionary-only.
+6. collocations — 5 natural, common phrases or word pairings using the word, in the ${style} style.
+7. memory_trick — choose the ONE technique that makes the meaning most memorable for THIS word:
+   - root_hook: a recognizable Latin/Greek/French root ("bene (like benefit) + vol (wanting) → wanting good for others 💚")
+   - sound_alike: a familiar similar-sounding word with a sharp link ("arid → 'a-rid' — rid of ALL moisture ☀️")
+   - micro_story: one vivid sentence with a character + action ("He parks a gold Ferrari at his kid's school just so everyone stares 👀")
+   - formula: a simple equation ("ambivalent = 'yes' + 'no' in the same brain ⚡")
+   - contrast_anchor: define by what it is NOT ("taciturn → NOT shy — they simply choose not to talk 🤐")
+   - analogy_bridge: "Like [familiar thing] but [exact distinction]"
+   - phonetic_split: split into parts that sound like real everyday words — ONLY if the link is genuinely strong; never the default.
+   Breakdown ≤ 18 words, max one emoji. Clarification starts with "👉 " and is one natural sentence (≤ 16 words) using the word. The trick must match the definition exactly — never bend the meaning.`,
+      },
+      {
+        role: 'user',
+        content: `Word: ${word}
+Style: ${style}
+Variation seed (ensure uniqueness): ${seed}
+
+Respond ONLY with this JSON:
+{
+  "definition": "...",
+  "part_of_speech": "...",
+  "register": "formal | casual | literary | slang",
+  "example_sentence": "...",
+  "synonyms": ["...", "...", "...", "..."],
+  "collocations": ["...", "...", "...", "...", "..."],
+  "memory_trick": {
+    "technique": "root_hook | sound_alike | micro_story | formula | contrast_anchor | analogy_bridge | phonetic_split",
+    "breakdown": "the mnemonic line",
+    "clarification": "👉 natural sentence using the word"
+  }
+}`,
+      },
+    ],
+    0.7
+  )
+
+  const parsed = parseLLMJson<{
+    definition?: unknown;
+    part_of_speech?: unknown;
+    register?: unknown;
+    example_sentence?: unknown;
+    synonyms?: unknown;
+    collocations?: unknown;
+    memory_trick?: { technique?: unknown; breakdown?: unknown; clarification?: unknown } | null;
+  }>(content, 'generateWordBundle')
+
+  if (typeof parsed.definition !== 'string' || !parsed.definition.trim()) {
+    throw new Error('generateWordBundle: model returned no definition')
+  }
+
+  const strings = (v: unknown): string[] =>
+    Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string' && !!s.trim()) : []
+
+  const mt = parsed.memory_trick
+  const memory_trick = mt && typeof mt.breakdown === 'string' && mt.breakdown.trim()
+    ? {
+        technique: typeof mt.technique === 'string' ? mt.technique : '',
+        breakdown: mt.breakdown,
+        clarification: typeof mt.clarification === 'string' ? mt.clarification : '',
+      }
+    : null
+
+  return {
+    definition: parsed.definition,
+    part_of_speech: typeof parsed.part_of_speech === 'string' ? parsed.part_of_speech : '',
+    register: REGISTERS.includes(parsed.register as DetectedRegister)
+      ? (parsed.register as DetectedRegister)
+      : 'formal',
+    example_sentence: typeof parsed.example_sentence === 'string' ? parsed.example_sentence : '',
+    synonyms: strings(parsed.synonyms),
+    collocations: strings(parsed.collocations),
+    memory_trick,
+  }
+}
+
 // --- IELTS Writing Lab — Drill 6 (CREI body paragraph grading) ---
 export type CREIFlaggedCode =
   | 'for_that_calque'

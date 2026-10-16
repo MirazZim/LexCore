@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { memeToast } from '@/lib/meme-toast';
 import { ArrowLeft, X, Sparkles, Loader2, Briefcase, MessageCircle, Sun, GraduationCap, BookPlus, RotateCcw, Zap, Brain, BookOpen } from 'lucide-react';
 import { useAddWord } from '@/hooks/useWords';
-import { generateDefinition, generateExampleSentences, generateCollocations, generateWord, generateSynonyms, generateMemoryTrick } from '@/lib/llm';
+import { generateDefinition, generateExampleSentences, generateCollocations, generateWord, generateSynonyms, generateMemoryTrick, generateWordBundle } from '@/lib/llm';
 import type { GenerationStyle } from '@/lib/llm';
 import type { Register } from '@/lib/types';
 
@@ -139,15 +139,9 @@ export default function AddWordPage() {
     if (!word.trim()) { toast.error('Enter a word first'); return; }
     setLoadingAutofill(true);
     try {
-      const result = await generateDefinition(word.trim(), generationStyle);
-      setDefinition(result.definition); setRegister(result.register);
-      const [sentences, syns, cols, trick] = await Promise.all([
-        generateExampleSentences(word.trim(), result.definition, generationStyle),
-        generateSynonyms(word.trim(), result.definition, generationStyle),
-        generateCollocations(word.trim(), result.definition, generationStyle),
-        generateMemoryTrick(word.trim(), result.definition),
-      ]);
-      setExampleSentence(sentences[0]); setSynonyms(syns); setCollocations(cols); setMemoryTrick(trick);
+      const b = await generateWordBundle(word.trim(), generationStyle);
+      setDefinition(b.definition); setRegister(b.register);
+      setExampleSentence(b.example_sentence); setSynonyms(b.synonyms); setCollocations(b.collocations); setMemoryTrick(b.memory_trick);
       memeToast.autofillComplete();
     } catch { toast.error('Autofill failed'); }
     finally { setLoadingAutofill(false); }
