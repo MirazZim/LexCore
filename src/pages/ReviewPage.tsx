@@ -12,7 +12,7 @@ import { useCollocationHistoryForWord } from '@/hooks/useCollocationAttempts';
 import { supabase } from '@/lib/supabase';
 import { BattlePhase } from '@/components/review/BattlePhase';
 import { ContextPhase } from '@/components/review/ContextPhase';
-import { CollocationPhase, type ForgeMode } from '@/components/review/CollocationPhase';
+import { CollocationPhase, matureForgeDue, type ForgeMode } from '@/components/review/CollocationPhase';
 import { GenerationPhase } from '@/components/review/GenerationPhase';
 import { SummaryPhase } from '@/components/review/SummaryPhase';
 import { SynonymsPhase } from '@/components/review/SynonymsPhase';
@@ -490,12 +490,11 @@ export default function ReviewPage() {
 
   const handleMatureExamplesNext = () => advancePastGeneration();
 
-  // Collocation Forge gating: new / learning / leech words always drill.
-  // Mature words skip it — unless a phrase was missed last time, in which case
-  // they get a short repair round of just those phrases.
-  const hasStrugglingCollocation = collocations.some(c => collocationHistory?.[c.id]?.struggling);
+  // Collocation Forge gating: new / learning / leech words always drill (3 phrases).
+  // Mature words get a 2-phrase quick check only when a phrase is due — missed
+  // last time, never tested, or not seen in 30 days — otherwise they skip it.
   const forgeMode: ForgeMode = currentTier === 'mature' ? 'repair' : 'full';
-  const forgeNeeded = collocations.length > 0 && (forgeMode === 'full' || hasStrugglingCollocation);
+  const forgeNeeded = collocations.length > 0 && (forgeMode === 'full' || matureForgeDue(collocations, collocationHistory));
 
   const resolveGenerationPhase = (wordId: string, tier: typeof currentTier) => {
     if (tier === 'mature' && !matureNeedsGeneration(wordId)) {
@@ -703,7 +702,7 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className={`min-h-screen pt-8 pb-24 px-4 max-w-lg mx-auto ${phase === 'context' ? 'lg:max-w-6xl lg:px-8' : ''}`}>
+    <div className={`min-h-screen pt-8 pb-24 px-4 max-w-lg mx-auto ${phase === 'context' ? 'lg:max-w-6xl lg:px-8' : phase === 'generation' ? 'lg:max-w-7xl lg:px-8' : ''}`}>
       <style>{RV_STYLES}</style>
 
       {/* Header */}

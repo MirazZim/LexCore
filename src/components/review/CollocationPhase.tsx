@@ -130,10 +130,26 @@ function buildChallenge(col: WordCollocation, word: string): Challenge | null {
 //   1. phrases missed last time (most misses first)
 //   2. phrases never practised
 //   3. phrases practised longest ago
-// "repair" mode (mature words) plays ONLY the missed ones.
+// "repair" mode (mature words) is a shorter check of REPAIR_CAP phrases, and
+// only includes phrases that are actually due: missed, never tested, or not
+// seen for STALE_DAYS. Untested phrases count as due — otherwise a mature word
+// with no history could never enter the Forge and never build any.
 const SESSION_CAP = 3;
+const REPAIR_CAP = 2;
+const STALE_DAYS = 30;
 
 export type ForgeMode = 'full' | 'repair';
+
+function isDueForCheck(id: string, history: CollocationHistory, now: number) {
+  const rec = history[id];
+  return !rec || rec.struggling || now - rec.lastAt > STALE_DAYS * 86_400_000;
+}
+
+/** Whether a mature word has any phrase worth a quick check this session. */
+export function matureForgeDue(cols: WordCollocation[], history: CollocationHistory | undefined) {
+  const now = Date.now();
+  return cols.some(c => isDueForCheck(c.id, history ?? {}, now));
+}
 
 function pickSessionSet(
   cols: WordCollocation[],
@@ -145,11 +161,14 @@ function pickSessionSet(
   const struggling = sorted
     .filter(c => history[c.id]?.struggling)
     .sort((a, b) => history[b.id].misses - history[a.id].misses);
-  if (mode === 'repair') return struggling.slice(0, SESSION_CAP);
-
   const rest = sorted
     .filter(c => !history[c.id]?.struggling)
     .sort((a, b) => (history[a.id]?.lastAt ?? 0) - (history[b.id]?.lastAt ?? 0));
+
+  if (mode === 'repair') {
+    const now = Date.now();
+    return [...struggling, ...rest.filter(c => isDueForCheck(c.id, history, now))].slice(0, REPAIR_CAP);
+  }
   return [...struggling, ...rest].slice(0, SESSION_CAP);
 }
 
@@ -367,7 +386,7 @@ export function CollocationPhase({
             className="text-[9px] uppercase tracking-[0.25em] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
             style={{ background: 'rgba(0,255,200,0.07)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.15)' }}
           >
-            🔗 {mode === 'repair' ? 'Repair Round' : 'Collocation Forge'}
+            🔗 {mode === 'repair' ? 'Quick Check' : 'Collocation Forge'}
           </span>
           <div className="ml-auto flex items-center gap-2">
             <AnimatePresence>
@@ -431,7 +450,7 @@ export function CollocationPhase({
                 className="text-center text-lg font-bold"
                 style={{ color: '#00FFC8', fontFamily: "'Space Grotesk', sans-serif" }}
               >
-                {mode === 'repair' ? 'Weak links repaired! 🔧' : 'Chain forged! ⛓️'}
+                {mode === 'repair' ? 'Quick check done! ✅' : 'Chain forged! ⛓️'}
               </p>
               {restingCount > 0 && (
                 <p className="text-center text-[11px] text-zinc-500 mt-1">

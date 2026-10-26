@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link2, Loader2, RotateCcw, Sparkles, Trophy, X, Zap } from 'lucide-react';
+import {
+  ArrowRight, ArrowUp, Command, CornerDownLeft, Flame, History, Loader2,
+  RotateCcw, Search, Sparkles, Trophy, Wand2, X,
+} from 'lucide-react';
 import type { DueWordItem, AiFeedback, WordCollocation } from './types';
 import type { ReviewTier } from '@/lib/fsrs';
 import type { DailyTopic } from '@/lib/topic-of-day';
@@ -459,37 +462,381 @@ export function ConnectorContent({ data }: { data: ChipCategory }) {
 }
 
 const verdictConfig = {
-  natural: { bg: 'rgba(0,255,200,0.1)', border: 'rgba(0,255,200,0.3)', color: '#00FFC8', label: '✓ Natural' },
-  close: { bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.3)', color: '#f97316', label: '⚡ Almost there' },
-  unnatural: { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', color: '#ef4444', label: '✗ Try again' },
+  natural: { color: '#00FFC8', label: 'Natural' },
+  close: { color: '#f97316', label: 'Almost there' },
+  unnatural: { color: '#ef4444', label: 'Not quite' },
 } as const;
 
+const FONT_DISPLAY = "'Space Grotesk', sans-serif";
+const LAB = '#fbbf24';
+const CARD_STYLE = { height: 'min(calc(100dvh - 13rem), 760px)' };
+// Shared by the textarea and its highlight mirror — must stay identical
+const EDITOR_TEXT = 'text-[19px] lg:text-[22px] leading-[1.55] tracking-[-0.01em] px-1 py-1';
+
+// ── Word / phrase detection (local, no LLM) ───────────────────────
+function stemsFor(word: string) {
+  const w = word.toLowerCase().trim();
+  const stems = [w];
+  if (w.endsWith('e')) stems.push(w.slice(0, -1));
+  if (w.endsWith('y')) stems.push(w.slice(0, -1) + 'i');
+  return stems;
+}
+
+function isTargetToken(token: string, word: string) {
+  const t = token.toLowerCase();
+  return stemsFor(word).some(s => t.startsWith(s) && t.length - s.length <= 4);
+}
+
+function usesWord(text: string, word: string) {
+  if (word.includes(' ')) return text.toLowerCase().includes(word.toLowerCase());
+  return (text.match(/[A-Za-z]+/g) ?? []).some(t => isTargetToken(t, word));
+}
+
+/** "Not only… but also" → "Not only", "…, which leads to" → "which leads to" */
+function insertableText(phrase: string) {
+  return phrase.replace(/^…,?\s*/, '').split('…')[0].trim();
+}
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const ALL_CONNECTORS = CONNECTORS.flatMap(c => c.items.map(i => insertableText(i.connector).replace(/,$/, '')));
+
+function findConnector(text: string): string | null {
+  const t = ` ${text.toLowerCase().replace(/\s+/g, ' ')} `;
+  return ALL_CONNECTORS.find(c => c.length > 2 && new RegExp(`[\\s,.(]${escapeRe(c.toLowerCase())}[\\s,.]`).test(t)) ?? null;
+}
+
+const SMALL_WORDS = new Set(['a', 'an', 'the', 'of', 'to', 'in', 'on', 'for', 'with', 'at', 'by', 'and', 'or']);
+
+function findCollocation(text: string, collocations: WordCollocation[], word: string): string | null {
+  if (!usesWord(text, word)) return null;
+  const lower = text.toLowerCase();
+  for (const col of collocations) {
+    const partners = (col.collocation.toLowerCase().match(/[a-z']+/g) ?? [])
+      .filter(t => !SMALL_WORDS.has(t) && !isTargetToken(t, word));
+    if (partners.length && partners.every(p => new RegExp(`\\b${escapeRe(p)}`).test(lower))) return col.collocation;
+  }
+  return null;
+}
+
+function highlightTarget(text: string, word: string, color = LAB) {
+  return text.split(/([A-Za-z]+)/).map((p, i) =>
+    i % 2 === 1 && isTargetToken(p, word)
+      ? <span key={i} style={{ color, fontWeight: 600 }}>{p}</span>
+      : <span key={i}>{p}</span>
+  );
+}
+
+// ── Command palette ───────────────────────────────────────────────
+interface PaletteItem { key: string; group: string; color: string; label: string; insert: string; example?: string }
+
+function buildPaletteItems(collocations: WordCollocation[]): PaletteItem[] {
+  const items: PaletteItem[] = collocations.map(c => ({
+    key: `col-${c.id}`, group: 'Collocations', color: '#00FFC8', label: c.collocation, insert: c.collocation,
+  }));
+  for (const list of [CONNECTORS, POWER_PHRASES] as const) {
+    for (const cat of list as readonly ChipCategory[]) {
+      for (const it of cat.items) {
+        items.push({
+          key: `${cat.id}-${it.connector}`, group: cat.label, color: cat.color,
+          label: it.connector, insert: insertableText(it.connector), example: it.example,
+        });
+      }
+    }
+  }
+  return items;
+}
+
+function CommandPalette({
+  open, items, onClose, onPick,
+}: { open: boolean; items: PaletteItem[]; onClose: () => void; onPick: (text: string) => void }) {
+  const [query, setQuery] = useState('');
+  const [active, setActive] = useState(0);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const q = query.trim().toLowerCase();
+  const results = q
+    ? items.filter(i => `${i.label} ${i.group} ${i.example ?? ''}`.toLowerCase().includes(q))
+    : items;
+
+  useEffect(() => { if (open) { setQuery(''); setActive(0); } }, [open]);
+  useEffect(() => { setActive(0); }, [query]);
+  useEffect(() => {
+    listRef.current?.querySelector(`[data-idx="${active}"]`)?.scrollIntoView({ block: 'nearest' });
+  }, [active]);
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActive(a => Math.min(a + 1, results.length - 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(a => Math.max(a - 1, 0)); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (results[active]) onPick(results[active].insert); }
+    else if (e.key === 'Escape') { e.preventDefault(); onClose(); }
+  };
+
+  let lastGroup = '';
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-40"
+            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, y: -12, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+            className="fixed z-50 left-1/2 top-[12vh] w-[min(560px,calc(100vw-2rem))] -translate-x-1/2 rounded-3xl overflow-hidden flex flex-col"
+            style={{
+              maxHeight: '64vh',
+              background: 'rgba(20,20,24,0.92)',
+              backdropFilter: 'blur(30px)',
+              WebkitBackdropFilter: 'blur(30px)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '0 30px 80px rgba(0,0,0,0.6)',
+            }}
+          >
+            <div className="shrink-0 flex items-center gap-3 px-5 h-14" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <Search className="h-4 w-4 text-zinc-500" />
+              <input
+                autoFocus
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                onKeyDown={onKeyDown}
+                placeholder="Search collocations, connectors, phrases…"
+                className="flex-1 bg-transparent outline-none text-[15px] text-zinc-100 placeholder:text-zinc-600"
+              />
+              <kbd className="text-[10px] text-zinc-500 px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(255,255,255,0.06)' }}>esc</kbd>
+            </div>
+            <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto p-2 [scrollbar-width:thin]">
+              {results.length === 0 && (
+                <p className="text-sm text-zinc-600 text-center py-8">Nothing matches “{query}”.</p>
+              )}
+              {results.map((item, idx) => {
+                const header = item.group !== lastGroup;
+                lastGroup = item.group;
+                const isActive = idx === active;
+                return (
+                  <div key={item.key}>
+                    {header && (
+                      <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] font-bold text-zinc-600 px-3 pt-3 pb-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: item.color }} /> {item.group}
+                      </p>
+                    )}
+                    <button
+                      data-idx={idx}
+                      onMouseEnter={() => setActive(idx)}
+                      onClick={() => onPick(item.insert)}
+                      className="w-full text-left rounded-xl px-3 py-2 flex items-baseline gap-3 transition-colors"
+                      style={{ background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent' }}
+                    >
+                      <span className="text-[14px] font-semibold shrink-0" style={{ color: isActive ? item.color : '#e4e4e7', fontFamily: FONT_DISPLAY }}>
+                        {item.label}
+                      </span>
+                      {item.example && (
+                        <span className="text-[12px] text-zinc-600 truncate">{item.example}</span>
+                      )}
+                      {isActive && <CornerDownLeft className="ml-auto h-3.5 w-3.5 shrink-0 text-zinc-500 self-center" />}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ── Writer's toolkit (collocations / connectors / power phrases) ──
+type ToolTab = 'connectors' | 'phrases' | 'collocations';
+
+function Toolkit({
+  collocations, word, onInsert,
+}: { collocations: WordCollocation[]; word: string; onInsert: (text: string) => void }) {
+  const [tab, setTab] = useState<ToolTab>(collocations.length ? 'collocations' : 'connectors');
+  const list: readonly ChipCategory[] = tab === 'connectors' ? CONNECTORS : POWER_PHRASES;
+  const [catId, setCatId] = useState<string>(CONNECTORS[0].id);
+  const cat = list.find(c => c.id === catId) ?? list[0];
+  // Chip under the pointer/focus. Keys are scoped to the current list, so a
+  // stale hover from another category can never leak into the preview.
+  const [hoverKey, setHoverKey] = useState<string | null>(null);
+
+  const switchTab = (id: ToolTab) => {
+    setTab(id);
+    setHoverKey(null);
+    if (id === 'connectors') setCatId(CONNECTORS[0].id);
+    if (id === 'phrases') setCatId(POWER_PHRASES[0].id);
+  };
+
+  const chips: { key: string; label: string; insert: string; example?: string; color: string }[] =
+    tab === 'collocations'
+      ? collocations.map(c => ({ key: `col-${c.id}`, label: c.collocation, insert: c.collocation, color: '#00FFC8' }))
+      : cat.items.map(i => ({ key: `${cat.id}::${i.connector}`, label: i.connector, insert: insertableText(i.connector), example: i.example, color: cat.color }));
+  // Preview always belongs to the visible list: hovered chip, else the first one
+  const previewChip = chips.find(c => c.key === hoverKey) ?? chips[0];
+
+  return (
+    <div className="h-full flex flex-col min-h-0" onMouseLeave={() => setHoverKey(null)}>
+      {/* Segmented tabs */}
+      <div className="shrink-0 flex gap-1 p-1 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        {([
+          ['collocations', `Collocations${collocations.length ? ` · ${collocations.length}` : ''}`],
+          ['connectors', 'Connectors'],
+          ['phrases', 'Power phrases'],
+        ] as const).filter(([id]) => id !== 'collocations' || collocations.length > 0).map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => switchTab(id)}
+            className="relative flex-1 rounded-xl py-2 text-[12px] font-bold transition-colors"
+            style={{ color: tab === id ? '#18181b' : '#a1a1aa' }}
+          >
+            {tab === id && (
+              <motion.span
+                layoutId="toolkit-tab"
+                className="absolute inset-0 rounded-xl"
+                style={{ background: LAB }}
+                transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+              />
+            )}
+            <span className="relative">{label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Category cloud — every category visible, one click to switch */}
+      {tab !== 'collocations' && (
+        <div className="shrink-0 flex flex-wrap gap-1.5 mt-4">
+          {list.map(c => {
+            const active = c.id === cat.id;
+            return (
+              <button
+                key={c.id}
+                onClick={() => { setCatId(c.id); setHoverKey(null); }}
+                className="relative rounded-full px-3 py-1 text-[12px] font-semibold transition-colors"
+                style={{
+                  color: active ? '#0b0b0e' : '#a1a1aa',
+                  background: active ? 'transparent' : 'rgba(255,255,255,0.025)',
+                  border: `1px solid ${active ? c.color : 'rgba(255,255,255,0.06)'}`,
+                }}
+              >
+                {active && (
+                  <motion.span
+                    layoutId={`toolkit-cat-${tab}`}
+                    className="absolute inset-0 rounded-full"
+                    style={{ background: c.color, boxShadow: `0 0 16px ${c.color}55` }}
+                    transition={{ type: 'spring', stiffness: 450, damping: 34 }}
+                  />
+                )}
+                <span className="relative flex items-center gap-1.5">
+                  {!active && <span className="w-1.5 h-1.5 rounded-full" style={{ background: c.color }} />}
+                  {c.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="shrink-0 h-px my-4" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.08), transparent)' }} />
+
+      {/* Phrase cloud — tap to insert at the cursor */}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={tab === 'collocations' ? 'collocations' : cat.id}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.15 }}
+          className="shrink-0"
+        >
+          {tab !== 'collocations' && (
+            <p className="text-[12px] text-zinc-500 mb-2.5">
+              <span className="font-bold" style={{ color: cat.color }}>{cat.label}</span> · {cat.description}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-1.5">
+            {chips.map((chip, i) => {
+              const lit = tab !== 'collocations' && chip.key === previewChip?.key;
+              return (
+                <motion.button
+                  key={chip.key}
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.015, duration: 0.15 }}
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => onInsert(chip.insert)}
+                  onMouseEnter={() => setHoverKey(chip.key)}
+                  onFocus={() => setHoverKey(chip.key)}
+                  className="rounded-xl px-3.5 py-2 text-[14px] font-semibold transition-all"
+                  style={{
+                    fontFamily: FONT_DISPLAY,
+                    color: chip.color,
+                    background: lit ? `${chip.color}26` : `${chip.color}0d`,
+                    border: `1px solid ${lit ? chip.color : chip.color + '30'}`,
+                    boxShadow: lit ? `0 0 16px ${chip.color}30` : 'none',
+                  }}
+                >
+                  {tab === 'collocations' ? highlightTarget(chip.label, word, '#00FFC8') : chip.label}
+                </motion.button>
+              );
+            })}
+          </div>
+        </motion.div>
+      </AnimatePresence>
+
+      <div className="flex-1 min-h-3" />
+
+      {/* Example + tip — full text, never clipped */}
+      <div className="shrink-0 rounded-2xl px-4 py-3.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <AnimatePresence mode="wait" initial={false}>
+          {tab !== 'collocations' && previewChip?.example ? (
+            <motion.div key={previewChip.key} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}>
+              <p className="text-[10px] uppercase tracking-[0.18em] font-bold mb-1.5 text-zinc-500">
+                In use · <span className="normal-case tracking-normal" style={{ color: previewChip.color }}>{previewChip.label}</span>
+              </p>
+              <p className="text-[13.5px] text-zinc-300 leading-relaxed">{highlightConnector(previewChip.example, previewChip.label)}</p>
+            </motion.div>
+          ) : (
+            <motion.p key="col-tip" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-[13px] text-zinc-400 leading-relaxed">
+              Natural partners for <span className="text-[#00FFC8] font-semibold">{word}</span>. Using one lights up the Collocation check.
+            </motion.p>
+          )}
+        </AnimatePresence>
+        {tab !== 'collocations' && (
+          <p className="flex gap-2 text-[12px] text-zinc-500 leading-snug mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <span className="shrink-0">💡</span>
+            <span>{cat.tip}</span>
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Component ─────────────────────────────────────────────────────
 export function GenerationPhase({
   currentItem, currentIndex, totalWords, generationText, generationSaved,
   aiFeedback, aiLoading, aiError, isSaving,
-  activeConnector, onConnectorChange,
   onGenerationTextChange, onSave, onSaveQuick, onNextWord, onRetry,
   tier, topic, priorSentence, roastMode, onToggleRoast, collocations,
 }: GenerationPhaseProps) {
+  const word = currentItem.word.word;
   const verdict = aiFeedback
     ? verdictConfig[aiFeedback.verdict as keyof typeof verdictConfig] ?? verdictConfig.close
     : null;
 
-  // Local UI state: which tab is active in the chip strip.
-  // Independent from `activeConnector` (which is the open sheet's id, global to both lists).
-  const [activeTab, setActiveTab] = useState<'connectors' | 'phrases'>('connectors');
-  const [showCollocations, setShowCollocations] = useState(false);
-
-  // Active list driving the chip strip below the toggle.
-  const currentList: readonly ChipCategory[] =
-    activeTab === 'connectors' ? CONNECTORS : POWER_PHRASES;
-
-  // Bottom-sheet lookup: search BOTH arrays so the sheet stays correct
-  // even if the user toggles tabs while a sheet is open.
-  const activeData: ChipCategory | null =
-    CONNECTORS.find(c => c.id === activeConnector) ??
-    POWER_PHRASES.find(c => c.id === activeConnector) ??
-    null;
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const mirrorRef = useRef<HTMLDivElement>(null);
+  const caretRef = useRef<{ start: number; end: number } | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const paletteItems = useMemo(() => buildPaletteItems(collocations), [collocations]);
 
   // Mint a trophy on a 9+ score. Fires once per saved sentence.
   const mintedRef = useRef<string | null>(null);
@@ -499,390 +846,471 @@ export function GenerationPhase({
     if (mintedRef.current === key) return;
     mintedRef.current = key;
     mintTrophy({
-      word: currentItem.word.word,
+      word,
       wordId: currentItem.word.id,
       sentence: generationText.trim(),
       topic: topic.title,
       score: aiFeedback.score,
     });
-  }, [aiFeedback, currentItem.word.id, currentItem.word.word, generationText, topic.title]);
+  }, [aiFeedback, currentItem.word.id, word, generationText, topic.title]);
 
   // Reset mint guard between words so the next word can mint
   useEffect(() => { mintedRef.current = null; }, [currentItem.word.id]);
 
-  // Tier-driven copy
-  const promptText = (() => {
-    switch (tier) {
-      case 'new': return 'Write your own sentence using this word:';
-      case 'learning': return 'Write a short phrase or sentence using this word:';
-      case 'mature': return 'Quick check — write a sentence. AI scoring is optional at this level.';
-      case 'leech': return "You've slipped on this word before. Rewrite your old sentence — better this time.";
-    }
-  })();
-
   const placeholder = tier === 'learning'
     ? 'A few words is enough…'
     : tier === 'leech'
-      ? 'Rewrite it sharper…'
-      : 'Type your sentence…';
+      ? 'Rewrite it, sharper this time…'
+      : 'Start writing…';
 
   const showRemix = (tier === 'learning' || tier === 'mature' || tier === 'leech') && !!priorSentence;
   const trophyMinted = !!aiFeedback && aiFeedback.score >= 9;
+  const pos = getWordPos(word);
+
+  // ── Live checks → meter + one next-step hint ──────────────────
+  const text = generationText.trim();
+  const wordCount = text ? text.split(/\s+/).length : 0;
+  const hasWord = !!text && usesWord(text, word);
+  const connector = text ? findConnector(text) : null;
+  const collocation = text ? findCollocation(text, collocations, word) : null;
+  const lengthOk = wordCount >= 8 && wordCount <= 30;
+  const checks = [
+    { ok: hasWord, label: 'Word' },
+    { ok: lengthOk, label: 'Length' },
+    { ok: !!connector, label: 'Connector' },
+    ...(collocations.length ? [{ ok: !!collocation, label: 'Collocation' }] : []),
+  ];
+  const sampleCollocation = collocations[0]?.collocation;
+  const hintKey = !text ? 'empty' : !hasWord ? 'word' : wordCount < 8 ? 'short' : wordCount > 30 ? 'long'
+    : !connector ? 'connector' : collocations.length && !collocation ? 'collocation' : 'done';
+  const hint = !text
+    ? <>Press <Kbd>/</Kbd> for collocations, connectors and power phrases</>
+    : !hasWord
+      ? <>Work <span style={{ color: LAB }}>{word}</span> into the sentence</>
+      : wordCount < 8
+        ? <>Keep going — aim for at least 8 words</>
+        : wordCount > 30
+          ? <>Tighten it — under 30 words reads cleaner</>
+          : !connector
+            ? <>Link two ideas with a connector · <Kbd>/</Kbd></>
+            : collocations.length && !collocation
+              ? <>Bonus: try a collocation{sampleCollocation ? <> like <span className="text-[#00FFC8]">{sampleCollocation}</span></> : null}</>
+              : <span className="text-[#00FFC8]">Strong sentence — send it</span>;
+
+  const canSubmit = !!text && !isSaving && !aiLoading;
+  const submit = () => {
+    if (!canSubmit) return;
+    if (tier === 'mature') onSaveQuick(); else onSave();
+  };
+
+  const openPalette = () => {
+    const el = textareaRef.current;
+    caretRef.current = el ? { start: el.selectionStart, end: el.selectionEnd } : null;
+    setPaletteOpen(true);
+  };
+
+  const insert = (phrase: string) => {
+    const value = generationText;
+    const { start, end } = caretRef.current ?? { start: value.length, end: value.length };
+    const before = value.slice(0, start);
+    const after = value.slice(end);
+    const lead = before && !/\s$/.test(before) ? ' ' : '';
+    const next = `${before}${lead}${phrase} ${after.replace(/^\s+/, '')}`;
+    onGenerationTextChange(next);
+    setPaletteOpen(false);
+    setSheetOpen(false);
+    const caret = (before + lead + phrase + ' ').length;
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(caret, caret);
+    });
+  };
+
+  // Toolkit clicks: the textarea keeps its selection while blurred, so read it now
+  const insertAtCursor = (phrase: string) => {
+    const el = textareaRef.current;
+    caretRef.current = el ? { start: el.selectionStart, end: el.selectionEnd } : null;
+    insert(phrase);
+  };
+
+  const onEditorKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === '/' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); openPalette(); return; }
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); submit(); }
+  };
+
+  // Global: Ctrl/Cmd+K opens the palette; after feedback, Enter moves on.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      if (!generationSaved && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        openPalette();
+      } else if (generationSaved && !aiLoading && e.key === 'Enter') {
+        e.preventDefault();
+        onNextWord();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  });
+
+  const tierLabel = tier === 'leech' ? 'Leech — rewrite it' : tier === 'mature' ? 'Mature' : tier === 'learning' ? 'Learning' : 'New word';
+  const tierColor = tier === 'leech' ? '#f87171' : tier === 'mature' ? '#00FFC8' : tier === 'learning' ? '#38bdf8' : '#a1a1aa';
 
   return (
     <>
-      {/* Main card */}
       <motion.div
         key={`gen-${currentIndex}`}
-        initial={{ opacity: 0, x: 60 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -60 }}
-        transition={{ duration: 0.3 }}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -16 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        className="mt-4 flex gap-5"
+        style={CARD_STYLE}
       >
-        <div className="rv-glass rounded-[2rem] p-8 mt-4">
-          <div className="mb-5 flex flex-wrap items-center gap-2">
-            <span
-              className="text-[9px] uppercase tracking-[0.25em] font-bold px-2.5 py-1 rounded-full"
-              style={{ background: 'rgba(251,191,36,0.07)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.18)' }}
+      <div
+        className="relative rounded-[2rem] overflow-hidden flex flex-col flex-1 min-w-0"
+        style={{ background: '#0e0e11', border: '1px solid rgba(255,255,255,0.06)' }}
+      >
+        {/* Ambient mesh */}
+        <div aria-hidden className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-32 -left-24 w-96 h-96 rounded-full" style={{ background: 'radial-gradient(circle, rgba(251,191,36,0.10), transparent 65%)' }} />
+          <div className="absolute -bottom-40 -right-24 w-[28rem] h-[28rem] rounded-full" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.08), transparent 65%)' }} />
+        </div>
+
+        {/* ── Top bar ─────────────────────────────────────────────── */}
+        <div className="relative shrink-0 flex items-center gap-3 px-7 pt-6">
+          <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-zinc-500">Generation Lab</span>
+          <span className="w-1 h-1 rounded-full bg-zinc-700" />
+          <span className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: tierColor }}>{tierLabel}</span>
+          <button
+            onClick={onToggleRoast}
+            aria-pressed={roastMode}
+            title={roastMode ? 'Roast mode on — brutal feedback' : 'Roast mode off — tap for brutal feedback'}
+            className="ml-auto w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            style={{
+              background: roastMode ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.04)',
+              color: roastMode ? '#f87171' : '#52525b',
+              boxShadow: roastMode ? '0 0 18px rgba(239,68,68,0.35)' : 'none',
+            }}
+          >
+            <Flame className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* ── Prompt line ─────────────────────────────────────────── */}
+        <div className="relative shrink-0 px-7 pt-5">
+          <p className="text-[13px] text-zinc-500">
+            {tier === 'leech' ? 'One more time, with' : 'Write a sentence with'}
+          </p>
+          <div className="flex items-baseline gap-2.5 mt-1">
+            <motion.h2
+              initial={{ opacity: 0, y: 8, filter: 'blur(6px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="font-bold leading-none"
+              style={{
+                fontSize: 'clamp(2rem, 4.5vw, 2.9rem)',
+                fontFamily: FONT_DISPLAY,
+                letterSpacing: '-0.03em',
+                background: 'linear-gradient(120deg, #fde68a 0%, #fbbf24 45%, #f59e0b 100%)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+              }}
             >
-              ✍ Generation Lab
-            </span>
-            {tier !== 'new' && (
-              <span
-                className="text-[9px] uppercase tracking-[0.2em] font-bold px-2.5 py-1 rounded-full"
-                style={
-                  tier === 'leech'
-                    ? { background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.22)' }
-                    : tier === 'mature'
-                      ? { background: 'rgba(0,255,200,0.07)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.18)' }
-                      : { background: 'rgba(56,189,248,0.07)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.18)' }
-                }
-              >
-                {tier === 'leech' ? '⚠ Leech' : tier === 'mature' ? '◆ Mature' : '◇ Learning'}
+              {word}
+            </motion.h2>
+            {pos && (
+              <span className="text-xs italic font-semibold" style={{ color: pos.source === 'oxford' ? '#a78bfa' : '#52525b' }}>
+                {pos.abbr}
               </span>
             )}
-            <button
-              onClick={onToggleRoast}
-              className="text-[9px] uppercase tracking-[0.2em] font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1 transition-all active:scale-95"
-              style={
-                roastMode
-                  ? { background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.35)' }
-                  : { background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.10)' }
-              }
-              aria-pressed={roastMode}
-              title={roastMode ? 'Roast Mode: ON — tap to soften' : 'Roast Mode: OFF — tap for brutal feedback'}
-            >
-              <Zap className="h-3 w-3" /> Roast {roastMode ? 'on' : 'off'}
-            </button>
           </div>
+          <p className="text-[13px] text-zinc-500 mt-2 leading-snug line-clamp-1" title={currentItem.word.definition}>
+            {currentItem.word.definition}
+          </p>
+          <p className="text-[12px] text-zinc-600 mt-1.5 truncate" title={`${topic.title} · ${topic.prompt}`}>
+            <span className="text-zinc-400">◎ {topic.title}</span> — {topic.prompt}
+          </p>
+        </div>
 
-          <div className="flex items-baseline gap-3 mb-2">
-            <motion.h2
-              initial={{ opacity: 0, scale: 0.82, filter: 'blur(8px)' }}
-              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-              transition={{ type: 'spring', stiffness: 180, damping: 18, delay: 0.06 }}
-              className="font-bold leading-none select-none"
-              style={{
-                fontSize: 'clamp(2.2rem, 7vw, 3.2rem)',
-                color: '#fbbf24',
-                fontFamily: "'Space Grotesk', sans-serif",
-                textShadow: '0 0 32px rgba(251,191,36,0.22)',
-                letterSpacing: '-0.01em',
-              }}
+        <AnimatePresence mode="wait" initial={false}>
+          {!generationSaved ? (
+            /* ══ Compose ═══════════════════════════════════════════ */
+            <motion.div
+              key="compose"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25 }}
+              className="relative flex-1 min-h-0 flex flex-col px-7 pt-5 pb-6"
             >
-              {currentItem.word.word}
-            </motion.h2>
-            {(() => {
-              const pos = getWordPos(currentItem.word.word);
-              if (!pos) return null;
-              return (
-                <span
-                  className="text-xs font-semibold italic shrink-0"
-                  style={{ color: pos.source === 'oxford' ? '#a78bfa' : '#71717a' }}
-                  title={pos.source === 'inferred' ? `inferred from word form` : `Oxford 3000`}
-                >
-                  {pos.abbr}
-                </span>
-              );
-            })()}
-          </div>
-          <p className="text-zinc-400 text-sm mb-6">{currentItem.word.definition}</p>
+              <div className="shrink-0 h-px mb-4" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.08), transparent)' }} />
 
-          {/* Toggle pill + chip strip */}
-          <div className="mb-4 space-y-3">
-            {/* Toggle pill — swaps which list of chips shows below */}
-            <div className="flex gap-1.5">
-              <button
-                onClick={() => setActiveTab('connectors')}
-                className="text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-full transition-all active:scale-95"
-                style={
-                  activeTab === 'connectors'
-                    ? { background: 'rgba(0,255,200,0.12)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.32)' }
-                    : { background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.08)' }
-                }
-                aria-pressed={activeTab === 'connectors'}
-              >
-                Connectors
-              </button>
-              <button
-                onClick={() => setActiveTab('phrases')}
-                className="text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-full transition-all active:scale-95"
-                style={
-                  activeTab === 'phrases'
-                    ? { background: 'rgba(0,255,200,0.12)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.32)' }
-                    : { background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.08)' }
-                }
-                aria-pressed={activeTab === 'phrases'}
-              >
-                Power Phrases
-              </button>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {currentList.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => onConnectorChange(activeConnector === cat.id ? null : cat.id)}
-                  className="rounded-xl px-3 py-1.5 flex flex-col items-start gap-1 transition-all active:scale-95"
-                  style={{
-                    background: activeConnector === cat.id ? `${cat.color}18` : 'rgba(255,255,255,0.06)',
-                    border: `1px solid ${activeConnector === cat.id ? cat.color : cat.color + '55'}`,
-                  }}
-                >
-                  <span className="text-xs font-semibold leading-none" style={{ color: cat.color }}>
-                    {cat.label}
-                  </span>
-                  <span className="text-[10px] font-medium leading-none opacity-60" style={{ color: cat.color }}>
-                    {cat.hint}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Topic of the day banner */}
-          <div
-            className="mb-5 rounded-xl px-4 py-2.5 flex items-center gap-2.5"
-            style={{ background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.18)' }}
-          >
-            <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: '#38bdf8' }} />
-            <p className="text-[11px] text-zinc-400 leading-snug">
-              <span className="text-[10px] uppercase tracking-widest font-bold mr-1.5" style={{ color: '#38bdf8' }}>Today's topic</span>
-              <span className="text-zinc-200 font-semibold">{topic.title}</span>
-              <span className="text-zinc-500"> · weave today's words around {topic.prompt}.</span>
-            </p>
-          </div>
-
-          {collocations.length > 0 && (
-            <button
-              onClick={() => setShowCollocations(true)}
-              className="mb-5 w-full rounded-xl px-4 py-2.5 flex items-center gap-2.5 transition-all active:scale-[0.99]"
-              style={{ background: 'rgba(0,255,200,0.06)', border: '1px solid rgba(0,255,200,0.22)' }}
-              title="Peek at collocations for this word"
-            >
-              <Link2 className="h-3.5 w-3.5 shrink-0" style={{ color: '#00FFC8' }} />
-              <p className="text-[11px] text-zinc-400 leading-snug text-left">
-                <span className="text-[10px] uppercase tracking-widest font-bold mr-1.5" style={{ color: '#00FFC8' }}>
-                  Collocations
-                </span>
-                <span className="text-zinc-200 font-semibold">{collocations.length} saved</span>
-                <span className="text-zinc-500"> · tap to peek without leaving.</span>
-              </p>
-            </button>
-          )}
-
-          <p className="text-white font-semibold mb-3">{promptText}</p>
-
-          {/* Remix scaffold: surface the user's previous sentence so they can rewrite it better */}
-          {!generationSaved && showRemix && priorSentence && (
-            <div
-              className="mb-3 rounded-xl p-3.5"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">
-                  {tier === 'leech' ? 'Your old try' : 'Your previous sentence'}
-                </span>
+              {showRemix && priorSentence && (
                 <button
                   onClick={() => onGenerationTextChange(priorSentence)}
-                  className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full transition-all active:scale-95"
-                  style={{ background: 'rgba(0,255,200,0.08)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.22)' }}
+                  className="group shrink-0 mb-3 flex items-center gap-2 text-left text-[12.5px] text-zinc-500 hover:text-zinc-300 transition-colors"
+                  title="Load your previous sentence to rework it"
                 >
-                  Remix
+                  <History className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate italic">Last time: “{priorSentence}”</span>
+                  <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-[#00FFC8] opacity-60 group-hover:opacity-100">Remix</span>
                 </button>
-              </div>
-              <p className="text-sm text-zinc-300 italic">"{priorSentence}"</p>
-            </div>
-          )}
+              )}
 
-          {!generationSaved ? (
-            <div className="space-y-3">
-              <textarea
-                className="rv-textarea"
-                placeholder={placeholder}
-                value={generationText}
-                onChange={e => onGenerationTextChange(e.target.value)}
-              />
-              {tier === 'mature' ? (
-                <div className="flex gap-3">
+              {/* Editor: transparent textarea over a mirror that highlights the word */}
+              <div className="relative flex-1 min-h-[6rem]" style={{ fontFamily: FONT_DISPLAY }}>
+                <div
+                  ref={mirrorRef}
+                  aria-hidden
+                  className={`absolute inset-0 overflow-hidden whitespace-pre-wrap break-words text-transparent pointer-events-none ${EDITOR_TEXT}`}
+                >
+                  {generationText.split(/([A-Za-z]+)/).map((p, i) =>
+                    i % 2 === 1 && isTargetToken(p, word)
+                      ? <mark key={i} className="text-transparent rounded-md" style={{ background: 'rgba(251,191,36,0.2)', boxShadow: '0 0 0 2px rgba(251,191,36,0.2)' }}>{p}</mark>
+                      : <span key={i}>{p}</span>
+                  )}
+                  {'\n'}
+                </div>
+                <textarea
+                  ref={textareaRef}
+                  autoFocus
+                  value={generationText}
+                  onChange={e => onGenerationTextChange(e.target.value)}
+                  onKeyDown={onEditorKeyDown}
+                  onScroll={e => { if (mirrorRef.current) mirrorRef.current.scrollTop = e.currentTarget.scrollTop; }}
+                  placeholder={placeholder}
+                  spellCheck
+                  className={`absolute inset-0 w-full h-full resize-none bg-transparent outline-none text-zinc-100 placeholder:text-zinc-700 caret-amber-400 ${EDITOR_TEXT}`}
+                />
+              </div>
+
+              {/* Meter + hint */}
+              <div className="shrink-0 mt-4">
+                <div className="flex gap-1.5">
+                  {checks.map(c => (
+                    <div key={c.label} className="flex-1" title={`${c.label}${c.ok ? ' ✓' : ''}`}>
+                      <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                        <motion.div
+                          className="h-full rounded-full"
+                          initial={false}
+                          animate={{ width: c.ok ? '100%' : '0%' }}
+                          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                          style={{ background: 'linear-gradient(90deg, #fbbf24, #00FFC8)' }}
+                        />
+                      </div>
+                      <p className="text-[9px] uppercase tracking-[0.15em] font-bold mt-1.5" style={{ color: c.ok ? '#a1a1aa' : '#3f3f46' }}>
+                        {c.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom bar */}
+              <div className="shrink-0 flex items-center gap-3 mt-4">
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={hintKey}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.18 }}
+                    className="flex-1 min-w-0 text-[13px] text-zinc-500 truncate"
+                  >
+                    {hint}
+                  </motion.p>
+                </AnimatePresence>
+
+                <button
+                  onClick={() => (window.matchMedia('(min-width: 1024px)').matches ? openPalette() : setSheetOpen(true))}
+                  title="Search collocations, connectors & phrases (/ or Ctrl+K)"
+                  className="shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                >
+                  <Command className="h-4 w-4" />
+                </button>
+
+                {tier === 'mature' && (
                   <button
                     onClick={onSave}
-                    disabled={!generationText.trim() || isSaving || aiLoading}
-                    className="flex items-center justify-center gap-2 flex-1 rounded-2xl py-3 text-sm font-bold transition-all active:scale-95"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: '#a1a1aa' }}
+                    disabled={!canSubmit}
+                    title="Audit with AI"
+                    className="shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-colors disabled:opacity-30"
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
                   >
-                    {aiLoading ? <><Loader2 className="h-4 w-4 animate-spin" />Auditing…</> : 'Audit with AI'}
+                    <Sparkles className="h-4 w-4" />
                   </button>
-                  <button
-                    onClick={onSaveQuick}
-                    disabled={!generationText.trim() || isSaving}
-                    className="rv-btn-mint flex-1"
-                  >
-                    Save · skip AI
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={onSave}
-                  disabled={!generationText.trim() || isSaving || aiLoading}
-                  className="rv-btn-mint"
-                >
-                  {isSaving || aiLoading ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" />Checking…</>
-                  ) : 'Submit'}
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div
-                className="rounded-xl p-4"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
-              >
-                <p className="text-zinc-200 text-sm">"{generationText}"</p>
-                <p className="text-[10px] text-zinc-600 mt-1">— My sentence</p>
-              </div>
+                )}
 
-              {aiLoading && (
-                <div className="flex items-center gap-2 text-zinc-500 text-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" style={{ color: '#00FFC8' }} />
-                  Checking your sentence…
-                </div>
-              )}
-
-              {trophyMinted && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8, scale: 0.94 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 220, damping: 16 }}
-                  className="rounded-xl px-4 py-3 flex items-center gap-3"
+                <motion.button
+                  onClick={submit}
+                  disabled={!canSubmit}
+                  whileTap={canSubmit ? { scale: 0.9 } : undefined}
+                  title={tier === 'mature' ? 'Save (Enter)' : 'Send for review (Enter)'}
+                  className="shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(240,201,106,0.10) 0%, rgba(200,146,42,0.06) 100%)',
-                    border: '1px solid rgba(240,201,106,0.45)',
-                    boxShadow: '0 0 28px rgba(240,201,106,0.18)',
+                    background: canSubmit ? 'linear-gradient(135deg, #fde68a, #fbbf24 55%, #f59e0b)' : 'rgba(255,255,255,0.05)',
+                    color: canSubmit ? '#1c1408' : '#3f3f46',
+                    boxShadow: canSubmit ? '0 8px 28px rgba(251,191,36,0.35)' : 'none',
                   }}
                 >
-                  <Trophy className="h-5 w-5 shrink-0" style={{ color: '#f0c96a' }} />
-                  <div className="leading-tight">
-                    <p className="text-sm font-bold" style={{ color: '#f0c96a', fontFamily: "'Space Grotesk', sans-serif" }}>
-                      Greatest Hits — minted.
-                    </p>
-                    <p className="text-[11px] text-zinc-400">{aiFeedback.score}/10 — saved to your trophy wall.</p>
-                  </div>
-                </motion.div>
-              )}
+                  {isSaving || aiLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowUp className="h-5 w-5" strokeWidth={2.5} />}
+                </motion.button>
+              </div>
+            </motion.div>
+          ) : (
+            /* ══ Review ════════════════════════════════════════════ */
+            <motion.div
+              key="review"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="relative flex-1 min-h-0 flex flex-col px-7 pt-5 pb-6"
+            >
+              <div className="shrink-0 h-px mb-5" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.08), transparent)' }} />
 
-              {aiFeedback && verdict && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 16 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                  className="rounded-xl p-5 space-y-3"
-                  style={{ background: verdict.bg, border: `1px solid ${verdict.border}` }}
-                >
-                  <div className="flex items-center justify-between">
-                    <span
-                      className="rounded-full px-3 py-1 text-xs font-bold"
-                      style={{ background: 'rgba(0,0,0,0.3)', color: verdict.color }}
-                    >
-                      {verdict.label}
-                    </span>
-                    <motion.span
-                      initial={{ scale: 0.5, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ type: 'spring', stiffness: 260, damping: 14, delay: 0.1 }}
-                      className="text-3xl font-bold"
-                      style={{ color: verdict.color, fontFamily: "'Space Grotesk', sans-serif" }}
-                    >
-                      {aiFeedback.score}<span className="text-base text-zinc-500">/10</span>
-                    </motion.span>
+              <div className="flex-1 min-h-0 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                {aiLoading ? (
+                  <div className="space-y-3 pt-2">
+                    <p className="text-[13px] text-zinc-500 flex items-center gap-2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: LAB }} />
+                      {roastMode ? 'Sharpening the knives…' : 'Reading your sentence…'}
+                    </p>
+                    {[92, 78, 64].map((w, i) => (
+                      <motion.div
+                        key={i}
+                        className="h-3 rounded-full"
+                        style={{ width: `${w}%`, background: 'rgba(255,255,255,0.05)' }}
+                        animate={{ opacity: [0.4, 1, 0.4] }}
+                        transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.15 }}
+                      />
+                    ))}
                   </div>
-                  {aiFeedback.mistake && (
-                    <p className="text-sm text-zinc-300">
-                      <span className="font-semibold" style={{ color: '#ef4444' }}>Your mistake: </span>
-                      {aiFeedback.mistake}
-                    </p>
-                  )}
-                  <p className="text-sm text-zinc-300">
-                    <span className="font-semibold" style={{ color: '#00FFC8' }}>What's working: </span>
-                    {aiFeedback.what_worked}
-                  </p>
-                  {aiFeedback.fix && (
-                    <p className="text-sm text-zinc-300">
-                      <span className="font-semibold" style={{ color: '#f97316' }}>Change this: </span>
-                      {aiFeedback.fix}
-                    </p>
-                  )}
-                  {aiFeedback.better_example && (
-                    <blockquote
-                      className="text-sm text-zinc-400 italic pl-3"
-                      style={{ borderLeft: '2px solid rgba(255,255,255,0.15)' }}
-                    >
-                      {aiFeedback.better_example}
-                    </blockquote>
-                  )}
-                </motion.div>
-              )}
+                ) : (
+                  <div className="space-y-6">
+                    {aiFeedback && verdict && (
+                      <div className="flex items-end gap-4">
+                        <motion.span
+                          initial={{ opacity: 0, scale: 0.6 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ type: 'spring', stiffness: 260, damping: 16 }}
+                          className="font-black leading-none tabular-nums"
+                          style={{ fontSize: '4.5rem', fontFamily: FONT_DISPLAY, color: verdict.color, letterSpacing: '-0.05em', textShadow: `0 0 40px ${verdict.color}40` }}
+                        >
+                          {aiFeedback.score}
+                        </motion.span>
+                        <div className="pb-2">
+                          <p className="text-zinc-600 text-sm font-bold">/10</p>
+                          <p className="text-lg font-bold leading-tight" style={{ color: verdict.color, fontFamily: FONT_DISPLAY }}>{verdict.label}</p>
+                        </div>
+                        {trophyMinted && (
+                          <motion.span
+                            initial={{ opacity: 0, rotate: -20, scale: 0.5 }}
+                            animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                            transition={{ type: 'spring', stiffness: 260, damping: 12, delay: 0.3 }}
+                            className="ml-auto mb-2 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full"
+                            style={{ color: '#f0c96a', background: 'rgba(240,201,106,0.1)', border: '1px solid rgba(240,201,106,0.4)' }}
+                            title="Saved to your trophy wall"
+                          >
+                            <Trophy className="h-3.5 w-3.5" /> Greatest Hit
+                          </motion.span>
+                        )}
+                      </div>
+                    )}
 
-              {aiError && (
-                <div
-                  className="rounded-xl px-4 py-3 space-y-1"
-                  style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.18)' }}
-                >
-                  <p className="text-sm text-zinc-400">
-                    AI feedback unavailable — tap Next Word to save your sentence and continue.
-                  </p>
-                  <p className="text-xs text-red-400/80 font-mono break-words">{aiError}</p>
-                </div>
-              )}
+                    {/* Yours vs stronger */}
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-600 mb-1.5">Yours</p>
+                        <p className="text-[17px] leading-relaxed text-zinc-200" style={{ fontFamily: FONT_DISPLAY }}>
+                          {highlightTarget(generationText, word)}
+                        </p>
+                      </div>
+                      {aiFeedback?.better_example && (
+                        <motion.div
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.25 }}
+                          className="pl-4"
+                          style={{ borderLeft: '2px solid #fbbf24' }}
+                        >
+                          <p className="text-[10px] uppercase tracking-[0.2em] font-bold mb-1.5" style={{ color: LAB }}>Stronger</p>
+                          <p className="text-[17px] leading-relaxed text-zinc-300" style={{ fontFamily: FONT_DISPLAY }}>
+                            {highlightTarget(aiFeedback.better_example, word)}
+                          </p>
+                        </motion.div>
+                      )}
+                    </div>
+
+                    {aiFeedback && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                        className="space-y-2.5 text-[13.5px] leading-relaxed"
+                      >
+                        <Note color="#00FFC8" label="Works">{aiFeedback.what_worked}</Note>
+                        {aiFeedback.mistake && <Note color="#f87171" label="Issue">{aiFeedback.mistake}</Note>}
+                        {aiFeedback.fix && <Note color="#fb923c" label="Fix">{aiFeedback.fix}</Note>}
+                      </motion.div>
+                    )}
+
+                    {aiError && (
+                      <div className="text-[13px] space-y-1">
+                        <p className="text-zinc-400">AI feedback unavailable — your sentence is still saved when you continue.</p>
+                        <p className="text-xs text-red-400/70 font-mono break-words">{aiError}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {!aiLoading && (
-                <div className="flex gap-3">
+                <div className="shrink-0 flex items-center gap-3 mt-4">
                   <button
                     onClick={onRetry}
-                    className="flex items-center justify-center gap-2 flex-1 rounded-2xl py-3 text-sm font-bold transition-all active:scale-95"
-                    style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      color: '#a1a1aa',
-                    }}
+                    className="h-12 px-5 rounded-full flex items-center gap-2 text-sm font-semibold text-zinc-400 hover:text-white transition-colors"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
                   >
-                    <RotateCcw className="h-4 w-4" />
-                    Try Again
+                    <RotateCcw className="h-4 w-4" /> Rewrite
                   </button>
-                  <button onClick={onNextWord} className="rv-btn-mint flex-1">
-                    {currentIndex + 1 >= totalWords ? 'View Summary' : 'Next Word'}
-                  </button>
+                  <motion.button
+                    onClick={onNextWord}
+                    whileTap={{ scale: 0.97 }}
+                    className="ml-auto h-12 pl-6 pr-5 rounded-full flex items-center gap-2 text-sm font-bold"
+                    style={{ background: 'linear-gradient(135deg, #2cffca, #00FFC8)', color: '#0b1512', boxShadow: '0 8px 28px rgba(0,255,200,0.25)' }}
+                  >
+                    {currentIndex + 1 >= totalWords ? 'View summary' : 'Next word'}
+                    <ArrowRight className="h-4 w-4" />
+                    <Kbd dark>↵</Kbd>
+                  </motion.button>
                 </div>
               )}
-            </div>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
+      </div>
+
+        {/* ══ Writer's toolkit (desktop sidebar) ════════════════════════ */}
+        <aside
+          className="hidden lg:flex w-[50%] shrink-0 flex-col p-6 min-h-0 rounded-[2rem]"
+          style={{ background: '#0e0e11', border: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <p className="shrink-0 flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] font-bold text-zinc-500 mb-3">
+            <Wand2 className="h-3.5 w-3.5" style={{ color: LAB }} /> Writer's toolkit
+          </p>
+          <div className="flex-1 min-h-0">
+            <Toolkit collocations={collocations} word={word} onInsert={insertAtCursor} />
+          </div>
+        </aside>
       </motion.div>
 
-      {/* Bottom sheet — same on both mobile and desktop */}
+      {/* Toolkit sheet (mobile) */}
       <AnimatePresence>
-        {activeData && (
+        {sheetOpen && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
@@ -891,124 +1319,68 @@ export function GenerationPhase({
               transition={{ duration: 0.2 }}
               className="fixed inset-0 z-40"
               style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
-              onClick={() => onConnectorChange(null)}
+              onClick={() => setSheetOpen(false)}
             />
             <motion.div
-              key={activeData.id}
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-[2rem] p-6 space-y-4 max-h-[78vh] overflow-y-auto"
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-[2rem] p-5 flex flex-col"
               style={{
-                background: 'rgba(18,18,22,0.88)',
+                height: '72vh',
+                background: 'rgba(18,18,22,0.92)',
                 backdropFilter: 'blur(28px)',
                 WebkitBackdropFilter: 'blur(28px)',
-                borderTop: `1px solid ${activeData.color}40`,
-                borderLeft: '1px solid rgba(255,255,255,0.07)',
-                borderRight: '1px solid rgba(255,255,255,0.07)',
+                borderTop: '1px solid rgba(251,191,36,0.3)',
               }}
             >
-              <div className="flex justify-center -mt-1 mb-1">
-                <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
-              </div>
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xl font-bold" style={{ color: activeData.color, fontFamily: "'Space Grotesk', sans-serif" }}>
-                    {activeData.label}
-                  </p>
-                  <p className="text-xs text-zinc-500 italic mt-0.5">{activeData.description}</p>
-                </div>
+              <div className="shrink-0 flex items-center justify-between mb-3">
+                <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] font-bold text-zinc-500">
+                  <Wand2 className="h-3.5 w-3.5" style={{ color: LAB }} /> Writer's toolkit
+                </p>
                 <button
-                  onClick={() => onConnectorChange(null)}
-                  className="flex items-center justify-center w-8 h-8 rounded-full shrink-0 ml-4 transition-all active:scale-90"
-                  style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa' }}
+                  onClick={() => setSheetOpen(false)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400"
+                  style={{ background: 'rgba(255,255,255,0.08)' }}
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <ConnectorContent data={activeData} />
+              <div className="flex-1 min-h-0">
+                <Toolkit collocations={collocations} word={word} onInsert={insertAtCursor} />
+              </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* Collocations peek sheet — lets the user reference collocations mid-write */}
-      <AnimatePresence>
-        {showCollocations && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-40"
-              style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
-              onClick={() => setShowCollocations(false)}
-            />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-[2rem] p-6 space-y-4 max-h-[78vh] overflow-y-auto"
-              style={{
-                background: 'rgba(18,18,22,0.88)',
-                backdropFilter: 'blur(28px)',
-                WebkitBackdropFilter: 'blur(28px)',
-                borderTop: '1px solid rgba(0,255,200,0.4)',
-                borderLeft: '1px solid rgba(255,255,255,0.07)',
-                borderRight: '1px solid rgba(255,255,255,0.07)',
-              }}
-            >
-              <div className="flex justify-center -mt-1 mb-1">
-                <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
-              </div>
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xl font-bold" style={{ color: '#00FFC8', fontFamily: "'Space Grotesk', sans-serif" }}>
-                    Collocations
-                  </p>
-                  <p className="text-xs text-zinc-500 italic mt-0.5">
-                    Word pairings for <span className="text-zinc-300 not-italic font-semibold">{currentItem.word.word}</span>
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowCollocations(false)}
-                  className="flex items-center justify-center w-8 h-8 rounded-full shrink-0 ml-4 transition-all active:scale-90"
-                  style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa' }}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <div className="space-y-2">
-                {collocations.map((col, i) => {
-                  const target = currentItem.word.word;
-                  const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                  const regex = new RegExp(`(${escaped})`, 'gi');
-                  const parts = col.collocation.split(regex);
-                  return (
-                    <div
-                      key={col.id}
-                      className="rounded-2xl px-4 py-3 flex items-center gap-3"
-                      style={{ background: 'rgba(0,255,200,0.05)', border: '1px solid rgba(0,255,200,0.16)' }}
-                    >
-                      <span className="text-[9px] font-bold text-zinc-600 w-4 shrink-0">#{i + 1}</span>
-                      <span className="text-sm font-semibold text-zinc-200" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                        {parts.map((part, j) =>
-                          regex.test(part)
-                            ? <span key={j} style={{ color: '#00FFC8', fontWeight: 700 }}>{part}</span>
-                            : <span key={j}>{part}</span>
-                        )}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      <CommandPalette
+        open={paletteOpen}
+        items={paletteItems}
+        onClose={() => { setPaletteOpen(false); requestAnimationFrame(() => textareaRef.current?.focus()); }}
+        onPick={insert}
+      />
     </>
+  );
+}
+
+function Kbd({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
+  return (
+    <kbd
+      className="hidden sm:inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-md text-[10px] font-semibold align-middle mx-0.5"
+      style={{ background: dark ? 'rgba(0,0,0,0.14)' : 'rgba(255,255,255,0.07)', color: dark ? 'inherit' : '#a1a1aa' }}
+    >
+      {children}
+    </kbd>
+  );
+}
+
+function Note({ color, label, children }: { color: string; label: string; children: React.ReactNode }) {
+  return (
+    <p className="text-zinc-400">
+      <span className="text-[10px] uppercase tracking-[0.18em] font-bold mr-2" style={{ color }}>{label}</span>
+      {children}
+    </p>
   );
 }
