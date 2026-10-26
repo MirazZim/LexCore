@@ -8,10 +8,11 @@ import { Rating } from 'ts-fsrs';
 import { dbStateToCard, getReviewTier, currentRetrievability } from '@/lib/fsrs';
 import { useDueWords, useUpdateWordStats, useSaveWordContext, useWords, useWordStats, useReviewSessions, useReviewEvents, useUserPreferences } from '@/hooks/useWords';
 import { useSaveClozeAttempt } from '@/hooks/useClozeAttempts';
+import { useCollocationHistoryForWord } from '@/hooks/useCollocationAttempts';
 import { supabase } from '@/lib/supabase';
 import { BattlePhase } from '@/components/review/BattlePhase';
 import { ContextPhase } from '@/components/review/ContextPhase';
-import { CollocationPhase } from '@/components/review/CollocationPhase';
+import { CollocationPhase, type ForgeMode } from '@/components/review/CollocationPhase';
 import { GenerationPhase } from '@/components/review/GenerationPhase';
 import { SummaryPhase } from '@/components/review/SummaryPhase';
 import { SynonymsPhase } from '@/components/review/SynonymsPhase';
@@ -121,6 +122,9 @@ export default function ReviewPage() {
 
   const currentItem = sessionWords[currentIndex];
   const totalWords = sessionWords.length;
+  // Fetched as soon as the word comes up, so it's ready by the time the
+  // Forge gating decision is made after the battle phase.
+  const { data: collocationHistory } = useCollocationHistoryForWord(currentItem?.word.id);
 
   const loadWordData = async (item: DueWordItem) => {
     const wordId = item.word.id;
@@ -486,6 +490,13 @@ export default function ReviewPage() {
 
   const handleMatureExamplesNext = () => advancePastGeneration();
 
+  // Collocation Forge gating: new / learning / leech words always drill.
+  // Mature words skip it — unless a phrase was missed last time, in which case
+  // they get a short repair round of just those phrases.
+  const hasStrugglingCollocation = collocations.some(c => collocationHistory?.[c.id]?.struggling);
+  const forgeMode: ForgeMode = currentTier === 'mature' ? 'repair' : 'full';
+  const forgeNeeded = collocations.length > 0 && (forgeMode === 'full' || hasStrugglingCollocation);
+
   const resolveGenerationPhase = (wordId: string, tier: typeof currentTier) => {
     if (tier === 'mature' && !matureNeedsGeneration(wordId)) {
       skipGenerationAndAdvance();
@@ -524,7 +535,7 @@ export default function ReviewPage() {
       setPhase('memory_trick');
     } else if (contexts.length > 0) {
       setPhase('context');
-    } else if (collocations.length > 0) {
+    } else if (forgeNeeded) {
       setPhase('collocation');
     } else {
       resolveGenerationPhase(currentItem.word.id, currentTier);
@@ -534,7 +545,7 @@ export default function ReviewPage() {
   const handleMemoryTrickNext = () => {
     if (contexts.length > 0) {
       setPhase('context');
-    } else if (collocations.length > 0) {
+    } else if (forgeNeeded) {
       setPhase('collocation');
     } else {
       resolveGenerationPhase(currentItem!.word.id, currentTier);
@@ -559,7 +570,7 @@ export default function ReviewPage() {
   const handleClozeNext = () => {
     setClozeAnswer('');
     setClozeSubmitted(false);
-    if (collocations.length > 0) {
+    if (forgeNeeded) {
       setPhase('collocation');
     } else {
       resolveGenerationPhase(currentItem!.word.id, currentTier);
@@ -758,6 +769,7 @@ export default function ReviewPage() {
               currentItem={currentItem}
               currentIndex={currentIndex}
               collocations={collocations}
+              mode={forgeMode}
               onNext={handleCollocationNext}
             />
           )}

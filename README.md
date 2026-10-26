@@ -27,8 +27,11 @@ The competitive edge: an **AI-powered sentence scoring pipeline** that evaluates
 ## ✨ Features
 
 - ⚔️ **Battle Phase** — 4-choice cloze test before definition reveal. Forces recall, not recognition.
-- 📖 **Context Phase** — Read real example sentences, fill in the blank.
-- 🔗 **Collocation Phase** — Review natural word pairings and usage patterns.
+- 📖 **Context Theater** — Fill the missing word in a two-line dialogue rendered as an iMessage thread. A penalty-kick pitch plays each attempt (goal, off the bar, off the post, wide, over) alongside a 5-attempt shootout record for that word. Fits the screen with no scrolling.
+- 🔗 **Collocation Forge** — Each phrase loses its partner word ("___ a decision", "opt ___ a salad") and you pick it from 4 shape-matched options (keys 1–4). XP, combo streaks and a chain that forges a link per phrase. Built to stay useful, not tiring:
+  - **Capped at 3 phrases per word per session**, chosen by need: phrases you missed last time first, then never-tested ones, then the least recently practised.
+  - **Mature words skip the Forge entirely**, unless one of their phrases was missed last time — then they get a short *Repair Round* of just those.
+  - Every answer is saved (`collocation_attempts`), so "Missed last time" and "fixed ✨" markers reflect your real history.
 - ✍️ **Generation Phase** — Write your own sentence; AI scores it on the spot.
 - 🔄 **Synonyms Phase** — Review semantically related words to build a richer mental web.
 - 🤖 **AI Auto-Scoring** — Gemini-powered sentence evaluation. No self-rating bias.
@@ -235,6 +238,8 @@ erDiagram
     words ||--o{ word_contexts : has
     words ||--o{ word_collocations : has
     words ||--o{ semantic_connections : has
+    words ||--o{ cloze_attempts : records
+    word_collocations ||--o{ collocation_attempts : records
 
     users {
         uuid id PK
@@ -296,6 +301,25 @@ erDiagram
         uuid word_id FK
         string connected_word
         string connection_type
+    }
+
+    cloze_attempts {
+        uuid id PK
+        uuid user_id FK
+        uuid word_id FK
+        string user_answer
+        bool was_correct
+        timestamp created_at
+    }
+
+    collocation_attempts {
+        uuid id PK
+        uuid user_id FK
+        uuid word_id FK
+        uuid collocation_id FK
+        bool was_correct "solved on first pick"
+        string wrong_pick "first wrong option, if any"
+        timestamp created_at
     }
 
     review_sessions {
@@ -427,8 +451,12 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 - [x] Conquered word marking in Dictionary — strikethrough, dimmed, teal border, checkmark, "already conquered" badge
 - [x] Daily Shuffle — date-seeded daily word discovery, CEFR + POS filters, adjustable batch size (1–50), pagination
 - [x] AI Intelligence Tips panel on Daily Shuffle — structured insight report per POS + CEFR combo (why it matters, strategy, power insight, focus score)
+- [x] Context Theater redesign — no-scroll layout, penalty-kick pitch per attempt, iMessage-style dialogue with tapback reactions
+- [x] Collocation Forge — gamified partner-word quiz with XP, combos and chain progress
+- [x] Need-based collocation drilling — 3 per session, missed phrases first, mature words skip or get a repair round (`collocation_attempts`)
 
 ### 🔜 Up Next
+- [ ] **Better Forge decoys** — return 3 plausible-but-wrong partner words per collocation from the existing bundled autofill request (no extra LLM calls), falling back to library-sourced decoys for older words
 - [ ] **Listening phase** — TTS pronunciation audio on every word card so you hear it while you review it
 - [ ] **Forgetting curve visualizer** — per-word chart showing memory strength over time, so you can see exactly how a word was learned
 - [ ] **Custom decks / topic lists** — group words into decks (IELTS Academic, Business English, Phrasal Verbs) and review them independently
