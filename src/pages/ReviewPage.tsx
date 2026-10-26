@@ -692,7 +692,7 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="min-h-screen pt-8 pb-24 px-4 max-w-lg mx-auto">
+    <div className={`min-h-screen pt-8 pb-24 px-4 max-w-lg mx-auto ${phase === 'context' ? 'lg:max-w-6xl lg:px-8' : ''}`}>
       <style>{RV_STYLES}</style>
 
       {/* Header */}

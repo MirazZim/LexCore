@@ -1,12 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
+import { RotateCcw, Check, X, ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useClozeAttemptHistoryForWord } from '@/hooks/useClozeAttempts';
 import type { DueWordItem, ClozeDialogue } from './types';
 
 const WIN_PHRASES = ['In context. Owned.', 'Nailed it.', 'Sharp recall.', 'Perfect.', 'Locked in.'];
 const LOSS_PHRASES = ['Not quite.', 'Read it again.', 'Study the context.', 'Almost.'];
+
+const MAX_SLOTS = 5;
 
 // ── Types ─────────────────────────────────────────────────────────
 interface SpellingAttempt {
@@ -31,326 +33,626 @@ interface ContextPhaseProps {
   onClozeRetry: () => void;
 }
 
+interface ClozeSegment {
+  text: string;
+  blank: boolean;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────
-function maskTargetWord(sentence: string, word: string): string {
+/**
+ * Split a sentence into plain/blank segments. Blanks keep the ORIGINAL token
+ * (e.g. "abandoned" for target "abandon") so it can be revealed after submit.
+ */
+function splitCloze(sentence: string, word: string): ClozeSegment[] {
   const w = word.toLowerCase().trim();
   if (!/^[a-z]+$/.test(w)) {
-    const escaped = w.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
-    return sentence.replace(new RegExp(escaped, 'gi'), '______');
+    const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return sentence
+      .split(new RegExp(`(${escaped})`, 'gi'))
+      .map((text, i) => ({ text, blank: i % 2 === 1 }))
+      .filter(s => s.text);
   }
   const stems = [w];
   if (w.endsWith('e')) stems.push(w.slice(0, -1));
   if (w.endsWith('y')) stems.push(w.slice(0, -1) + 'i');
-  return sentence.replace(/[A-Za-z]+/g, token => {
-    const t = token.toLowerCase();
-    return stems.some(s => t.startsWith(s) && t.length - s.length <= 4) ? '______' : token;
-  });
+  return sentence
+    .split(/([A-Za-z]+)/)
+    .map((text, i) => {
+      const t = text.toLowerCase();
+      const blank = i % 2 === 1 && stems.some(s => t.startsWith(s) && t.length - s.length <= 4);
+      return { text, blank };
+    })
+    .filter(s => s.text);
 }
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
 
-// ── FIFA Goal Post Visualization ──────────────────────────────────
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+// ── Penalty shot geometry ─────────────────────────────────────────
+// SVG scene, viewBox 0 0 400 270. Goal mouth spans x 90→310, crossbar at
+// y 70, goal line at y 190. Every attempt is a penalty from the spot.
+type ShotKind = 'goal' | 'crossbar' | 'post' | 'wide' | 'over';
+interface Pt { x: number; y: number }
+
+const GOAL_L = 90;
+const GOAL_R = 310;
+const BAR_Y = 70;
+const LINE_Y = 190;
+const SPOT: Pt = { x: 200, y: 252 };
+const FLIGHT = 0.75;
+
+const GOAL_TARGETS: Pt[] = [
+  { x: 200, y: 122 },
+  { x: 138, y: 104 },
+  { x: 262, y: 108 },
+  { x: 152, y: 160 },
+  { x: 250, y: 158 },
+];
+
+const MISS_KINDS: ShotKind[] = ['crossbar', 'post', 'wide', 'over'];
+
+const COMMENTARY: Record<ShotKind, string> = {
+  goal: 'GOAL!',
+  crossbar: 'Off the crossbar!',
+  post: 'Rattles the post!',
+  wide: 'Dragged wide!',
+  over: 'Blazed over the bar!',
+};
+
+interface Shot {
+  kind: ShotKind;
+  /** Where the ball meets the frame / net. */
+  contact: Pt;
+  /** Bezier control for the flight arc. */
+  control: Pt;
+  /** Post-contact rebound points (empty for clean shots). */
+  rebound: Pt[];
+}
+
+function planShot(attempt: SpellingAttempt, slot: number): Shot {
+  const h = hashString(attempt.id);
+  const dir = h & 1 ? 1 : -1;
+
+  let kind: ShotKind = 'goal';
+  let contact: Pt;
+  let rebound: Pt[] = [];
+
+  if (attempt.wasCorrect) {
+    contact = GOAL_TARGETS[slot % GOAL_TARGETS.length];
+  } else {
+    kind = MISS_KINDS[(h >> 1) % MISS_KINDS.length];
+    const jitter = ((h >> 4) % 40) - 20;
+    switch (kind) {
+      case 'crossbar':
+        contact = { x: 200 + dir * (50 + jitter), y: BAR_Y + 7 };
+        rebound = [
+          { x: contact.x + dir * 22, y: BAR_Y - 30 },
+          { x: contact.x + dir * 40, y: BAR_Y - 22 },
+        ];
+        break;
+      case 'post': {
+        const postX = dir < 0 ? GOAL_L + 8 : GOAL_R - 8;
+        contact = { x: postX, y: 120 + jitter };
+        rebound = [
+          { x: postX + dir * 34, y: 150 + jitter / 2 },
+          { x: postX + dir * 52, y: 182 },
+        ];
+        break;
+      }
+      case 'wide':
+        contact = { x: dir < 0 ? 46 + jitter / 2 : 354 + jitter / 2, y: 135 + jitter };
+        break;
+      default:
+        contact = { x: 200 + dir * (30 + jitter), y: 28 };
+    }
+  }
+
+  const control = {
+    x: (SPOT.x + contact.x) / 2 + dir * 26,
+    y: Math.min(SPOT.y, contact.y) - 30,
+  };
+  return { kind, contact, control, rebound };
+}
+
+function bezier(p0: Pt, c: Pt, p1: Pt, t: number): Pt {
+  const u = 1 - t;
+  return {
+    x: u * u * p0.x + 2 * u * t * c.x + t * t * p1.x,
+    y: u * u * p0.y + 2 * u * t * c.y + t * t * p1.y,
+  };
+}
+
+function shotKeyframes(shot: Shot) {
+  const flight = Array.from({ length: 9 }, (_, i) => bezier(SPOT, shot.control, shot.contact, i / 8));
+  const pts = [...flight, ...shot.rebound];
+  const flightEnd = 8 / (pts.length - 1);
+  const times = pts.map((_, i) =>
+    i <= 8 ? (i / 8) * flightEnd : flightEnd + ((i - 8) / shot.rebound.length) * (1 - flightEnd)
+  );
+  // Ball shrinks with distance (perspective) and a bit more into the net
+  const scale = pts.map((_, i) => (i <= 8 ? 1 - (i / 8) * 0.45 : 0.55));
+  return { xs: pts.map(p => p.x), ys: pts.map(p => p.y), times, scale };
+}
+
+function shotPath(shot: Shot): string {
+  const { contact: k, control: c } = shot;
+  return `M ${SPOT.x} ${SPOT.y} Q ${c.x} ${c.y} ${k.x} ${k.y}` + shot.rebound.map(p => ` L ${p.x} ${p.y}`).join('');
+}
+
+// ── Penalty scene ─────────────────────────────────────────────────
 
 /**
- * FIFA Penalty Kick Goal Post
- *
- * Scoped to ONE target word. Shows that word's last 5 cloze attempts
- * (pulled from cloze_attempts, across all past sessions) so repeated
- * mistakes on the same word are visible and reinforced over time.
- *
- * Visual metaphor:
- * - CORRECT   → ball in the net (subtle green dot inside the goal)
- * - MISSPELLED → ball HITS THE CROSSBAR / POST (loud red segment on the bar,
- *   labeled with what was actually typed that attempt)
+ * Penalty-shootout view scoped to ONE target word: its last 5 cloze attempts
+ * (from cloze_attempts, across all past sessions). Correct answers bury the
+ * ball in the net; misses clip the bar, rattle the post or fly wide/over,
+ * tagged with what was actually typed.
  */
-function GoalPost({ attempts, targetWord }: { attempts: SpellingAttempt[]; targetWord: string }) {
-  const MAX_SLOTS = 5;
-
-  const slots = Array.from({ length: MAX_SLOTS }, (_, i) => attempts[i] || null);
-  const scoredCount = slots.filter(a => a?.wasCorrect).length;
-  const missedCount = slots.filter(a => a && !a.wasCorrect).length;
-  const emptyCount = MAX_SLOTS - scoredCount - missedCount;
-  const pastMisses = slots.filter((a): a is SpellingAttempt => !!a && !a.wasCorrect);
-  const isRepeatedMiss = missedCount >= 2;
+function PenaltyScene({ attempts, kick }: { attempts: SpellingAttempt[]; kick: SpellingAttempt | null }) {
+  // Only the current kick is played out on the pitch; history lives in the
+  // scoreboard + shootout tracker. Before submitting, the ball waits on the spot.
+  const latest = kick ? { attempt: kick, shot: planShot(kick, 0) } : null;
+  const goals = attempts.filter(a => a.wasCorrect).length;
+  const misses = attempts.length - goals;
+  // Shootout tracker reads left → right, oldest first
+  const chronological = [...attempts].reverse();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.4, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="mt-6 select-none"
-    >
-      {/* ── Goal Structure ─────────────────────────────────────────── */}
-      <div className="relative mx-auto" style={{ maxWidth: 420 }}>
+    <div className="h-full flex flex-col select-none">
+      {/* ── Scoreboard ─────────────────────────────────────────────── */}
+      <div className="shrink-0 hidden lg:flex items-center justify-between px-7 pt-6">
+        <div>
+          <p className="text-[9px] uppercase tracking-[0.25em] font-bold text-zinc-500">Penalty record</p>
+          <p className="text-[11px] text-zinc-600 mt-0.5">Last {MAX_SLOTS} attempts on this word</p>
+        </div>
+        <div
+          className="flex items-center gap-3 rounded-xl px-4 py-2 font-black tabular-nums"
+          style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.06)', fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          <div className="text-center">
+            <motion.p key={goals} initial={{ scale: 1.4 }} animate={{ scale: 1 }} className="text-2xl leading-none text-emerald-400">{goals}</motion.p>
+            <p className="text-[8px] uppercase tracking-widest text-emerald-400/60 mt-1">Goals</p>
+          </div>
+          <span className="text-xl text-zinc-600">–</span>
+          <div className="text-center">
+            <motion.p
+              key={misses}
+              initial={{ scale: 1.4 }}
+              animate={{ scale: 1 }}
+              className="text-2xl leading-none text-rose-500"
+              style={{ textShadow: misses ? '0 0 14px rgba(244,63,94,0.4)' : 'none' }}
+            >
+              {misses}
+            </motion.p>
+            <p className="text-[8px] uppercase tracking-widest text-rose-400/60 mt-1">Missed</p>
+          </div>
+        </div>
+      </div>
 
-        {/* Crossbar + Posts Frame */}
-        <div className="relative" style={{ aspectRatio: '2 / 1.3' }}>
+      {/* ── Pitch ─────────────────────────────────────────────────── */}
+      <div className="relative flex-1 min-h-0">
+        {/* Live commentary for the latest shot */}
+        <div className="absolute top-2 lg:top-4 inset-x-0 flex justify-center z-10 pointer-events-none">
+          <AnimatePresence mode="wait">
+            {latest ? (
+              <motion.div
+                key={latest.attempt.id}
+                initial={{ opacity: 0, y: -8, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 18, delay: 0.2 + FLIGHT }}
+                className="px-3 py-1 rounded-full text-[10px] lg:text-xs font-black uppercase tracking-wider"
+                style={latest.shot.kind === 'goal'
+                  ? { background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(52,211,153,0.4)' }
+                  : { background: 'rgba(244,63,94,0.15)', color: '#fb7185', border: '1px solid rgba(244,63,94,0.4)' }}
+              >
+                {COMMENTARY[latest.shot.kind]}
+                {latest.shot.kind !== 'goal' && (
+                  <span className="normal-case font-semibold opacity-80"> · "{latest.attempt.userAnswer || 'blank'}"</span>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="px-3 py-1 rounded-full text-[10px] lg:text-xs font-bold uppercase tracking-wider text-zinc-500"
+                style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                Step up — take the kick
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-          {/* Top Crossbar */}
-          <div className="absolute top-0 left-0 right-0 h-16 flex gap-1 px-0.5">
-            {slots.map((attempt, index) => {
-              const isFilled = attempt !== null;
-              const isMiss = isFilled && !attempt.wasCorrect;
-              const isCorrect = isFilled && attempt.wasCorrect;
-              const isRepeated = isMiss && isRepeatedMiss;
+        <svg viewBox="0 0 400 270" preserveAspectRatio="xMidYMax meet" className="absolute inset-0 w-full h-full">
+          <defs>
+            <pattern id="ct-net" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <path d="M 0 0 L 0 9 M 0 0 L 9 0" stroke="rgba(255,255,255,0.13)" strokeWidth="0.7" fill="none" />
+            </pattern>
+            <linearGradient id="ct-grass" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#0f2a1e" />
+              <stop offset="1" stopColor="#0a1a13" />
+            </linearGradient>
+            <radialGradient id="ct-spot-light" cx="0.5" cy="0" r="0.8">
+              <stop offset="0" stopColor="rgba(255,255,255,0.07)" />
+              <stop offset="1" stopColor="rgba(255,255,255,0)" />
+            </radialGradient>
+            <radialGradient id="ct-ball" cx="0.35" cy="0.3" r="0.8">
+              <stop offset="0" stopColor="#ffffff" />
+              <stop offset="1" stopColor="#c9c9d1" />
+            </radialGradient>
+          </defs>
 
-              return (
-                <motion.div
-                  key={isFilled ? attempt.id : `bar-${index}`}
-                  className="flex-1 rounded-sm relative overflow-hidden"
-                  style={{
-                    background: isMiss
-                      ? isRepeated
-                        ? 'linear-gradient(180deg, #f43f5e 0%, #e11d48 100%)'
-                        : 'linear-gradient(180deg, #fb7185 0%, #f43f5e 100%)'
-                      : isCorrect
-                        ? 'linear-gradient(180deg, #34d399 0%, #10b981 100%)'
-                        : 'rgba(255,255,255,0.08)',
-                    boxShadow: isMiss
-                      ? isRepeated
-                        ? '0 0 20px rgba(244,63,94,0.6), inset 0 1px 0 rgba(255,255,255,0.2)'
-                        : '0 0 12px rgba(244,63,94,0.4), inset 0 1px 0 rgba(255,255,255,0.15)'
-                      : isCorrect
-                        ? '0 0 12px rgba(16,185,129,0.4), inset 0 1px 0 rgba(255,255,255,0.15)'
-                        : 'inset 0 1px 0 rgba(255,255,255,0.05)',
-                    border: isMiss
-                      ? '1px solid rgba(244,63,94,0.5)'
-                      : isCorrect
-                        ? '1px solid rgba(16,185,129,0.5)'
-                        : '1px solid rgba(255,255,255,0.06)',
-                  }}
-                  initial={isFilled ? { scaleY: 0.3, opacity: 0 } : {}}
-                  animate={{ scaleY: 1, opacity: 1 }}
+          {/* Floodlight wash */}
+          <ellipse cx="200" cy="40" rx="220" ry="150" fill="url(#ct-spot-light)" />
+
+          {/* Grass with mowing stripes */}
+          <path d="M 0 182 L 400 182 L 400 270 L 0 270 Z" fill="url(#ct-grass)" />
+          {[0, 1, 2, 3, 4, 5, 6, 7].map(i => (
+            <path
+              key={i}
+              d={`M ${i * 50} 182 L ${i * 50 + 50} 182 L ${(i * 50 + 50 - 200) * 1.6 + 200} 270 L ${(i * 50 - 200) * 1.6 + 200} 270 Z`}
+              fill={i % 2 ? 'rgba(255,255,255,0.025)' : 'transparent'}
+            />
+          ))}
+          {/* Six-yard box + penalty spot */}
+          <path d="M 60 190 L 40 222 L 360 222 L 340 190" stroke="rgba(255,255,255,0.18)" strokeWidth="1" fill="none" />
+          <line x1="0" y1={LINE_Y} x2="400" y2={LINE_Y} stroke="rgba(255,255,255,0.22)" strokeWidth="1" />
+          <ellipse cx={SPOT.x} cy={SPOT.y + 6} rx="4" ry="1.6" fill="rgba(255,255,255,0.4)" />
+
+          {/* Net (back plane + side panels) */}
+          <path
+            d={`M ${GOAL_L} ${BAR_Y} L ${GOAL_L + 22} ${BAR_Y + 18} L ${GOAL_R - 22} ${BAR_Y + 18} L ${GOAL_R} ${BAR_Y} L ${GOAL_R} ${LINE_Y} L ${GOAL_R - 22} ${LINE_Y - 8} L ${GOAL_L + 22} ${LINE_Y - 8} L ${GOAL_L} ${LINE_Y} Z`}
+            fill="rgba(10,10,14,0.55)"
+          />
+          <rect x={GOAL_L} y={BAR_Y} width={GOAL_R - GOAL_L} height={LINE_Y - BAR_Y} fill="url(#ct-net)" />
+          <path
+            d={`M ${GOAL_L + 22} ${BAR_Y + 18} L ${GOAL_R - 22} ${BAR_Y + 18} L ${GOAL_R - 22} ${LINE_Y - 8} L ${GOAL_L + 22} ${LINE_Y - 8} Z`}
+            stroke="rgba(255,255,255,0.1)" strokeWidth="0.8" fill="none"
+          />
+          <path
+            d={`M ${GOAL_L} ${BAR_Y} L ${GOAL_L + 22} ${BAR_Y + 18} M ${GOAL_R} ${BAR_Y} L ${GOAL_R - 22} ${BAR_Y + 18} M ${GOAL_L} ${LINE_Y} L ${GOAL_L + 22} ${LINE_Y - 8} M ${GOAL_R} ${LINE_Y} L ${GOAL_R - 22} ${LINE_Y - 8}`}
+            stroke="rgba(255,255,255,0.12)" strokeWidth="0.8"
+          />
+
+          {/* Frame — flashes on woodwork hits */}
+          <rect x={GOAL_L - 4} y={BAR_Y - 4} width={GOAL_R - GOAL_L + 8} height="5" rx="2" fill="#e4e4e7" />
+          <rect x={GOAL_L - 4} y={BAR_Y - 4} width="5" height={LINE_Y - BAR_Y + 4} rx="2" fill="#e4e4e7" />
+          <rect x={GOAL_R - 1} y={BAR_Y - 4} width="5" height={LINE_Y - BAR_Y + 4} rx="2" fill="#e4e4e7" />
+
+          {/* Ball waiting on the spot */}
+          {!latest && (
+            <motion.g
+              key="ball-on-spot"
+              initial={{ opacity: 0, x: SPOT.x, y: SPOT.y - 4 }}
+              animate={{ opacity: 1, x: SPOT.x, y: [SPOT.y - 4, SPOT.y - 1, SPOT.y - 4] }}
+              transition={{ opacity: { duration: 0.3 }, y: { duration: 1.6, repeat: Infinity, ease: 'easeInOut' } }}
+            >
+              <circle r="8" fill="url(#ct-ball)" stroke="rgba(255,255,255,0.5)" strokeWidth="1" />
+              <path d="M 0 -3 L 2.9 -0.9 L 1.8 2.4 L -1.8 2.4 L -2.9 -0.9 Z" fill="#27272a" />
+            </motion.g>
+          )}
+
+          {/* The current kick */}
+          {latest && [latest].map(({ attempt, shot }) => {
+            const slot = 0;
+            const isLatest = true;
+            const delay = 0.2 + slot * 0.12;
+            const kf = shotKeyframes(shot);
+            const rest = shot.rebound[shot.rebound.length - 1] ?? shot.contact;
+            const isGoal = shot.kind === 'goal';
+            const hitsWood = shot.kind === 'crossbar' || shot.kind === 'post';
+            const accent = isGoal ? '#34d399' : '#f43f5e';
+            const fade = isLatest ? 1 : 0.45;
+            const duration = FLIGHT * (hitsWood ? 1.5 : 1);
+
+            return (
+              <g key={attempt.id}>
+                {/* Flight trail */}
+                <motion.path
+                  d={shotPath(shot)}
+                  fill="none"
+                  stroke={accent}
+                  strokeWidth={isLatest ? 1.6 : 1}
+                  strokeDasharray="3 4"
+                  strokeLinecap="round"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: isLatest ? 0.75 : 0.18 }}
+                  transition={{ duration: duration, delay, ease: 'easeOut' }}
+                />
+
+                {/* Net bulge on a goal */}
+                {isGoal && (
+                  <motion.ellipse
+                    cx={shot.contact.x}
+                    cy={shot.contact.y}
+                    fill="none"
+                    stroke="#34d399"
+                    strokeWidth="1.5"
+                    initial={{ rx: 2, ry: 2, opacity: 0 }}
+                    animate={{ rx: [2, 26], ry: [2, 16], opacity: [0.9, 0] }}
+                    transition={{ duration: 0.7, delay: delay + FLIGHT, ease: 'easeOut' }}
+                  />
+                )}
+
+                {/* Impact burst on the woodwork */}
+                {hitsWood && (
+                  <motion.g
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: [0, 1.2, 1], opacity: [0, 1, fade] }}
+                    transition={{ duration: 0.4, delay: delay + duration * kf.times[8] }}
+                    style={{ transformOrigin: `${shot.contact.x}px ${shot.contact.y}px`, transformBox: 'view-box' }}
+                  >
+                    {[0, 45, 90, 135, 180, 225, 270, 315].map(deg => {
+                      const r = (deg * Math.PI) / 180;
+                      return (
+                        <line
+                          key={deg}
+                          x1={shot.contact.x + Math.cos(r) * 7}
+                          y1={shot.contact.y + Math.sin(r) * 7}
+                          x2={shot.contact.x + Math.cos(r) * 13}
+                          y2={shot.contact.y + Math.sin(r) * 13}
+                          stroke="#fb7185"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                        />
+                      );
+                    })}
+                  </motion.g>
+                )}
+
+                {/* Ball */}
+                <motion.g
+                  initial={{ x: SPOT.x, y: SPOT.y, scale: 1, opacity: 0 }}
+                  animate={{ x: kf.xs, y: kf.ys, scale: kf.scale, opacity: fade }}
                   transition={{
-                    type: 'spring',
-                    stiffness: 500,
-                    damping: 20,
-                    delay: index * 0.06,
+                    x: { duration, delay, times: kf.times, ease: 'easeOut' },
+                    y: { duration, delay, times: kf.times, ease: 'easeOut' },
+                    scale: { duration, delay, times: kf.times },
+                    opacity: { duration: 0.15, delay },
                   }}
                 >
-                  {/* Miss label inside the bar segment */}
-                  {isMiss && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.15 + index * 0.06 }}
-                      className="absolute inset-0 flex items-center justify-center"
-                    >
-                      <span
-                        className="block text-[8.5px] font-bold uppercase tracking-tighter truncate max-w-full px-0.5"
-                        style={{
-                          color: isRepeated ? '#fff' : 'rgba(255,255,255,0.9)',
-                          textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                        }}
-                      >
-                        {attempt.userAnswer || '—'}
-                      </span>
-                    </motion.div>
-                  )}
-
-                  {/* Correct checkmark inside the bar segment */}
-                  {isCorrect && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.15 + index * 0.06 }}
-                      className="absolute inset-0 flex items-center justify-center"
-                    >
-                      <CheckCircle2
-                        className="h-5 w-5"
-                        style={{ color: 'rgba(255,255,255,0.9)' }}
-                      />
-                    </motion.div>
-                  )}
-
-                  {/* Pulse ring for repeated misses */}
-                  {isRepeated && (
-                    <motion.div
-                      className="absolute inset-0 rounded-sm"
-                      style={{ border: '2px solid #f43f5e' }}
-                      animate={{ opacity: [0.6, 0, 0.6] }}
-                      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                  <circle r="8" fill="url(#ct-ball)" stroke={accent} strokeWidth={isLatest ? 1.6 : 1} />
+                  <path d="M 0 -3 L 2.9 -0.9 L 1.8 2.4 L -1.8 2.4 L -2.9 -0.9 Z" fill="#27272a" />
+                  {isLatest && (
+                    <motion.circle
+                      r="8"
+                      fill="none"
+                      stroke={accent}
+                      initial={{ opacity: 0 }}
+                      animate={{ r: [8, 15], opacity: [0.7, 0] }}
+                      transition={{ duration: 1.6, delay: delay + FLIGHT * 1.5, repeat: Infinity }}
                     />
                   )}
-                </motion.div>
-              );
-            })}
-          </div>
+                </motion.g>
 
-          {/* Side Posts */}
-          <div
-            className="absolute top-16 left-0 w-1.5 h-full rounded-b-sm"
-            style={{ background: 'rgba(255,255,255,0.12)' }}
-          />
-          <div
-            className="absolute top-16 right-0 w-1.5 h-full rounded-b-sm"
-            style={{ background: 'rgba(255,255,255,0.12)' }}
-          />
+                {/* What was typed, pinned where the miss ended up */}
+                {!isGoal && isLatest && (
+                  <motion.g
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: delay + FLIGHT * 1.5 }}
+                  >
+                    {(() => {
+                      const label = (attempt.userAnswer || 'blank').slice(0, 14);
+                      const w = label.length * 6 + 14;
+                      const lx = Math.min(Math.max(rest.x - w / 2, 4), 396 - w);
+                      const ly = rest.y < 50 ? rest.y + 12 : rest.y - 30;
+                      return (
+                        <>
+                          <rect x={lx} y={ly} width={w} height="16" rx="8" fill="#e11d48" />
+                          <text
+                            x={lx + w / 2}
+                            y={ly + 11.5}
+                            textAnchor="middle"
+                            fontSize="9.5"
+                            fontWeight="800"
+                            fill="#fff"
+                            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                          >
+                            {label}
+                          </text>
+                        </>
+                      );
+                    })()}
+                  </motion.g>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+      </div>
 
-          {/* Goal Net Area */}
-          <div
-            className="absolute top-16 left-1.5 right-1.5 bottom-0 rounded-b-sm overflow-hidden"
+      {/* ── Shootout tracker ──────────────────────────────────────── */}
+      <div className="shrink-0 hidden lg:flex justify-center gap-3 px-7 pb-6 pt-3">
+        {Array.from({ length: MAX_SLOTS }, (_, i) => {
+          const a = chronological[i];
+          return (
+            <div key={a?.id ?? `empty-${i}`} className="flex flex-col items-center gap-1.5 w-14">
+              <motion.div
+                initial={a ? { scale: 0 } : false}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 16, delay: 0.1 + i * 0.05 }}
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={!a
+                  ? { border: '1.5px dashed rgba(255,255,255,0.12)' }
+                  : a.wasCorrect
+                    ? { background: 'rgba(16,185,129,0.18)', border: '1.5px solid #10b981', boxShadow: '0 0 12px rgba(16,185,129,0.3)' }
+                    : { background: 'rgba(244,63,94,0.18)', border: '1.5px solid #f43f5e', boxShadow: '0 0 12px rgba(244,63,94,0.3)' }}
+              >
+                {a && (a.wasCorrect
+                  ? <Check className="h-4 w-4 text-emerald-400" strokeWidth={3} />
+                  : <X className="h-4 w-4 text-rose-400" strokeWidth={3} />)}
+              </motion.div>
+              <span
+                className={`text-[10px] font-semibold truncate max-w-full ${a && !a.wasCorrect ? 'text-rose-300 line-through' : 'text-zinc-600'}`}
+                title={a?.userAnswer}
+              >
+                {a ? (a.wasCorrect ? 'scored' : a.userAnswer || 'blank') : '—'}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Cloze bubble ──────────────────────────────────────────────────
+function ClozeLine({
+  segments, typed, revealed, correct, sent,
+}: { segments: ClozeSegment[]; typed: string; revealed: boolean; correct: boolean; sent: boolean }) {
+  return (
+    <>
+      {segments.map((seg, i) => {
+        if (!seg.blank) return <span key={i}>{seg.text}</span>;
+        if (revealed) {
+          return (
+            <motion.span
+              key={i}
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 20, delay: 0.1 }}
+              className="inline-block font-semibold px-1.5 rounded-md"
+              // iOS green when right; search-highlight yellow showing the real word when wrong
+              style={correct
+                ? { color: '#fff', background: '#34C759' }
+                : { color: '#000', background: '#FFD60A' }}
+            >
+              {seg.text}
+            </motion.span>
+          );
+        }
+        return (
+          <span
+            key={i}
+            className="inline-block text-center font-semibold px-1.5 rounded-md align-baseline"
             style={{
-              background: 'rgba(20,20,25,0.5)',
-              borderLeft: '1px solid rgba(255,255,255,0.06)',
-              borderRight: '1px solid rgba(255,255,255,0.06)',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              minWidth: `${Math.max(4, seg.text.length) * 0.55}em`,
+              color: sent ? '#fff' : '#000',
+              background: sent ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.06)',
+              borderBottom: `2px dashed ${sent ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.35)'}`,
             }}
           >
-            {/* Hexagonal net pattern */}
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='24' viewBox='0 0 14 24'%3E%3Cpath d='M7 0L14 4v8L7 16 0 12V4z' fill='none' stroke='rgba(255,255,255,0.1)' stroke-width='0.8'/%3E%3C/svg%3E")`,
-                backgroundSize: '14px 24px',
-                opacity: 0.6,
-              }}
-            />
+            {typed || ' '}
+          </span>
+        );
+      })}
+    </>
+  );
+}
 
-            {/* Correct shots — subtle dots in the net */}
-            <div className="absolute inset-0 flex items-center justify-center gap-6">
-              {slots.map((attempt, index) => {
-                if (!attempt?.wasCorrect) return null;
-                // Scatter correct dots slightly
-                const offsets = [
-                  { x: -30, y: -15 },
-                  { x: 0, y: -25 },
-                  { x: 30, y: -10 },
-                  { x: -20, y: 15 },
-                  { x: 25, y: 20 },
-                ];
-                const off = offsets[index] || { x: 0, y: 0 };
+// ── iMessage (light mode) ─────────────────────────────────────────
+type StageMood = 'idle' | 'correct' | 'wrong';
 
-                return (
-                  <motion.div
-                    key={attempt.id}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 0.5 }}
-                    transition={{
-                      type: 'spring',
-                      stiffness: 400,
-                      damping: 20,
-                      delay: 0.2 + index * 0.05,
-                    }}
-                    className="absolute w-2.5 h-2.5 rounded-full bg-emerald-400"
-                    style={{
-                      transform: `translate(${off.x}px, ${off.y}px)`,
-                      boxShadow: '0 0 8px rgba(52,211,153,0.3)',
-                    }}
-                  />
-                );
-              })}
-            </div>
+const IOS_FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif";
+const IOS_SCREEN = '#FFFFFF';
+const IOS_BLUE = '#0B84FE';
+const IOS_GRAY = '#E9E9EB';
+const IOS_LABEL = '#8E8E93';
+const IOS_RED = '#FF3B30';
 
-            {/* Empty state hint */}
-            {slots.every(s => s === null) && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[10px] text-white/10 uppercase tracking-widest">
-                  5 attempts
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+/**
+ * iMessage bubble with the classic curled tail: a rounded nub in the bubble
+ * colour, then a screen-coloured cutout carving the curl out of it.
+ */
+function IMessageBubble({ sent, children }: { sent: boolean; children: React.ReactNode }) {
+  const fill = sent ? IOS_BLUE : IOS_GRAY;
+  return (
+    <div
+      className="relative min-w-0 px-3 py-[6px] rounded-[18px] text-[15px] lg:text-[16px] leading-[1.3]"
+      style={{ background: fill, color: sent ? '#fff' : '#000', letterSpacing: '-0.01em' }}
+    >
+      <span
+        aria-hidden
+        className="absolute bottom-0 w-5 h-5"
+        style={sent
+          ? { right: -7, background: fill, borderBottomLeftRadius: '16px 14px' }
+          : { left: -7, background: fill, borderBottomRightRadius: '16px 14px' }}
+      />
+      <span
+        aria-hidden
+        className="absolute bottom-0 w-[10px] h-5"
+        style={sent
+          ? { right: -10, background: IOS_SCREEN, borderBottomLeftRadius: 10 }
+          : { left: -10, background: IOS_SCREEN, borderBottomRightRadius: 10 }}
+      />
+      <span className="relative">{children}</span>
+    </div>
+  );
+}
 
-        {/* Ground / Goal Line */}
-        <div
-          className="h-1.5 mx-auto rounded-full mt-1"
-          style={{
-            width: '108%',
-            marginLeft: '-4%',
-            background: 'linear-gradient(to bottom, rgba(255,255,255,0.08), transparent)',
-          }}
+/** Scene partner's reaction on your message — ♥ when right, ? when wrong. */
+function Tapback({ correct }: { correct: boolean }) {
+  return (
+    <motion.span
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 520, damping: 16, delay: 0.3 }}
+      className="absolute -top-5 -left-5 z-[2] w-7 h-7 rounded-full flex items-center justify-center"
+      style={{ background: IOS_GRAY, border: `2px solid ${IOS_SCREEN}` }}
+    >
+      {correct
+        ? <span className="text-[13px] leading-none" style={{ color: '#FF2D55' }}>♥</span>
+        : <span className="text-[13px] font-bold leading-none" style={{ color: IOS_LABEL }}>?</span>}
+      <span
+        aria-hidden
+        className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full"
+        style={{ background: IOS_GRAY, border: `1.5px solid ${IOS_SCREEN}` }}
+      />
+    </motion.span>
+  );
+}
+
+/** Ring that fills in, then a check / cross drawn stroke by stroke. */
+function VerdictBadge({ correct }: { correct: boolean }) {
+  const color = correct ? '#00FFC8' : '#fb7185';
+  return (
+    <motion.svg
+      viewBox="0 0 40 40"
+      className="shrink-0 w-10 h-10"
+      initial={{ scale: 0.6 }}
+      animate={{ scale: 1 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 14 }}
+    >
+      <circle cx="20" cy="20" r="18" fill={correct ? 'rgba(0,255,200,0.1)' : 'rgba(244,63,94,0.1)'} />
+      <motion.circle
+        cx="20" cy="20" r="18" fill="none" stroke={color} strokeWidth="2"
+        style={{ rotate: -90, transformOrigin: '50% 50%' }}
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+      />
+      {correct ? (
+        <motion.path
+          d="M12.5 20.5 L17.5 25.5 L27.5 15" fill="none" stroke={color} strokeWidth="3"
+          strokeLinecap="round" strokeLinejoin="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 0.3, delay: 0.35, ease: 'easeOut' }}
         />
-      </div>
-
-      {/* ── Stats Row ──────────────────────────────────────────────── */}
-      <div className="flex items-center justify-center gap-10 mt-5">
-        {/* Missed — EMPHASIZED */}
-        <div className="flex flex-col items-center gap-1.5">
-          <motion.span
-            key={missedCount}
-            initial={{ scale: 1.3 }}
-            animate={{ scale: 1 }}
-            className="text-2xl font-black text-rose-500 tabular-nums"
-            style={{ textShadow: '0 0 16px rgba(244,63,94,0.35)' }}
-          >
-            {missedCount}
-          </motion.span>
-          <div className="w-7 h-2 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.4)]" />
-          <span className="text-[10px] text-rose-400/80 uppercase tracking-wider font-bold">
-            Missed
-          </span>
-        </div>
-
-        {/* Correct — subtle */}
-        <div className="flex flex-col items-center gap-1.5 opacity-50">
-          <span className="text-lg font-semibold text-emerald-400/60 tabular-nums">
-            {scoredCount}
-          </span>
-          <div className="w-2 h-2 rounded-full bg-emerald-400/40" />
-          <span className="text-[10px] text-emerald-400/40 uppercase tracking-wider font-medium">
-            Scored
-          </span>
-        </div>
-
-        {/* Empty */}
-        <div className="flex flex-col items-center gap-1.5 opacity-30">
-          <span className="text-lg font-semibold text-white/20 tabular-nums">
-            {emptyCount}
-          </span>
-          <div className="w-2 h-2 rounded-full bg-white/[0.06]" />
-          <span className="text-[10px] text-white/20 uppercase tracking-wider font-medium">
-            Left
-          </span>
-        </div>
-      </div>
-
-      {/* ── Recurring Miss Alert — this specific word ──────────────── */}
-      <AnimatePresence>
-        {isRepeatedMiss && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="mt-5 overflow-hidden"
-          >
-            <div
-              className="rounded-xl p-4 bg-rose-500/10 border-2 border-rose-500/40"
-              style={{ boxShadow: '0 0 24px rgba(244,63,94,0.15)' }}
-            >
-              <div className="flex items-start gap-3">
-                <motion.div
-                  animate={{ opacity: [1, 0.5, 1] }}
-                  transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-                  className="flex-shrink-0 mt-0.5"
-                >
-                  <RotateCcw className="h-4 w-4 text-rose-400" />
-                </motion.div>
-                <div className="space-y-1.5">
-                  <p className="text-xs font-black text-rose-400 uppercase tracking-wider">
-                    You keep missing "{targetWord}" — Focus Here
-                  </p>
-                  <p className="text-sm text-rose-200/90">
-                    Missed <span className="font-black text-rose-400">{missedCount}</span> of your
-                    last {slots.filter(s => s !== null).length} attempts. Past typos:{' '}
-                    {pastMisses.map((a, i) => (
-                      <span key={a.id}>
-                        <span className="font-bold text-rose-300">"{a.userAnswer || '(blank)'}"</span>
-                        {i < pastMisses.length - 1 ? ', ' : ''}
-                      </span>
-                    ))}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+      ) : (
+        <>
+          <motion.path
+            d="M14 14 L26 26" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round"
+            initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
+            transition={{ duration: 0.18, delay: 0.35 }}
+          />
+          <motion.path
+            d="M26 14 L14 26" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round"
+            initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
+            transition={{ duration: 0.18, delay: 0.5 }}
+          />
+        </>
+      )}
+    </motion.svg>
   );
 }
 
@@ -366,7 +668,7 @@ export function ContextPhase({
   const [attemptHistory, setAttemptHistory] = useState<SpellingAttempt[]>([]);
 
   // Seed from this word's persisted history (across all past sessions)
-  const { data: pastAttemptsForWord } = useClozeAttemptHistoryForWord(currentItem.word.id, 5);
+  const { data: pastAttemptsForWord } = useClozeAttemptHistoryForWord(currentItem.word.id, MAX_SLOTS);
 
   // Reset immediately on word change so we never show the previous word's bar
   useEffect(() => {
@@ -389,44 +691,79 @@ export function ContextPhase({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pastAttemptsForWord, currentItem.word.id]);
 
-  const maskedSetup = clozeDialogue?.setup
-    ? maskTargetWord(clozeDialogue.setup, currentItem.word.word)
+  const setupSegments = clozeDialogue?.setup
+    ? splitCloze(clozeDialogue.setup, currentItem.word.word)
     : undefined;
-  const maskedResponse = clozeDialogue?.response
-    ? maskTargetWord(clozeDialogue.response, currentItem.word.word)
+  const responseSegments = clozeDialogue?.response
+    ? splitCloze(clozeDialogue.response, currentItem.word.word)
     : undefined;
   const isClozeCorrect = clozeAnswer.toLowerCase().trim() === currentItem.word.word.toLowerCase();
+
+  // The kick being played out on the pitch. Held separately from the history so
+  // the DB refetch (which swaps in rows with new ids) can't replay or re-roll it.
+  const [currentKick, setCurrentKick] = useState<SpellingAttempt | null>(null);
 
   // Track attempt when submitted — prepend locally for instant feedback
   // (the DB write + refetch happens in parallel via useSaveClozeAttempt)
   useEffect(() => {
-    if (clozeSubmitted) {
-      const newAttempt: SpellingAttempt = {
-        id: generateId(),
-        word: currentItem.word.word,
-        userAnswer: clozeAnswer,
-        wasCorrect: isClozeCorrect,
-        timestamp: Date.now(),
-      };
-
-      // Keep only last 5 (FIFO — newest first)
-      setAttemptHistory(prev => [newAttempt, ...prev].slice(0, 5));
+    if (!clozeSubmitted) {
+      setCurrentKick(null);
+      return;
     }
+    const newAttempt: SpellingAttempt = {
+      id: generateId(),
+      word: currentItem.word.word,
+      userAnswer: clozeAnswer,
+      wasCorrect: isClozeCorrect,
+      timestamp: Date.now(),
+    };
+
+    setCurrentKick(newAttempt);
+    // Keep only last 5 (FIFO — newest first)
+    setAttemptHistory(prev => [newAttempt, ...prev].slice(0, MAX_SLOTS));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clozeSubmitted]);
 
-  // Make sure Continue is always reachable — scroll it into view once the
-  // feedback + shake animation has had time to settle (card can be tall
-  // when the recurring-miss panel is showing).
-  const continueButtonRef = useRef<HTMLButtonElement>(null);
+  // Focus Continue / Try Again only after the submitting Enter has fully
+  // dispatched — autoFocus would grab focus mid-keypress and the same Enter
+  // would immediately "click" the button, skipping the result.
+  const resultButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (clozeSubmitted) {
-      const t = setTimeout(() => {
-        continueButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 550);
-      return () => clearTimeout(t);
-    }
+    if (!clozeSubmitted) return;
+    const t = setTimeout(() => resultButtonRef.current?.focus(), 350);
+    return () => clearTimeout(t);
   }, [clozeSubmitted]);
+
+  // Shrink-to-fit for the chat thread: no scrolling allowed, so if a long
+  // dialogue overflows the phone panel, step the thread's zoom down until it fits.
+  const threadRef = useRef<HTMLDivElement>(null);
+  const threadContentRef = useRef<HTMLDivElement>(null);
+  const [threadZoom, setThreadZoom] = useState(1);
+  const [viewportH, setViewportH] = useState(() => window.innerHeight);
+  useEffect(() => {
+    const onResize = () => setViewportH(window.innerHeight);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  useLayoutEffect(() => {
+    setThreadZoom(1);
+  }, [currentItem.word.id, clozeDialogue, viewportH]);
+  useLayoutEffect(() => {
+    const box = threadRef.current;
+    const content = threadContentRef.current;
+    if (!box || !content) return;
+    const available = box.clientHeight - 20; // pt-3 + pb-2
+    if (content.getBoundingClientRect().height > available && threadZoom > 0.7) {
+      setThreadZoom(z => Math.round((z - 0.05) * 100) / 100);
+    }
+  }, [threadZoom, clozeSubmitted, isClozeCorrect, clozeDialogue, clozeLoading, viewportH, attemptHistory]);
+
+  const pastMisses = attemptHistory.filter(a => !a.wasCorrect);
+  const isRepeatedMiss = pastMisses.length >= 2;
+  const mood: StageMood = clozeSubmitted ? (isClozeCorrect ? 'correct' : 'wrong') : 'idle';
+  const [chatTime] = useState(() =>
+    new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  );
 
   return (
     <motion.div
@@ -435,10 +772,19 @@ export function ContextPhase({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -60 }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      className="mt-4"
+      // Fixed height sized to the viewport minus the review page chrome,
+      // so the whole phase fits without scrolling.
+      className="mt-4 flex flex-col lg:flex-row gap-3 lg:gap-5"
+      style={{ height: 'min(calc(100dvh - 13rem), 780px)' }}
     >
+      {/* ── Pitch: penalty record for this word ──────────────────────── */}
+      <div className="rv-glass rounded-[2rem] overflow-hidden shrink-0 h-40 lg:h-auto lg:w-[44%]">
+        <PenaltyScene attempts={attemptHistory} kick={clozeSubmitted ? currentKick : null} />
+      </div>
+
+      {/* ── Theater ─────────────────────────────────────────────────── */}
       <div
-        className="rv-glass rounded-[2rem] overflow-hidden"
+        className="rv-glass rounded-[2rem] overflow-hidden flex flex-col flex-1 min-h-0 min-w-0 relative"
         style={{
           borderColor: clozeSubmitted
             ? isClozeCorrect ? 'rgba(0,255,200,0.45)' : 'rgba(239,68,68,0.45)'
@@ -446,25 +792,22 @@ export function ContextPhase({
           transition: 'border-color 0.45s ease',
         }}
       >
-        {/* ── Header ─────────────────────────────────────────────────── */}
-        <div className="px-8 pt-7">
+
+        {/* ── Label + word ───────────────────────────────────────────── */}
+        <div className="relative shrink-0 px-6 lg:px-10 pt-5">
           <span
-            className="text-[9px] uppercase tracking-[0.25em] font-bold px-2.5 py-1 rounded-full"
+            className="text-[9px] uppercase tracking-[0.25em] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
             style={{ background: 'rgba(56,189,248,0.07)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.15)' }}
           >
-            📖 Context Theater
+            🎭 Context Theater
           </span>
-        </div>
-
-        {/* ── Word — spring blur-in ───────────────────────────────────── */}
-        <div className="px-8 pt-5 pb-5 text-center">
           <motion.h2
             initial={{ opacity: 0, scale: 0.82, filter: 'blur(8px)' }}
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             transition={{ type: 'spring', stiffness: 180, damping: 18, delay: 0.06 }}
-            className="font-bold leading-none select-none"
+            className="font-bold leading-none select-none break-words text-center mt-2 lg:mt-3"
             style={{
-              fontSize: 'clamp(2.6rem, 8vw, 4rem)',
+              fontSize: 'clamp(1.85rem, 3.5vw, 3.25rem)',
               color: '#38bdf8',
               fontFamily: "'Space Grotesk', sans-serif",
               textShadow: '0 0 40px rgba(56,189,248,0.28)',
@@ -475,179 +818,232 @@ export function ContextPhase({
           </motion.h2>
         </div>
 
-        {/* Hairline */}
-        <div className="mx-8 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-        {/* ── FIFA Goal Post ──────────────────────────────────────── */}
-        <GoalPost
-          attempts={attemptHistory}
-          targetWord={currentItem.word.word}
-        />
+        {/* ── Recurring miss strip — this specific word ──────────────── */}
+        <AnimatePresence>
+          {isRepeatedMiss && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className="relative shrink-0 mx-6 lg:mx-10 mt-4 flex items-center gap-2 rounded-xl px-3 py-2 bg-rose-500/10 border border-rose-500/40 text-xs lg:text-sm"
+              style={{ boxShadow: '0 0 18px rgba(244,63,94,0.12)' }}
+            >
+              <motion.span
+                animate={{ opacity: [1, 0.5, 1] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                className="shrink-0"
+              >
+                <RotateCcw className="h-3.5 w-3.5 text-rose-400" />
+              </motion.span>
+              <span className="shrink-0 font-black uppercase tracking-wider text-rose-400">
+                Missed {pastMisses.length}/{attemptHistory.length}
+              </span>
+              <span className="truncate text-rose-200/90">
+                · typed {pastMisses.map(a => `"${a.userAnswer || '(blank)'}"`).join(', ')}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* ── Content ────────────────────────────────────────────────── */}
-        <div className="px-8 pt-6 pb-8">
-          {clozeLoading ? (
-            <div className="space-y-3 py-2">
-              <Skeleton className="h-4 w-full rounded-lg bg-zinc-800/60" />
-              <Skeleton className="h-4 w-4/5 rounded-lg bg-zinc-800/60" />
-              <Skeleton className="h-4 w-3/5 rounded-lg bg-zinc-800/60" />
-            </div>
-          ) : maskedResponse ? (
-            <>
-              <div className="mb-6 space-y-2.5">
-                {maskedSetup && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, x: -8 }}
-                    animate={{ opacity: 1, y: 0, x: 0 }}
-                    transition={{ delay: 0.1, duration: 0.28 }}
-                    className="flex"
-                  >
-                    <p
-                      className="text-zinc-300 text-sm leading-relaxed px-4 py-3 rounded-2xl rounded-bl-md max-w-[85%]"
-                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
-                    >
-                      {maskedSetup}
-                    </p>
-                  </motion.div>
-                )}
-                <motion.div
-                  initial={{ opacity: 0, y: 8, x: 8 }}
-                  animate={{ opacity: 1, y: 0, x: 0 }}
-                  transition={{ delay: 0.2, duration: 0.28 }}
-                  className="flex justify-end"
-                >
-                  <p
-                    className="text-zinc-100 text-sm leading-relaxed px-4 py-3 rounded-2xl rounded-br-md max-w-[85%] text-right"
-                    style={{ background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.25)' }}
-                  >
-                    {maskedResponse}
-                  </p>
-                </motion.div>
+        {/* ── Stage: two actors, one forgotten word ───────────────────── */}
+        <div className="relative flex-1 min-h-0 px-6 lg:px-10 pt-4 pb-3 flex flex-col">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="flex-1 min-h-0 flex flex-col rounded-[1.5rem] overflow-hidden"
+            style={{ background: IOS_SCREEN, fontFamily: IOS_FONT, boxShadow: '0 10px 40px rgba(0,0,0,0.35)' }}
+          >
+            {/* Contact header */}
+            <div
+              className="shrink-0 flex items-center justify-center gap-2 py-2"
+              style={{ background: 'rgba(249,249,249,0.94)', borderBottom: '0.5px solid rgba(0,0,0,0.15)' }}
+            >
+              <div
+                className="w-6 h-6 rounded-full flex items-center justify-center text-xs"
+                style={{ background: 'linear-gradient(180deg, #A5ABB8 0%, #858994 100%)' }}
+              >
+                🎭
               </div>
+              <p className="text-[12px] font-medium text-black">
+                Scene Partner <span style={{ color: IOS_LABEL }}>›</span>
+              </p>
+            </div>
 
-              {!clozeSubmitted ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.22, duration: 0.24 }}
-                  className="space-y-3"
-                >
-                  <input
-                    className="rv-input"
-                    placeholder="Type the missing word…"
-                    value={clozeAnswer}
-                    onChange={e => onClozeAnswerChange(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && clozeAnswer.trim() && onClozeSubmit()}
-                    autoFocus
-                    autoComplete="off"
-                    autoCorrect="off"
-                    spellCheck={false}
-                  />
-                  <button
-                    onClick={onClozeSubmit}
-                    disabled={!clozeAnswer.trim()}
-                    className="rv-btn-mint"
-                  >
-                    Check
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.97 }}
-                  animate={{
-                    opacity: 1,
-                    scale: 1,
-                    x: isClozeCorrect ? 0 : [0, -9, 9, -7, 7, -4, 4, 0],
-                  }}
-                  transition={{
-                    opacity: { duration: 0.22 },
-                    scale: { duration: 0.22 },
-                    x: isClozeCorrect ? {} : { duration: 0.45, ease: 'easeInOut' },
-                  }}
-                  className="space-y-4"
-                >
-                  <div className="text-center mb-2">
+            {/* Thread */}
+            <div ref={threadRef} className="flex-1 min-h-0 overflow-hidden px-4 pt-3 pb-2 flex flex-col justify-end">
+              {clozeLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-9 w-3/5 rounded-[18px] bg-zinc-200" />
+                  <Skeleton className="h-9 w-1/2 rounded-[18px] bg-zinc-200 ml-auto" />
+                </div>
+              ) : responseSegments ? (
+                <div ref={threadContentRef} className="shrink-0 flex flex-col" style={{ zoom: threadZoom }}>
+                  <p className="shrink-0 text-center text-[11px] leading-tight mb-2.5" style={{ color: IOS_LABEL }}>
+                    iMessage · <span className="font-semibold">Today</span> {chatTime}
+                  </p>
+                  {setupSegments && (
                     <motion.div
-                      initial={{ scale: 0.35, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ type: 'spring', stiffness: 280, damping: 16, delay: 0.04 }}
-                      className="inline-block mb-2"
+                      initial={{ opacity: 0, scale: 0.85 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.15, type: 'spring', stiffness: 420, damping: 28 }}
+                      className="shrink-0 flex max-w-[75%] origin-bottom-left ml-1"
                     >
-                      {isClozeCorrect
-                        ? <CheckCircle2 className="h-12 w-12 mx-auto" style={{ color: '#00FFC8' }} />
-                        : <XCircle className="h-12 w-12 mx-auto" style={{ color: '#ef4444' }} />
-                      }
+                      <IMessageBubble sent={false}>
+                        <ClozeLine segments={setupSegments} typed={clozeAnswer} revealed={clozeSubmitted} correct={isClozeCorrect} sent={false} />
+                      </IMessageBubble>
                     </motion.div>
-                    <motion.p
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.14, duration: 0.2 }}
-                      className="text-xl font-bold"
-                      style={{ color: isClozeCorrect ? '#00FFC8' : '#ef4444', fontFamily: "'Space Grotesk', sans-serif" }}
+                  )}
+                  <div className="flex items-center justify-end gap-2.5">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.85 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.5, type: 'spring', stiffness: 420, damping: 28 }}
+                      className="relative flex max-w-[75%] origin-bottom-right mr-1 mt-4"
                     >
-                      {isClozeCorrect ? winPhrase : lossPhrase}
-                    </motion.p>
+                      {mood !== 'idle' && <Tapback correct={mood === 'correct'} />}
+                      <IMessageBubble sent>
+                        <ClozeLine segments={responseSegments} typed={clozeAnswer} revealed={clozeSubmitted} correct={isClozeCorrect} sent />
+                      </IMessageBubble>
+                    </motion.div>
+                    {mood === 'wrong' && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 20, delay: 0.15 }}
+                        className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-white text-[13px] font-bold"
+                        style={{ background: IOS_RED }}
+                      >
+                        !
+                      </motion.span>
+                    )}
                   </div>
-
-                  {!isClozeCorrect && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.22, duration: 0.22 }}
-                      className="rounded-2xl p-4 space-y-3"
-                      style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.14)' }}
-                    >
-                      <div>
-                        <p className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1">Your answer</p>
-                        <p className="text-sm line-through font-medium" style={{ color: '#ef4444' }}>{clozeAnswer}</p>
-                      </div>
-                      <div className="h-px" style={{ background: 'rgba(255,255,255,0.05)' }} />
-                      <div>
-                        <p className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1">The word</p>
-                        <p className="text-sm font-semibold" style={{ color: '#00FFC8' }}>{currentItem.word.word}</p>
-                        <p className="text-xs text-zinc-500 mt-0.5">{currentItem.word.definition}</p>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {isClozeCorrect ? (
-                    <motion.button
-                      ref={continueButtonRef}
-                      onClick={onClozeNext}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2, duration: 0.22 }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.97 }}
-                      className="rv-btn-mint"
-                    >
-                      Continue
-                    </motion.button>
-                  ) : (
-                    <motion.button
-                      ref={continueButtonRef}
-                      onClick={onClozeRetry}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.46, duration: 0.22 }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.97 }}
-                      className="rv-btn-mint"
-                    >
-                      Try Again — Type It Correctly
-                    </motion.button>
-                  )}
-                </motion.div>
+                  <p
+                    className={`text-right text-[11px] font-semibold mt-1 h-4 ${mood === 'wrong' ? 'mr-8' : 'mr-1'}`}
+                    style={{ color: mood === 'wrong' ? IOS_RED : IOS_LABEL }}
+                  >
+                    {mood === 'idle' ? '' : mood === 'correct' ? 'Delivered' : 'Not Delivered'}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-center text-sm my-auto" style={{ color: IOS_LABEL }}>
+                  No context sentence available for this word.
+                </p>
               )}
-            </>
-          ) : (
+            </div>
+          </motion.div>
+        </div>
+
+        {/* ── Footer: input / verdict ─────────────────────────────────── */}
+        <div className="relative shrink-0 px-6 lg:px-10 pb-6 lg:pb-7 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          {clozeLoading ? (
+            <Skeleton className="h-12 w-full rounded-2xl bg-zinc-800/60" />
+          ) : !responseSegments ? (
+            <button onClick={onClozeNext} className="rv-btn-mint">Continue</button>
+          ) : !clozeSubmitted ? (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.14 }}
-              className="text-center py-6 space-y-4"
+              transition={{ delay: 0.22, duration: 0.24 }}
+              className="flex gap-2"
             >
-              <p className="text-zinc-500 text-sm">No context sentence available for this word.</p>
-              <button onClick={onClozeNext} className="rv-btn-mint">Continue</button>
+              <input
+                className="rv-input flex-1 min-w-0"
+                placeholder="Type the missing word…"
+                value={clozeAnswer}
+                onChange={e => onClozeAnswerChange(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && clozeAnswer.trim() && onClozeSubmit()}
+                autoFocus
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+              <button
+                onClick={onClozeSubmit}
+                disabled={!clozeAnswer.trim()}
+                className="rv-btn-mint shrink-0"
+                style={{ width: 'auto', padding: '0 1.6rem' }}
+              >
+                Shoot ⚽
+              </button>
+            </motion.div>
+          ) : (
+            // Same height as the input row: the composer morphs into the verdict
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0, x: isClozeCorrect ? 0 : [0, -8, 8, -6, 6, -3, 3, 0] }}
+              transition={{
+                opacity: { duration: 0.2 },
+                y: { duration: 0.2 },
+                x: isClozeCorrect ? {} : { duration: 0.45, ease: 'easeInOut' },
+              }}
+              className="flex items-center gap-3 h-12"
+            >
+              <VerdictBadge correct={isClozeCorrect} />
+
+              <div className="min-w-0 flex-1">
+                <p
+                  className="text-base lg:text-lg font-bold leading-tight truncate"
+                  style={{ color: isClozeCorrect ? '#00FFC8' : '#fb7185', fontFamily: "'Space Grotesk', sans-serif" }}
+                >
+                  {isClozeCorrect ? winPhrase : lossPhrase}
+                </p>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.35 }}
+                  className="text-xs text-zinc-500 truncate mt-0.5"
+                  title={isClozeCorrect ? undefined : currentItem.word.definition}
+                >
+                  {isClozeCorrect ? (
+                    <>Scene Partner <span className="text-[#FF2D55]">♥</span> loved your message</>
+                  ) : (
+                    <>
+                      <span className="line-through text-rose-400/80">{clozeAnswer}</span>
+                      <span className="mx-1 text-zinc-600">→</span>
+                      <span className="font-semibold text-[#00FFC8]">{currentItem.word.word}</span>
+                      <span className="text-zinc-600"> · {currentItem.word.definition}</span>
+                    </>
+                  )}
+                </motion.p>
+              </div>
+
+              <motion.button
+                ref={resultButtonRef}
+                onClick={isClozeCorrect ? onClozeNext : onClozeRetry}
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: isClozeCorrect ? 0.25 : 0.5, type: 'spring', stiffness: 300, damping: 22 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.96 }}
+                className="group relative shrink-0 h-12 px-5 rounded-2xl flex items-center gap-2 text-sm font-bold overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                style={isClozeCorrect
+                  ? { background: 'linear-gradient(135deg, #2cffca 0%, #00FFC8 100%)', color: '#18181b', boxShadow: '0 0 20px rgba(0,255,200,0.25)' }
+                  : { background: 'rgba(244,63,94,0.12)', color: '#fecdd3', border: '1px solid rgba(244,63,94,0.4)' }}
+              >
+                {isClozeCorrect && (
+                  <motion.span
+                    aria-hidden
+                    className="absolute inset-y-0 w-1/2 -skew-x-12"
+                    style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)' }}
+                    initial={{ left: '-60%' }}
+                    animate={{ left: '130%' }}
+                    transition={{ duration: 0.9, delay: 0.6, ease: 'easeInOut' }}
+                  />
+                )}
+                {!isClozeCorrect && <RotateCcw className="relative h-4 w-4" />}
+                <span className="relative">{isClozeCorrect ? 'Continue' : 'Retry'}</span>
+                {isClozeCorrect && (
+                  <ArrowRight className="relative h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                )}
+                <kbd
+                  className="relative hidden sm:inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-md text-[10px] font-semibold"
+                  style={{ background: isClozeCorrect ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)' }}
+                >
+                  ↵
+                </kbd>
+              </motion.button>
             </motion.div>
           )}
         </div>
