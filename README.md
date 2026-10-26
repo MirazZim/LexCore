@@ -30,9 +30,10 @@ The competitive edge: an **AI-powered sentence scoring pipeline** that evaluates
 - 📖 **Context Theater** — Fill the missing word in a two-line dialogue rendered as an iMessage thread. A penalty-kick pitch plays each attempt (goal, off the bar, off the post, wide, over) alongside a 5-attempt shootout record for that word. Fits the screen with no scrolling.
 - 🔗 **Collocation Forge** — Each phrase loses its partner word ("___ a decision", "opt ___ a salad") and you pick it from 4 shape-matched options (keys 1–4). XP, combo streaks and a chain that forges a link per phrase. Built to stay useful, not tiring:
   - **Capped at 3 phrases per word per session**, chosen by need: phrases you missed last time first, then never-tested ones, then the least recently practised.
-  - **Mature words skip the Forge entirely**, unless one of their phrases was missed last time — then they get a short *Repair Round* of just those.
+  - **Mature words get a 2-phrase *Quick Check* instead** — only when a phrase is due (missed last time, never tested, or unseen for 30 days); otherwise they skip the Forge.
   - Every answer is saved (`collocation_attempts`), so "Missed last time" and "fixed ✨" markers reflect your real history.
-- ✍️ **Generation Phase** — Write your own sentence; AI scores it on the spot.
+- 🪝 **Memory Hook** — The word's mnemonic, drawn by technique instead of shown as plain text: phonetic / root splits as chips with glosses, formulas as equations, NOT ↔ IS contrasts, sound-alikes, LIKE → BUT analogies, and micro-stories that play word by word. Includes a 🔊 pronunciation button and an "In the wild" example.
+- ✍️ **Generation Lab** — A minimal writing canvas: write a sentence with the word while it highlights itself as you type. A 4-part meter (word · length · connector · collocation) and a single next-step hint push you toward a richer sentence; Enter sends it for AI scoring. The **Writer's toolkit** beside it holds collocations, IELTS connectors and power phrases — click any to insert it at the cursor, with a live example and tip. Press `/` or Ctrl+K for a searchable command palette.
 - 🔄 **Synonyms Phase** — Review semantically related words to build a richer mental web.
 - 🤖 **AI Auto-Scoring** — Gemini-powered sentence evaluation. No self-rating bias.
 - 🔁 **FSRS v6 Spaced Repetition** — State-machine scheduling (New → Learning → Review → Relearning) driven by actual memory stability, not fixed intervals.
@@ -453,7 +454,9 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 - [x] AI Intelligence Tips panel on Daily Shuffle — structured insight report per POS + CEFR combo (why it matters, strategy, power insight, focus score)
 - [x] Context Theater redesign — no-scroll layout, penalty-kick pitch per attempt, iMessage-style dialogue with tapback reactions
 - [x] Collocation Forge — gamified partner-word quiz with XP, combos and chain progress
-- [x] Need-based collocation drilling — 3 per session, missed phrases first, mature words skip or get a repair round (`collocation_attempts`)
+- [x] Need-based collocation drilling — 3 per session, missed phrases first; mature words get a 2-phrase Quick Check only when a phrase is missed, untested or unseen for 30 days (`collocation_attempts`)
+- [x] Memory Hook redesign — technique-specific visuals for every mnemonic type, pronunciation button
+- [x] Generation Lab redesign — live-highlight editor, sentence meter, Writer's toolkit with click-to-insert, `/` command palette
 
 ### 🔜 Up Next
 - [ ] **Better Forge decoys** — return 3 plausible-but-wrong partner words per collocation from the existing bundled autofill request (no extra LLM calls), falling back to library-sourced decoys for older words
