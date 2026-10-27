@@ -4,6 +4,7 @@ import { RotateCcw, Check, X, ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useClozeAttemptHistoryForWord } from '@/hooks/useClozeAttempts';
 import type { DueWordItem, ClozeDialogue } from './types';
+import { HERO, HERO_GREEN } from './twoTone';
 
 const WIN_PHRASES = ['In context. Owned.', 'Nailed it.', 'Sharp recall.', 'Perfect.', 'Locked in.'];
 const LOSS_PHRASES = ['Not quite.', 'Read it again.', 'Study the context.', 'Almost.'];
@@ -78,7 +79,7 @@ function hashString(s: string): number {
 // ── Penalty shot geometry ─────────────────────────────────────────
 // SVG scene, viewBox 0 0 400 270. Goal mouth spans x 90→310, crossbar at
 // y 70, goal line at y 190. Every attempt is a penalty from the spot.
-type ShotKind = 'goal' | 'crossbar' | 'post' | 'wide' | 'over';
+type ShotKind = 'goal' | 'save' | 'crossbar' | 'over';
 interface Pt { x: number; y: number }
 
 const GOAL_L = 90;
@@ -96,15 +97,20 @@ const GOAL_TARGETS: Pt[] = [
   { x: 250, y: 158 },
 ];
 
-const MISS_KINDS: ShotKind[] = ['crossbar', 'post', 'wide', 'over'];
+const MISS_KINDS: ShotKind[] = ['save', 'crossbar', 'over'];
 
 const COMMENTARY: Record<ShotKind, string> = {
   goal: 'GOAL!',
+  save: 'Saved by the keeper!',
   crossbar: 'Off the crossbar!',
-  post: 'Rattles the post!',
-  wide: 'Dragged wide!',
-  over: 'Blazed over the bar!',
+  over: 'Out of the stadium!',
 };
+
+// Keeper's save dive: sideways shift + tilt around the waist (200, 156).
+// The ball is aimed at where the gloves end up, 39 units above the pivot.
+const SAVE_SHIFT = 40;
+const SAVE_TILT = 70;
+const KICK_DELAY = 0.2;
 
 interface Shot {
   kind: ShotKind;
@@ -116,7 +122,7 @@ interface Shot {
   rebound: Pt[];
 }
 
-function planShot(attempt: SpellingAttempt, slot: number): Shot {
+function planShot(attempt: SpellingAttempt): Shot {
   const h = hashString(attempt.id);
   const dir = h & 1 ? 1 : -1;
 
@@ -125,11 +131,26 @@ function planShot(attempt: SpellingAttempt, slot: number): Shot {
   let rebound: Pt[] = [];
 
   if (attempt.wasCorrect) {
-    contact = GOAL_TARGETS[slot % GOAL_TARGETS.length];
+    // Pick a corner/zone from the hash, then nudge it so no two goals look identical
+    const base = GOAL_TARGETS[(h >>> 1) % GOAL_TARGETS.length];
+    contact = {
+      x: base.x + (((h >>> 4) % 30) - 15),
+      y: base.y + (((h >>> 9) % 16) - 8),
+    };
   } else {
-    kind = MISS_KINDS[(h >> 1) % MISS_KINDS.length];
-    const jitter = ((h >> 4) % 40) - 20;
+    kind = MISS_KINDS[(h >>> 1) % MISS_KINDS.length];
+    const jitter = ((h >>> 4) % 40) - 20;
     switch (kind) {
+      case 'save': {
+        // Fingertip parry: ball meets the gloves at full stretch, pushed round the post
+        const tilt = (SAVE_TILT * Math.PI) / 180;
+        contact = { x: 200 + dir * (SAVE_SHIFT + 39 * Math.sin(tilt)), y: 152 - 39 * Math.cos(tilt) };
+        rebound = [
+          { x: contact.x + dir * 26, y: contact.y - 28 },
+          { x: contact.x + dir * 52, y: 184 },
+        ];
+        break;
+      }
       case 'crossbar':
         contact = { x: 200 + dir * (50 + jitter), y: BAR_Y + 7 };
         rebound = [
@@ -137,20 +158,9 @@ function planShot(attempt: SpellingAttempt, slot: number): Shot {
           { x: contact.x + dir * 40, y: BAR_Y - 22 },
         ];
         break;
-      case 'post': {
-        const postX = dir < 0 ? GOAL_L + 8 : GOAL_R - 8;
-        contact = { x: postX, y: 120 + jitter };
-        rebound = [
-          { x: postX + dir * 34, y: 150 + jitter / 2 },
-          { x: postX + dir * 52, y: 182 },
-        ];
-        break;
-      }
-      case 'wide':
-        contact = { x: dir < 0 ? 46 + jitter / 2 : 354 + jitter / 2, y: 135 + jitter };
-        break;
       default:
-        contact = { x: 200 + dir * (30 + jitter), y: 28 };
+        // Skied clean out of the scene
+        contact = { x: 200 + dir * (40 + jitter), y: -60 };
     }
   }
 
@@ -186,6 +196,258 @@ function shotPath(shot: Shot): string {
   return `M ${SPOT.x} ${SPOT.y} Q ${c.x} ${c.y} ${k.x} ${k.y}` + shot.rebound.map(p => ` L ${p.x} ${p.y}`).join('');
 }
 
+/** Shots that bounce off something (bar, gloves) get extra time for the rebound. */
+function deflects(shot: Shot): boolean {
+  return shot.kind === 'crossbar' || shot.kind === 'save';
+}
+
+function shotDuration(shot: Shot): number {
+  return FLIGHT * (deflects(shot) ? 1.5 : 1);
+}
+
+/** Seconds from submit until the ball reaches its contact point. */
+function impactTime(shot: Shot): number {
+  return KICK_DELAY + shotDuration(shot) * shotKeyframes(shot).times[8];
+}
+
+// ── Goalkeeper ────────────────────────────────────────────────────
+// Drawn standing on the goal line at x 200 (feet at y 187). The dive rotates
+// the whole figure around its waist, so "arms overhead" becomes "arms
+// outstretched towards the post".
+
+const KIT = '#f59e0b';
+
+/**
+ * Pins an SVG element's transform origin to a point in viewBox coordinates.
+ * framer-motion overwrites a plain `transformOrigin` on SVG with "50% 50%", so
+ * the point is passed as originX/originY fractions of the viewBox instead.
+ */
+function viewBoxOrigin(x: number, y: number) {
+  return { originX: x / 400, originY: y / 270, transformBox: 'view-box' as const };
+}
+
+const KEEPER_POSE = {
+  ready: {
+    armL: 'M 191 145 L 182 140 L 178 130',
+    armR: 'M 209 145 L 218 140 L 222 130',
+    legL: 'M 195 163 L 191 175 L 189 187',
+    legR: 'M 205 163 L 209 175 L 211 187',
+    gloveL: { cx: 178, cy: 130 },
+    gloveR: { cx: 222, cy: 130 },
+  },
+  dive: {
+    armL: 'M 191 145 L 193 131 L 195 117',
+    armR: 'M 209 145 L 207 131 L 205 117',
+    legL: 'M 195 163 L 197 175 L 198 187',
+    legR: 'M 205 163 L 203 175 L 202 187',
+    gloveL: { cx: 195, cy: 117 },
+    gloveR: { cx: 205, cy: 117 },
+  },
+  // Arms thrown up in a V
+  celebrate: {
+    armL: 'M 191 145 L 185 132 L 181 119',
+    armR: 'M 209 145 L 215 132 L 219 119',
+    legL: 'M 195 163 L 194 175 L 193 187',
+    legR: 'M 205 163 L 206 175 L 207 187',
+    gloveL: { cx: 181, cy: 119 },
+    gloveR: { cx: 219, cy: 119 },
+  },
+};
+
+const DIVE_TIME = 0.45;
+// A save is DIVE_TIME in the air (gloves meet the ball), then the fall to the grass
+const SAVE_FALL_TIME = DIVE_TIME / 0.6;
+const FULL_SHIFT = 64;
+// Lying on the grass: near-horizontal, waist dropped so the body rests on the ground
+const LYING_TILT = 86;
+const GROUNDED_Y = 21;
+
+interface KeeperKick { kind: ShotKind; dir: 1 | -1 }
+
+/** Goals beat the keeper (wrong way); on misses the keeper reads the side. */
+function keeperKick(shot: Shot): KeeperKick {
+  const side = shot.contact.x >= 200 ? 1 : -1;
+  return { kind: shot.kind, dir: shot.kind === 'goal' ? (side === 1 ? -1 : 1) : side };
+}
+
+/** When the keeper leaves the line — a save is timed so the gloves arrive with the ball. */
+function keeperDelay(shot: Shot): number {
+  return shot.kind === 'save' ? impactTime(shot) - DIVE_TIME + 0.03 : KICK_DELAY + FLIGHT * 0.3;
+}
+
+const KEEPER_SHOUT: Record<ShotKind, string> = {
+  goal: '',
+  save: 'SAVED!',
+  crossbar: 'PHEW!',
+  over: 'HA!',
+};
+
+const DIZZY_STAR ='M 0 -3 L 0.9 -0.9 L 3 0 L 0.9 0.9 L 0 3 L -0.9 0.9 L -3 0 L -0.9 -0.9 Z';
+
+/**
+ * Sways on the line until the kick, then dives. Afterwards: beaten by a goal →
+ * lies there with a spinning head; any miss (save, bar, skied) → gets up and celebrates.
+ */
+function GoalKeeper({ kick, delay }: { kick: KeeperKick | null; delay: number }) {
+  const [aftermath, setAftermath] = useState(false);
+
+  const kind = kick?.kind;
+  useEffect(() => {
+    if (!kind) return;
+    // Goal: dizzy as soon as the keeper lands. Miss: a beat on the floor, then up.
+    const wait = delay + DIVE_TIME + (kind === 'goal' ? 0 : 0.55);
+    const id = setTimeout(() => setAftermath(true), wait * 1000);
+    return () => clearTimeout(id);
+  }, [kind, delay]);
+
+  const d = kick?.dir ?? 1;
+  const isSave = kick?.kind === 'save';
+  const celebrating = kick?.kind !== 'goal' && aftermath;
+  const dizzy = kick?.kind === 'goal' && aftermath;
+  const shift = d * (isSave ? SAVE_SHIFT : FULL_SHIFT);
+
+  const pose = !kick ? KEEPER_POSE.ready : celebrating ? KEEPER_POSE.celebrate : KEEPER_POSE.dive;
+  const limb = { duration: 0.25, delay: kick && !aftermath ? delay : 0 };
+
+  const body = !kick
+    ? {
+        animate: { x: [-9, 9, -9], y: [0, -1.5, 0, -1.5, 0] },
+        transition: { duration: 2.4, repeat: Infinity, ease: 'easeInOut' as const },
+      }
+    : celebrating
+      ? {
+          // Back on the feet (the bounce lives on the inner group)
+          animate: { x: shift, y: 0, rotate: 0 },
+          transition: { duration: 0.3, ease: 'easeOut' as const },
+        }
+      : isSave
+        ? {
+            // Airborne at full stretch when the ball arrives, then drops to the grass
+            animate: { x: shift, y: [0, -16, -4, GROUNDED_Y], rotate: [0, d * SAVE_TILT, d * LYING_TILT] },
+            transition: {
+              x: { duration: DIVE_TIME, delay, ease: 'easeOut' as const },
+              y: { duration: SAVE_FALL_TIME, delay, times: [0, 0.35, 0.6, 1], ease: 'easeOut' as const },
+              rotate: { duration: SAVE_FALL_TIME, delay, times: [0, 0.6, 1], ease: 'easeOut' as const },
+            },
+          }
+        : {
+            animate: { x: shift, y: [0, -18, GROUNDED_Y], rotate: d * LYING_TILT },
+            transition: {
+              duration: DIVE_TIME,
+              delay,
+              ease: 'easeOut' as const,
+              y: { duration: DIVE_TIME, delay, times: [0, 0.45, 1] },
+            },
+          };
+
+  return (
+    <g>
+      {/* Ground shadow tracks the keeper sideways only */}
+      <motion.ellipse
+        cx="200" cy="188" rx="14" ry="2.6" fill="rgba(0,0,0,0.45)"
+        animate={!kick ? { x: [-9, 9, -9] } : { x: shift, rx: celebrating ? 14 : 24, opacity: 0.6 }}
+        transition={!kick
+          ? { duration: 2.4, repeat: Infinity, ease: 'easeInOut' }
+          : { duration: celebrating ? 0.3 : DIVE_TIME, delay: celebrating ? 0 : delay, ease: 'easeOut' }}
+      />
+      {/* Celebration bounce, layered over the get-up so the two don't fight */}
+      <motion.g
+        animate={celebrating ? { y: [0, -14, 0] } : { y: 0 }}
+        transition={celebrating
+          ? { duration: 0.5, delay: 0.3, repeat: Infinity, repeatDelay: 0.1, ease: 'easeOut' }
+          : { duration: 0 }}
+      >
+        <motion.g
+          initial={{ x: 0, y: 0, rotate: 0 }}
+          {...body}
+          style={viewBoxOrigin(200, 156)}
+        >
+          {/* Legs + boots */}
+          {(['legL', 'legR'] as const).map(k => (
+            <motion.path
+              key={k}
+              initial={{ d: KEEPER_POSE.ready[k] }}
+              animate={{ d: pose[k] }}
+              transition={limb}
+              stroke="#18181b" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none"
+            />
+          ))}
+          {/* Shorts */}
+          <rect x="190" y="159" width="20" height="9" rx="2.5" fill="#27272a" />
+          {/* Jersey */}
+          <rect x="189" y="140" width="22" height="23" rx="6" fill={KIT} />
+          <path d="M 189.5 150 L 210.5 150" stroke="rgba(0,0,0,0.18)" strokeWidth="1.2" />
+          <text x="200" y="160" textAnchor="middle" fontSize="8" fontWeight="900" fill="rgba(0,0,0,0.5)" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>1</text>
+          {/* Arms + gloves */}
+          {(['L', 'R'] as const).map(s => (
+            <g key={s}>
+              <motion.path
+                initial={{ d: KEEPER_POSE.ready[`arm${s}`] }}
+                animate={{ d: pose[`arm${s}`] }}
+                transition={limb}
+                stroke={KIT} strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
+              />
+              <motion.circle
+                initial={KEEPER_POSE.ready[`glove${s}`]}
+                animate={pose[`glove${s}`]}
+                transition={limb}
+                r="3.6" fill="#f4f4f5" stroke="#a1a1aa" strokeWidth="0.6"
+              />
+            </g>
+          ))}
+          {/* Head — spins when the keeper's been sent the wrong way */}
+          <motion.g
+            animate={dizzy ? { rotate: 360 } : { rotate: 0 }}
+            transition={dizzy ? { duration: 0.5, repeat: Infinity, ease: 'linear' } : { duration: 0 }}
+            style={{ transformOrigin: 'center', transformBox: 'fill-box' }}
+          >
+            <circle cx="200" cy="133" r="6.5" fill="#c68b59" />
+            <path d="M 193.6 132 A 6.5 6.5 0 0 1 206.4 132 Q 200 128.6 193.6 132 Z" fill="#1c1917" />
+          </motion.g>
+          {dizzy && (
+            <motion.g
+              initial={{ opacity: 0, rotate: 0 }}
+              animate={{ opacity: 1, rotate: -360 }}
+              transition={{ opacity: { duration: 0.2 }, rotate: { duration: 1.4, repeat: Infinity, ease: 'linear' } }}
+              style={{ transformOrigin: 'center', transformBox: 'fill-box' }}
+            >
+              {/* Four stars, symmetric so the group's box is centred on the head */}
+              {[0, 90, 180, 270].map(deg => {
+                const r = (deg * Math.PI) / 180;
+                return (
+                  <path
+                    key={deg}
+                    d={DIZZY_STAR}
+                    transform={`translate(${200 + Math.cos(r) * 12} ${133 + Math.sin(r) * 12})`}
+                    fill="#fde047"
+                  />
+                );
+              })}
+            </motion.g>
+          )}
+        </motion.g>
+      </motion.g>
+      {/* Victory shout over the keeper's head */}
+      {celebrating && (
+        <motion.text
+          x={200 + shift}
+          y="104"
+          textAnchor="middle"
+          fontSize="11"
+          fontWeight="900"
+          fill={KIT}
+          initial={{ opacity: 0, scale: 0.4 }}
+          animate={{ opacity: 1, scale: [0.4, 1.25, 1] }}
+          transition={{ duration: 0.4 }}
+          style={{ fontFamily: "'Space Grotesk', sans-serif", transformOrigin: 'center', transformBox: 'fill-box' }}
+        >
+          {kick && KEEPER_SHOUT[kick.kind]}
+        </motion.text>
+      )}
+    </g>
+  );
+}
+
 // ── Penalty scene ─────────────────────────────────────────────────
 
 /**
@@ -197,7 +459,7 @@ function shotPath(shot: Shot): string {
 function PenaltyScene({ attempts, kick }: { attempts: SpellingAttempt[]; kick: SpellingAttempt | null }) {
   // Only the current kick is played out on the pitch; history lives in the
   // scoreboard + shootout tracker. Before submitting, the ball waits on the spot.
-  const latest = kick ? { attempt: kick, shot: planShot(kick, 0) } : null;
+  const latest = kick ? { attempt: kick, shot: planShot(kick) } : null;
   const goals = attempts.filter(a => a.wasCorrect).length;
   const misses = attempts.length - goals;
   // Shootout tracker reads left → right, oldest first
@@ -327,6 +589,13 @@ function PenaltyScene({ attempts, kick }: { attempts: SpellingAttempt[]; kick: S
           <rect x={GOAL_L - 4} y={BAR_Y - 4} width="5" height={LINE_Y - BAR_Y + 4} rx="2" fill="#e4e4e7" />
           <rect x={GOAL_R - 1} y={BAR_Y - 4} width="5" height={LINE_Y - BAR_Y + 4} rx="2" fill="#e4e4e7" />
 
+          {/* Keeper — sways on the line, then dives once the ball is struck */}
+          <GoalKeeper
+            key={latest?.attempt.id ?? 'keeper-idle'}
+            kick={latest ? keeperKick(latest.shot) : null}
+            delay={latest ? keeperDelay(latest.shot) : 0}
+          />
+
           {/* Ball waiting on the spot */}
           {!latest && (
             <motion.g
@@ -344,14 +613,14 @@ function PenaltyScene({ attempts, kick }: { attempts: SpellingAttempt[]; kick: S
           {latest && [latest].map(({ attempt, shot }) => {
             const slot = 0;
             const isLatest = true;
-            const delay = 0.2 + slot * 0.12;
+            const delay = KICK_DELAY + slot * 0.12;
             const kf = shotKeyframes(shot);
             const rest = shot.rebound[shot.rebound.length - 1] ?? shot.contact;
             const isGoal = shot.kind === 'goal';
-            const hitsWood = shot.kind === 'crossbar' || shot.kind === 'post';
+            const hitsSomething = deflects(shot);
             const accent = isGoal ? '#34d399' : '#f43f5e';
             const fade = isLatest ? 1 : 0.45;
-            const duration = FLIGHT * (hitsWood ? 1.5 : 1);
+            const duration = shotDuration(shot);
 
             return (
               <g key={attempt.id}>
@@ -382,13 +651,13 @@ function PenaltyScene({ attempts, kick }: { attempts: SpellingAttempt[]; kick: S
                   />
                 )}
 
-                {/* Impact burst on the woodwork */}
-                {hitsWood && (
+                {/* Impact burst on the woodwork / gloves */}
+                {hitsSomething && (
                   <motion.g
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: [0, 1.2, 1], opacity: [0, 1, fade] }}
                     transition={{ duration: 0.4, delay: delay + duration * kf.times[8] }}
-                    style={{ transformOrigin: `${shot.contact.x}px ${shot.contact.y}px`, transformBox: 'view-box' }}
+                    style={viewBoxOrigin(shot.contact.x, shot.contact.y)}
                   >
                     {[0, 45, 90, 135, 180, 225, 270, 315].map(deg => {
                       const r = (deg * Math.PI) / 180;
@@ -399,7 +668,7 @@ function PenaltyScene({ attempts, kick }: { attempts: SpellingAttempt[]; kick: S
                           y1={shot.contact.y + Math.sin(r) * 7}
                           x2={shot.contact.x + Math.cos(r) * 13}
                           y2={shot.contact.y + Math.sin(r) * 13}
-                          stroke="#fb7185"
+                          stroke={shot.kind === 'save' ? '#fbbf24' : '#fb7185'}
                           strokeWidth="1.6"
                           strokeLinecap="round"
                         />
@@ -444,7 +713,8 @@ function PenaltyScene({ attempts, kick }: { attempts: SpellingAttempt[]; kick: S
                       const label = (attempt.userAnswer || 'blank').slice(0, 14);
                       const w = label.length * 6 + 14;
                       const lx = Math.min(Math.max(rest.x - w / 2, 4), 396 - w);
-                      const ly = rest.y < 50 ? rest.y + 12 : rest.y - 30;
+                      // Balls skied out of the scene get their label pinned just above the bar
+                      const ly = Math.max(rest.y < 50 ? rest.y + 12 : rest.y - 30, 36);
                       return (
                         <>
                           <rect x={lx} y={ly} width={w} height="16" rx="8" fill="#e11d48" />
@@ -554,7 +824,9 @@ type StageMood = 'idle' | 'correct' | 'wrong';
 
 const IOS_FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif";
 const IOS_SCREEN = '#FFFFFF';
-const IOS_BLUE = '#0B84FE';
+// Sent bubble: violet instead of iMessage blue — still reads white text cleanly
+// and stays distinct from the green / yellow answer highlights
+const SENT_BUBBLE = '#7C3AED';
 const IOS_GRAY = '#E9E9EB';
 const IOS_LABEL = '#8E8E93';
 const IOS_RED = '#FF3B30';
@@ -564,7 +836,7 @@ const IOS_RED = '#FF3B30';
  * colour, then a screen-coloured cutout carving the curl out of it.
  */
 function IMessageBubble({ sent, children }: { sent: boolean; children: React.ReactNode }) {
-  const fill = sent ? IOS_BLUE : IOS_GRAY;
+  const fill = sent ? SENT_BUBBLE : IOS_GRAY;
   return (
     <div
       className="relative min-w-0 px-3 py-[6px] rounded-[18px] text-[15px] lg:text-[16px] leading-[1.3]"
@@ -613,7 +885,7 @@ function Tapback({ correct }: { correct: boolean }) {
 
 /** Ring that fills in, then a check / cross drawn stroke by stroke. */
 function VerdictBadge({ correct }: { correct: boolean }) {
-  const color = correct ? '#00FFC8' : '#fb7185';
+  const color = correct ? '#059669' : '#e11d48';
   return (
     <motion.svg
       viewBox="0 0 40 40"
@@ -622,7 +894,7 @@ function VerdictBadge({ correct }: { correct: boolean }) {
       animate={{ scale: 1 }}
       transition={{ type: 'spring', stiffness: 320, damping: 14 }}
     >
-      <circle cx="20" cy="20" r="18" fill={correct ? 'rgba(0,255,200,0.1)' : 'rgba(244,63,94,0.1)'} />
+      <circle cx="20" cy="20" r="18" fill={correct ? 'rgba(5,150,105,0.1)' : 'rgba(225,29,72,0.08)'} />
       <motion.circle
         cx="20" cy="20" r="18" fill="none" stroke={color} strokeWidth="2"
         style={{ rotate: -90, transformOrigin: '50% 50%' }}
@@ -784,20 +1056,21 @@ export function ContextPhase({
 
       {/* ── Theater ─────────────────────────────────────────────────── */}
       <div
-        className="rv-glass rounded-[2rem] overflow-hidden flex flex-col flex-1 min-h-0 min-w-0 relative"
+        className="rv-surface rounded-[2rem] overflow-hidden flex flex-col flex-1 min-h-0 min-w-0 relative"
         style={{
+          border: '1px solid',
           borderColor: clozeSubmitted
-            ? isClozeCorrect ? 'rgba(0,255,200,0.45)' : 'rgba(239,68,68,0.45)'
-            : 'rgba(255,255,255,0.07)',
+            ? isClozeCorrect ? 'rgba(5,150,105,0.55)' : 'rgba(225,29,72,0.5)'
+            : 'rgba(15,23,20,0.08)',
           transition: 'border-color 0.45s ease',
         }}
       >
 
         {/* ── Label + word ───────────────────────────────────────────── */}
-        <div className="relative shrink-0 px-6 lg:px-10 pt-5">
+        <div className="relative shrink-0 px-6 lg:px-10 pt-5 pb-5" style={{ background: HERO.background }}>
           <span
             className="text-[9px] uppercase tracking-[0.25em] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
-            style={{ background: 'rgba(56,189,248,0.07)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.15)' }}
+            style={{ background: 'rgba(56,189,248,0.16)', color: '#7dd3fc' }}
           >
             🎭 Context Theater
           </span>
@@ -808,9 +1081,8 @@ export function ContextPhase({
             className="font-bold leading-none select-none break-words text-center mt-2 lg:mt-3"
             style={{
               fontSize: 'clamp(1.85rem, 3.5vw, 3.25rem)',
-              color: '#38bdf8',
+              color: '#fff',
               fontFamily: "'Space Grotesk', sans-serif",
-              textShadow: '0 0 40px rgba(56,189,248,0.28)',
               letterSpacing: '-0.01em',
             }}
           >
@@ -826,20 +1098,19 @@ export function ContextPhase({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
-              className="relative shrink-0 mx-6 lg:mx-10 mt-4 flex items-center gap-2 rounded-xl px-3 py-2 bg-rose-500/10 border border-rose-500/40 text-xs lg:text-sm"
-              style={{ boxShadow: '0 0 18px rgba(244,63,94,0.12)' }}
+              className="relative shrink-0 mx-6 lg:mx-10 mt-4 flex items-center gap-2 rounded-xl px-3 py-2 bg-rose-50 border border-rose-200 text-xs lg:text-sm"
             >
               <motion.span
                 animate={{ opacity: [1, 0.5, 1] }}
                 transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
                 className="shrink-0"
               >
-                <RotateCcw className="h-3.5 w-3.5 text-rose-400" />
+                <RotateCcw className="h-3.5 w-3.5 text-rose-600" />
               </motion.span>
-              <span className="shrink-0 font-black uppercase tracking-wider text-rose-400">
+              <span className="shrink-0 font-black uppercase tracking-wider text-rose-600">
                 Missed {pastMisses.length}/{attemptHistory.length}
               </span>
-              <span className="truncate text-rose-200/90">
+              <span className="truncate text-rose-700/80">
                 · typed {pastMisses.map(a => `"${a.userAnswer || '(blank)'}"`).join(', ')}
               </span>
             </motion.div>
@@ -853,7 +1124,7 @@ export function ContextPhase({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             className="flex-1 min-h-0 flex flex-col rounded-[1.5rem] overflow-hidden"
-            style={{ background: IOS_SCREEN, fontFamily: IOS_FONT, boxShadow: '0 10px 40px rgba(0,0,0,0.35)' }}
+            style={{ background: IOS_SCREEN, fontFamily: IOS_FONT, border: '1px solid rgba(15,23,20,0.08)', boxShadow: '0 1px 2px rgba(15,23,20,0.05), 0 8px 24px rgba(15,23,20,0.07)' }}
           >
             {/* Contact header */}
             <div
@@ -936,11 +1207,11 @@ export function ContextPhase({
         </div>
 
         {/* ── Footer: input / verdict ─────────────────────────────────── */}
-        <div className="relative shrink-0 px-6 lg:px-10 pb-6 lg:pb-7 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="relative shrink-0 px-6 lg:px-10 pb-6 lg:pb-7 pt-4" style={{ borderTop: '1px solid rgba(15,23,20,0.06)' }}>
           {clozeLoading ? (
-            <Skeleton className="h-12 w-full rounded-2xl bg-zinc-800/60" />
+            <Skeleton className="h-12 w-full rounded-2xl bg-zinc-200" />
           ) : !responseSegments ? (
-            <button onClick={onClozeNext} className="rv-btn-mint">Continue</button>
+            <button onClick={onClozeNext} className="rv-btn-hero">Continue</button>
           ) : !clozeSubmitted ? (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -949,7 +1220,7 @@ export function ContextPhase({
               className="flex gap-2"
             >
               <input
-                className="rv-input flex-1 min-w-0"
+                className="rv-input-light flex-1 min-w-0"
                 placeholder="Type the missing word…"
                 value={clozeAnswer}
                 onChange={e => onClozeAnswerChange(e.target.value)}
@@ -962,7 +1233,7 @@ export function ContextPhase({
               <button
                 onClick={onClozeSubmit}
                 disabled={!clozeAnswer.trim()}
-                className="rv-btn-mint shrink-0"
+                className="rv-btn-hero shrink-0"
                 style={{ width: 'auto', padding: '0 1.6rem' }}
               >
                 Shoot ⚽
@@ -985,7 +1256,7 @@ export function ContextPhase({
               <div className="min-w-0 flex-1">
                 <p
                   className="text-base lg:text-lg font-bold leading-tight truncate"
-                  style={{ color: isClozeCorrect ? '#00FFC8' : '#fb7185', fontFamily: "'Space Grotesk', sans-serif" }}
+                  style={{ color: isClozeCorrect ? '#059669' : '#e11d48', fontFamily: "'Space Grotesk', sans-serif" }}
                 >
                   {isClozeCorrect ? winPhrase : lossPhrase}
                 </p>
@@ -1000,10 +1271,10 @@ export function ContextPhase({
                     <>Scene Partner <span className="text-[#FF2D55]">♥</span> loved your message</>
                   ) : (
                     <>
-                      <span className="line-through text-rose-400/80">{clozeAnswer}</span>
-                      <span className="mx-1 text-zinc-600">→</span>
-                      <span className="font-semibold text-[#00FFC8]">{currentItem.word.word}</span>
-                      <span className="text-zinc-600"> · {currentItem.word.definition}</span>
+                      <span className="line-through text-rose-500">{clozeAnswer}</span>
+                      <span className="mx-1 text-zinc-400">→</span>
+                      <span className="font-semibold text-emerald-600">{currentItem.word.word}</span>
+                      <span className="text-zinc-400"> · {currentItem.word.definition}</span>
                     </>
                   )}
                 </motion.p>
@@ -1017,16 +1288,16 @@ export function ContextPhase({
                 transition={{ delay: isClozeCorrect ? 0.25 : 0.5, type: 'spring', stiffness: 300, damping: 22 }}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.96 }}
-                className="group relative shrink-0 h-12 px-5 rounded-2xl flex items-center gap-2 text-sm font-bold overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                className="group relative shrink-0 h-12 px-5 rounded-2xl flex items-center gap-2 text-sm font-bold overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40"
                 style={isClozeCorrect
-                  ? { background: 'linear-gradient(135deg, #2cffca 0%, #00FFC8 100%)', color: '#18181b', boxShadow: '0 0 20px rgba(0,255,200,0.25)' }
-                  : { background: 'rgba(244,63,94,0.12)', color: '#fecdd3', border: '1px solid rgba(244,63,94,0.4)' }}
+                  ? { background: HERO_GREEN, color: '#fff' }
+                  : { background: '#ffe4e6', color: '#be123c', border: '1px solid #fda4af' }}
               >
                 {isClozeCorrect && (
                   <motion.span
                     aria-hidden
                     className="absolute inset-y-0 w-1/2 -skew-x-12"
-                    style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)' }}
+                    style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)' }}
                     initial={{ left: '-60%' }}
                     animate={{ left: '130%' }}
                     transition={{ duration: 0.9, delay: 0.6, ease: 'easeInOut' }}
@@ -1039,7 +1310,7 @@ export function ContextPhase({
                 )}
                 <kbd
                   className="relative hidden sm:inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-md text-[10px] font-semibold"
-                  style={{ background: isClozeCorrect ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)' }}
+                  style={{ background: isClozeCorrect ? 'rgba(255,255,255,0.15)' : 'rgba(190,18,60,0.08)' }}
                 >
                   ↵
                 </kbd>

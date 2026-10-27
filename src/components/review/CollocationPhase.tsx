@@ -7,6 +7,7 @@ import {
   type CollocationHistory,
 } from '@/hooks/useCollocationAttempts';
 import type { DueWordItem, WordCollocation } from './types';
+import { HERO } from './twoTone';
 
 function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -17,7 +18,7 @@ function highlightWord(phrase: string, word: string) {
   const parts = phrase.split(regex);
   return parts.map((part, i) =>
     regex.test(part)
-      ? <span key={i} style={{ color: '#00FFC8', fontWeight: 700 }}>{part}</span>
+      ? <span key={i} style={{ color: '#059669', fontWeight: 700 }}>{part}</span>
       : <span key={i}>{part}</span>
   );
 }
@@ -338,9 +339,9 @@ export function CollocationPhase({
 
   if (!session) {
     return (
-      <div className="mt-4 rv-glass rounded-[2rem] flex items-center justify-center" style={CARD_STYLE}>
+      <div className="mt-4 rv-surface rounded-[2rem] flex items-center justify-center" style={CARD_STYLE}>
         <motion.span
-          className="text-[10px] uppercase tracking-[0.25em] font-bold text-zinc-600"
+          className="text-[10px] uppercase tracking-[0.25em] font-bold text-zinc-400"
           animate={{ opacity: [0.4, 1, 0.4] }}
           transition={{ duration: 1.2, repeat: Infinity }}
         >
@@ -360,9 +361,9 @@ export function CollocationPhase({
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         className="mt-4"
       >
-        <div className="rv-glass rounded-[2rem] p-8 text-center space-y-5">
+        <div className="rv-surface rounded-[2rem] p-8 text-center space-y-5">
           <p className="text-zinc-500 text-sm">No collocations saved for this word yet.</p>
-          <button onClick={onNext} className="rv-btn-mint">
+          <button onClick={onNext} className="rv-btn-hero">
             Continue <ArrowRight className="h-4 w-4" />
           </button>
         </div>
@@ -379,12 +380,13 @@ export function CollocationPhase({
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       className="mt-4"
     >
-      <div className="rv-glass rounded-[2rem] overflow-hidden flex flex-col" style={CARD_STYLE}>
+      <div className="rv-surface rounded-[2rem] overflow-hidden flex flex-col" style={CARD_STYLE}>
+        <div className="shrink-0 pb-5" style={{ background: HERO.background }}>
         {/* ── HUD: badge · combo · XP ────────────────────────────────── */}
         <div className="shrink-0 px-6 pt-5 flex items-center gap-2">
           <span
             className="text-[9px] uppercase tracking-[0.25em] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
-            style={{ background: 'rgba(0,255,200,0.07)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.15)' }}
+            style={{ background: 'rgba(0,255,200,0.14)', color: '#00FFC8' }}
           >
             🔗 {mode === 'repair' ? 'Quick Check' : 'Collocation Forge'}
           </span>
@@ -423,9 +425,8 @@ export function CollocationPhase({
             className="font-bold leading-none select-none"
             style={{
               fontSize: 'clamp(1.9rem, 6vw, 2.6rem)',
-              color: '#00FFC8',
+              color: '#fff',
               fontFamily: "'Space Grotesk', sans-serif",
-              textShadow: '0 0 32px rgba(0,255,200,0.25)',
               letterSpacing: '-0.01em',
             }}
           >
@@ -434,6 +435,7 @@ export function CollocationPhase({
           <div className="mt-4">
             <Chain states={chainStates} />
           </div>
+        </div>
         </div>
 
         <AnimatePresence mode="wait">
@@ -448,7 +450,7 @@ export function CollocationPhase({
             >
               <p
                 className="text-center text-lg font-bold"
-                style={{ color: '#00FFC8', fontFamily: "'Space Grotesk', sans-serif" }}
+                style={{ color: '#059669', fontFamily: "'Space Grotesk', sans-serif" }}
               >
                 {mode === 'repair' ? 'Quick check done! ✅' : 'Chain forged! ⛓️'}
               </p>
@@ -460,26 +462,25 @@ export function CollocationPhase({
 
               <div className="grid grid-cols-3 gap-2 mt-4">
                 {[
-                  { label: 'XP earned', value: xp, color: '#facc15' },
+                  { label: 'XP earned', value: xp, color: '#ca8a04' },
                   {
                     label: 'First try',
                     value: `${Math.round((results.filter(r => r === 'clean').length / total) * 100)}%`,
-                    color: '#00FFC8',
+                    color: '#059669',
                   },
-                  { label: 'Best combo', value: `x${bestCombo}`, color: '#fb923c' },
+                  { label: 'Best combo', value: `x${bestCombo}`, color: '#ea580c' },
                 ].map((s, i) => (
                   <motion.div
                     key={s.label}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 + i * 0.08 }}
-                    className="rounded-2xl py-2.5 text-center"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                    className="rv-tile rounded-2xl py-2.5 text-center"
                   >
                     <p className="text-xl font-black tabular-nums" style={{ color: s.color, fontFamily: "'Space Grotesk', sans-serif" }}>
                       {s.value}
                     </p>
-                    <p className="text-[9px] uppercase tracking-widest text-zinc-500 mt-0.5">{s.label}</p>
+                    <p className="text-[9px] uppercase tracking-widest text-zinc-400 mt-0.5">{s.label}</p>
                   </motion.div>
                 ))}
               </div>
@@ -496,26 +497,26 @@ export function CollocationPhase({
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.3 + i * 0.05, type: 'spring', stiffness: 400, damping: 22 }}
                       title={retry ? 'Needed a retry — worth another look' : undefined}
-                      className="inline-flex items-center gap-1.5 rounded-full pl-2 pr-3 py-1 text-[13px] font-semibold text-white max-w-full"
+                      className="inline-flex items-center gap-1.5 rounded-full pl-2 pr-3 py-1 text-[13px] font-semibold text-zinc-800 max-w-full"
                       style={{
                         fontFamily: "'Space Grotesk', sans-serif",
-                        background: retry ? 'rgba(251,191,36,0.06)' : 'rgba(0,255,200,0.05)',
-                        border: `1px solid ${retry ? 'rgba(251,191,36,0.3)' : 'rgba(0,255,200,0.15)'}`,
+                        background: retry ? '#fef3c7' : '#ecfdf5',
+                        border: `1px solid ${retry ? '#fcd34d' : '#a7f3d0'}`,
                       }}
                     >
                       {retry
-                        ? <RotateCcw className="h-3 w-3 shrink-0 text-amber-400" />
-                        : <Check className="h-3 w-3 shrink-0 text-[#00FFC8]" />}
+                        ? <RotateCcw className="h-3 w-3 shrink-0 text-amber-600" />
+                        : <Check className="h-3 w-3 shrink-0 text-emerald-600" />}
                       <span className="truncate">{highlightWord(col.collocation, targetWord)}</span>
-                      {fixed && <span className="shrink-0 text-[10px] font-bold text-[#00FFC8]">fixed ✨</span>}
+                      {fixed && <span className="shrink-0 text-[10px] font-bold text-emerald-600">fixed ✨</span>}
                     </motion.span>
                   );
                 })}
               </div>
 
-              <button onClick={onNext} className="rv-btn-mint mt-4 shrink-0">
+              <button onClick={onNext} className="rv-btn-hero mt-4 shrink-0">
                 Let's Write <ArrowRight className="h-4 w-4" />
-                <kbd className="hidden sm:inline-flex items-center justify-center h-5 px-1 rounded-md text-[10px]" style={{ background: 'rgba(0,0,0,0.12)' }}>↵</kbd>
+                <kbd className="hidden sm:inline-flex items-center justify-center h-5 px-1 rounded-md text-[10px]" style={{ background: 'rgba(255,255,255,0.15)' }}>↵</kbd>
               </button>
             </motion.div>
           ) : (
@@ -534,7 +535,7 @@ export function CollocationPhase({
                   {wasStruggling.has(current.id) && (
                     <span
                       className="mb-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
-                      style={{ background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.3)' }}
+                      style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fcd34d' }}
                     >
                       <RotateCcw className="h-2.5 w-2.5" /> Missed last time
                     </span>
@@ -550,8 +551,8 @@ export function CollocationPhase({
                             return (
                               <span key={i}>
                                 {isTargetToken(tok, targetWord)
-                                  ? <span style={{ color: '#00FFC8' }}>{tok}</span>
-                                  : <span className="text-zinc-200">{tok}</span>}
+                                  ? <span style={{ color: '#059669' }}>{tok}</span>
+                                  : <span className="text-zinc-800">{tok}</span>}
                                 {spacer}
                               </span>
                             );
@@ -562,7 +563,7 @@ export function CollocationPhase({
                                 <motion.span
                                   layoutId="answer-chip"
                                   className="inline-block px-2 rounded-lg"
-                                  style={{ background: 'rgba(0,255,200,0.15)', color: '#fff', boxShadow: '0 0 18px rgba(0,255,200,0.3)' }}
+                                  style={{ background: '#d1fae5', color: '#047857' }}
                                   transition={{ type: 'spring', stiffness: 380, damping: 26 }}
                                 >
                                   {challenge.answer}
@@ -572,8 +573,8 @@ export function CollocationPhase({
                                   className="inline-block align-baseline rounded-lg"
                                   style={{
                                     minWidth: `${Math.max(3, challenge.answer.length) * 0.6}em`,
-                                    borderBottom: '3px dashed rgba(255,255,255,0.3)',
-                                    background: 'rgba(255,255,255,0.03)',
+                                    borderBottom: '3px dashed rgba(15,23,20,0.3)',
+                                    background: 'rgba(15,23,20,0.04)',
                                   }}
                                 >
                                   &nbsp;
@@ -596,11 +597,11 @@ export function CollocationPhase({
                         exit={{ opacity: 0 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 16, delay: 0.2 }}
                         className="mt-4 text-sm font-black"
-                        style={{ color: '#facc15' }}
+                        style={{ color: '#ca8a04' }}
                       >
                         +{lastGain} XP
-                        {combo >= 2 && <span className="ml-2 text-[#fb923c]">🔥 combo x{combo}</span>}
-                        {wrongPicks.length > 0 && <span className="ml-2 text-amber-400/80 font-semibold">· link cracked</span>}
+                        {combo >= 2 && <span className="ml-2 text-orange-600">🔥 combo x{combo}</span>}
+                        {wrongPicks.length > 0 && <span className="ml-2 text-amber-600 font-semibold">· link cracked</span>}
                       </motion.p>
                     )}
                   </AnimatePresence>
@@ -615,7 +616,7 @@ export function CollocationPhase({
                         const isAnswer = opt === challenge.answer;
                         if (isSolved && isAnswer) {
                           // Placeholder keeps the grid from jumping while the chip flies into the blank
-                          return <div key={opt} className="h-12 rounded-2xl" style={{ border: '1px dashed rgba(0,255,200,0.2)' }} />;
+                          return <div key={opt} className="h-12 rounded-2xl" style={{ border: '1px dashed #a7f3d0' }} />;
                         }
                         return (
                           <motion.button
@@ -630,15 +631,16 @@ export function CollocationPhase({
                             className="relative h-12 rounded-2xl px-4 flex items-center justify-center text-[15px] font-bold transition-colors"
                             style={{
                               fontFamily: "'Space Grotesk', sans-serif",
-                              background: isWrong ? 'rgba(244,63,94,0.08)' : 'rgba(255,255,255,0.05)',
-                              border: `1px solid ${isWrong ? 'rgba(244,63,94,0.35)' : 'rgba(255,255,255,0.1)'}`,
-                              color: isWrong ? 'rgba(251,113,133,0.6)' : isSolved ? '#52525b' : '#fff',
+                              background: isWrong ? '#ffe4e6' : '#fff',
+                              border: `1px solid ${isWrong ? '#fda4af' : 'rgba(15,23,20,0.1)'}`,
+                              boxShadow: '0 1px 2px rgba(15,23,20,0.05)',
+                              color: isWrong ? 'rgba(225,29,72,0.6)' : isSolved ? '#a1a1aa' : '#18181b',
                               textDecoration: isWrong ? 'line-through' : 'none',
                             }}
                           >
                             <kbd
                               className="absolute left-3 hidden sm:flex items-center justify-center w-5 h-5 rounded-md text-[10px] font-semibold"
-                              style={{ background: 'rgba(255,255,255,0.06)', color: '#71717a' }}
+                              style={{ background: '#f4f4f5', color: '#71717a' }}
                             >
                               {i + 1}
                             </kbd>
@@ -658,11 +660,11 @@ export function CollocationPhase({
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: challenge ? 0.25 : 0.1, duration: 0.22 }}
                           onClick={advance}
-                          className="rv-btn-mint h-12"
+                          className="rv-btn-hero h-12"
                           style={{ padding: 0 }}
                         >
                           {isLast ? 'Finish the chain' : 'Next link'} <ArrowRight className="h-4 w-4" />
-                          <kbd className="hidden sm:inline-flex items-center justify-center h-5 px-1 rounded-md text-[10px]" style={{ background: 'rgba(0,0,0,0.12)' }}>↵</kbd>
+                          <kbd className="hidden sm:inline-flex items-center justify-center h-5 px-1 rounded-md text-[10px]" style={{ background: 'rgba(255,255,255,0.15)' }}>↵</kbd>
                         </motion.button>
                       )}
                       {!isSolved && (
@@ -671,7 +673,7 @@ export function CollocationPhase({
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           onClick={onNext}
-                          className="w-full h-12 text-center text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+                          className="w-full h-12 text-center text-xs text-zinc-400 hover:text-zinc-600 transition-colors"
                         >
                           Skip to Generation Lab →
                         </motion.button>

@@ -12,6 +12,12 @@ export function createScheduler(params: { request_retention: number; maximum_int
     return fsrs(generatorParameters({ ...params, enable_fuzz: true }));
 }
 
+// Same parameters, no fuzz — for showing "what would happen" in the UI. The real
+// schedule (fuzzed) can land a day or so either side of what this predicts.
+export function createPreviewScheduler(params: { request_retention: number; maximum_interval: number }) {
+    return fsrs(generatorParameters({ ...params, enable_fuzz: false }));
+}
+
 const f = createScheduler({ request_retention: 0.90, maximum_interval: 365 });
 
 // DB row shape (subset of WordStats — the FSRS-relevant fields)

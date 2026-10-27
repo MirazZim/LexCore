@@ -8,6 +8,7 @@ import { RV_STYLES } from '@/lib/rv-styles';
 import { getIdentity } from '@/lib/identity';
 import { calculateStreak, dateKey } from '@/lib/streak';
 import type { ReviewResult } from './types';
+import { HERO_MUTED } from './twoTone';
 
 interface SummaryPhaseProps {
   results: ReviewResult[];
@@ -17,10 +18,10 @@ interface SummaryPhaseProps {
 // ReviewResult.quality stores ts-fsrs Rating values (Again=1 … Easy=4),
 // not the old SM-2 0–5 quality scale.
 const QUALITY_LABELS = [
-  { quality: Rating.Again, label: 'Again', color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
-  { quality: Rating.Hard,  label: 'Hard',  color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
-  { quality: Rating.Good,  label: 'Good',  color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
-  { quality: Rating.Easy,  label: 'Easy',  color: '#00FFC8', bg: 'rgba(0,255,200,0.12)' },
+  { quality: Rating.Again, label: 'Again', color: '#dc2626', bg: '#fee2e2' },
+  { quality: Rating.Hard,  label: 'Hard',  color: '#ea580c', bg: '#ffedd5' },
+  { quality: Rating.Good,  label: 'Good',  color: '#2563eb', bg: '#dbeafe' },
+  { quality: Rating.Easy,  label: 'Easy',  color: '#059669', bg: '#d1fae5' },
 ];
 
 const fade = (delay = 0) => ({
@@ -101,10 +102,10 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
       >
 
         {/* ── 1. Hero Header ─────────────────────────────────────────── */}
-        <motion.div variants={fade(0)} className="text-center">
+        <motion.div variants={fade(0)} className="rv-hero rounded-[2rem] px-6 py-8 text-center">
           <div
             className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.3em] mb-4"
-            style={{ background: 'rgba(0,255,200,0.07)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.16)' }}
+            style={{ background: 'rgba(0,255,200,0.14)', color: '#00FFC8' }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#00FFC8] animate-pulse" />
             Session Complete
@@ -115,7 +116,7 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
           >
             You&apos;re becoming<br />someone.
           </h1>
-          <p className="mt-3 text-zinc-500 text-sm">
+          <p className="mt-3 text-sm" style={{ color: HERO_MUTED }}>
             Day {identity?.daysIn ?? 1} of your journey
           </p>
         </motion.div>
@@ -184,6 +185,7 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
           </motion.div>
         )}
 
+        <div className="rv-surface rounded-[2rem] p-4 space-y-4">
         {/* ── 3. Stats row ──────────────────────────────────────────── */}
         <motion.div variants={fade(0.18)} className="flex gap-3">
           {[
@@ -193,16 +195,15 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
           ].map(({ label, value }) => (
             <div
               key={label}
-              className="flex-1 flex flex-col items-center gap-1 py-4 rounded-2xl"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+              className="rv-tile flex-1 flex flex-col items-center gap-1 py-4 rounded-2xl"
             >
               <span
-                className="text-2xl font-bold text-white"
+                className="text-2xl font-bold text-zinc-900"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
                 {value}
               </span>
-              <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-600">{label}</span>
+              <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-400">{label}</span>
             </div>
           ))}
         </motion.div>
@@ -210,10 +211,9 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
         {/* ── 4. Quality distribution ───────────────────────────────── */}
         <motion.div
           variants={fade(0.26)}
-          className="rounded-[1.5rem] px-6 py-5"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+          className="rv-tile rounded-[1.5rem] px-6 py-5"
         >
-          <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-600 mb-4">
+          <p className="text-[9px] uppercase tracking-widest font-bold text-zinc-400 mb-4">
             Rating Breakdown
           </p>
           <div className="flex gap-2">
@@ -224,19 +224,19 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
                   key={quality}
                   className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl"
                   style={{
-                    background: count > 0 ? bg : 'rgba(255,255,255,0.02)',
-                    border: `1px solid ${count > 0 ? color + '33' : 'rgba(255,255,255,0.04)'}`,
+                    background: count > 0 ? bg : '#fafafa',
+                    border: `1px solid ${count > 0 ? color + '33' : 'rgba(15,23,20,0.05)'}`,
                   }}
                 >
                   <span
                     className="text-xl font-bold"
-                    style={{ fontFamily: "'Space Grotesk', sans-serif", color: count > 0 ? color : '#3f3f46' }}
+                    style={{ fontFamily: "'Space Grotesk', sans-serif", color: count > 0 ? color : '#d4d4d8' }}
                   >
                     {count}
                   </span>
                   <span
                     className="text-[9px] uppercase tracking-wider font-bold"
-                    style={{ color: count > 0 ? color : '#3f3f46' }}
+                    style={{ color: count > 0 ? color : '#a1a1aa' }}
                   >
                     {label}
                   </span>
@@ -253,7 +253,7 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
             className="flex items-center justify-center gap-2"
           >
             <Flame className="h-4 w-4 shrink-0" style={{ color: '#f97316' }} />
-            <span className="text-sm font-bold text-white">{streak}</span>
+            <span className="text-sm font-bold text-zinc-900">{streak}</span>
             <span className="text-sm text-zinc-500">day streak</span>
           </motion.div>
         )}
@@ -263,11 +263,12 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
           <button
             onClick={() => navigate('/')}
             disabled={saveSession.isPending}
-            className="rv-btn-mint"
+            className="rv-btn-hero"
           >
             {saveSession.isPending ? 'Saving…' : 'Back to Dashboard'}
           </button>
         </motion.div>
+        </div>
 
       </motion.div>
     </div>
