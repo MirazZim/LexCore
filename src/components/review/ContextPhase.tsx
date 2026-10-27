@@ -4,6 +4,7 @@ import { RotateCcw, Check, X, ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useClozeAttemptHistoryForWord } from '@/hooks/useClozeAttempts';
 import type { DueWordItem, ClozeDialogue } from './types';
+import { HERO, HERO_GREEN } from './twoTone';
 
 const WIN_PHRASES = ['In context. Owned.', 'Nailed it.', 'Sharp recall.', 'Perfect.', 'Locked in.'];
 const LOSS_PHRASES = ['Not quite.', 'Read it again.', 'Study the context.', 'Almost.'];
@@ -823,7 +824,9 @@ type StageMood = 'idle' | 'correct' | 'wrong';
 
 const IOS_FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif";
 const IOS_SCREEN = '#FFFFFF';
-const IOS_BLUE = '#0B84FE';
+// Sent bubble: violet instead of iMessage blue — still reads white text cleanly
+// and stays distinct from the green / yellow answer highlights
+const SENT_BUBBLE = '#7C3AED';
 const IOS_GRAY = '#E9E9EB';
 const IOS_LABEL = '#8E8E93';
 const IOS_RED = '#FF3B30';
@@ -833,7 +836,7 @@ const IOS_RED = '#FF3B30';
  * colour, then a screen-coloured cutout carving the curl out of it.
  */
 function IMessageBubble({ sent, children }: { sent: boolean; children: React.ReactNode }) {
-  const fill = sent ? IOS_BLUE : IOS_GRAY;
+  const fill = sent ? SENT_BUBBLE : IOS_GRAY;
   return (
     <div
       className="relative min-w-0 px-3 py-[6px] rounded-[18px] text-[15px] lg:text-[16px] leading-[1.3]"
@@ -882,7 +885,7 @@ function Tapback({ correct }: { correct: boolean }) {
 
 /** Ring that fills in, then a check / cross drawn stroke by stroke. */
 function VerdictBadge({ correct }: { correct: boolean }) {
-  const color = correct ? '#00FFC8' : '#fb7185';
+  const color = correct ? '#059669' : '#e11d48';
   return (
     <motion.svg
       viewBox="0 0 40 40"
@@ -891,7 +894,7 @@ function VerdictBadge({ correct }: { correct: boolean }) {
       animate={{ scale: 1 }}
       transition={{ type: 'spring', stiffness: 320, damping: 14 }}
     >
-      <circle cx="20" cy="20" r="18" fill={correct ? 'rgba(0,255,200,0.1)' : 'rgba(244,63,94,0.1)'} />
+      <circle cx="20" cy="20" r="18" fill={correct ? 'rgba(5,150,105,0.1)' : 'rgba(225,29,72,0.08)'} />
       <motion.circle
         cx="20" cy="20" r="18" fill="none" stroke={color} strokeWidth="2"
         style={{ rotate: -90, transformOrigin: '50% 50%' }}
@@ -1053,20 +1056,21 @@ export function ContextPhase({
 
       {/* ── Theater ─────────────────────────────────────────────────── */}
       <div
-        className="rv-glass rounded-[2rem] overflow-hidden flex flex-col flex-1 min-h-0 min-w-0 relative"
+        className="rv-surface rounded-[2rem] overflow-hidden flex flex-col flex-1 min-h-0 min-w-0 relative"
         style={{
+          border: '1px solid',
           borderColor: clozeSubmitted
-            ? isClozeCorrect ? 'rgba(0,255,200,0.45)' : 'rgba(239,68,68,0.45)'
-            : 'rgba(255,255,255,0.07)',
+            ? isClozeCorrect ? 'rgba(5,150,105,0.55)' : 'rgba(225,29,72,0.5)'
+            : 'rgba(15,23,20,0.08)',
           transition: 'border-color 0.45s ease',
         }}
       >
 
         {/* ── Label + word ───────────────────────────────────────────── */}
-        <div className="relative shrink-0 px-6 lg:px-10 pt-5">
+        <div className="relative shrink-0 px-6 lg:px-10 pt-5 pb-5" style={{ background: HERO.background }}>
           <span
             className="text-[9px] uppercase tracking-[0.25em] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
-            style={{ background: 'rgba(56,189,248,0.07)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.15)' }}
+            style={{ background: 'rgba(56,189,248,0.16)', color: '#7dd3fc' }}
           >
             🎭 Context Theater
           </span>
@@ -1077,9 +1081,8 @@ export function ContextPhase({
             className="font-bold leading-none select-none break-words text-center mt-2 lg:mt-3"
             style={{
               fontSize: 'clamp(1.85rem, 3.5vw, 3.25rem)',
-              color: '#38bdf8',
+              color: '#fff',
               fontFamily: "'Space Grotesk', sans-serif",
-              textShadow: '0 0 40px rgba(56,189,248,0.28)',
               letterSpacing: '-0.01em',
             }}
           >
@@ -1095,20 +1098,19 @@ export function ContextPhase({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
-              className="relative shrink-0 mx-6 lg:mx-10 mt-4 flex items-center gap-2 rounded-xl px-3 py-2 bg-rose-500/10 border border-rose-500/40 text-xs lg:text-sm"
-              style={{ boxShadow: '0 0 18px rgba(244,63,94,0.12)' }}
+              className="relative shrink-0 mx-6 lg:mx-10 mt-4 flex items-center gap-2 rounded-xl px-3 py-2 bg-rose-50 border border-rose-200 text-xs lg:text-sm"
             >
               <motion.span
                 animate={{ opacity: [1, 0.5, 1] }}
                 transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
                 className="shrink-0"
               >
-                <RotateCcw className="h-3.5 w-3.5 text-rose-400" />
+                <RotateCcw className="h-3.5 w-3.5 text-rose-600" />
               </motion.span>
-              <span className="shrink-0 font-black uppercase tracking-wider text-rose-400">
+              <span className="shrink-0 font-black uppercase tracking-wider text-rose-600">
                 Missed {pastMisses.length}/{attemptHistory.length}
               </span>
-              <span className="truncate text-rose-200/90">
+              <span className="truncate text-rose-700/80">
                 · typed {pastMisses.map(a => `"${a.userAnswer || '(blank)'}"`).join(', ')}
               </span>
             </motion.div>
@@ -1122,7 +1124,7 @@ export function ContextPhase({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             className="flex-1 min-h-0 flex flex-col rounded-[1.5rem] overflow-hidden"
-            style={{ background: IOS_SCREEN, fontFamily: IOS_FONT, boxShadow: '0 10px 40px rgba(0,0,0,0.35)' }}
+            style={{ background: IOS_SCREEN, fontFamily: IOS_FONT, border: '1px solid rgba(15,23,20,0.08)', boxShadow: '0 1px 2px rgba(15,23,20,0.05), 0 8px 24px rgba(15,23,20,0.07)' }}
           >
             {/* Contact header */}
             <div
@@ -1205,11 +1207,11 @@ export function ContextPhase({
         </div>
 
         {/* ── Footer: input / verdict ─────────────────────────────────── */}
-        <div className="relative shrink-0 px-6 lg:px-10 pb-6 lg:pb-7 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="relative shrink-0 px-6 lg:px-10 pb-6 lg:pb-7 pt-4" style={{ borderTop: '1px solid rgba(15,23,20,0.06)' }}>
           {clozeLoading ? (
-            <Skeleton className="h-12 w-full rounded-2xl bg-zinc-800/60" />
+            <Skeleton className="h-12 w-full rounded-2xl bg-zinc-200" />
           ) : !responseSegments ? (
-            <button onClick={onClozeNext} className="rv-btn-mint">Continue</button>
+            <button onClick={onClozeNext} className="rv-btn-hero">Continue</button>
           ) : !clozeSubmitted ? (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -1218,7 +1220,7 @@ export function ContextPhase({
               className="flex gap-2"
             >
               <input
-                className="rv-input flex-1 min-w-0"
+                className="rv-input-light flex-1 min-w-0"
                 placeholder="Type the missing word…"
                 value={clozeAnswer}
                 onChange={e => onClozeAnswerChange(e.target.value)}
@@ -1231,7 +1233,7 @@ export function ContextPhase({
               <button
                 onClick={onClozeSubmit}
                 disabled={!clozeAnswer.trim()}
-                className="rv-btn-mint shrink-0"
+                className="rv-btn-hero shrink-0"
                 style={{ width: 'auto', padding: '0 1.6rem' }}
               >
                 Shoot ⚽
@@ -1254,7 +1256,7 @@ export function ContextPhase({
               <div className="min-w-0 flex-1">
                 <p
                   className="text-base lg:text-lg font-bold leading-tight truncate"
-                  style={{ color: isClozeCorrect ? '#00FFC8' : '#fb7185', fontFamily: "'Space Grotesk', sans-serif" }}
+                  style={{ color: isClozeCorrect ? '#059669' : '#e11d48', fontFamily: "'Space Grotesk', sans-serif" }}
                 >
                   {isClozeCorrect ? winPhrase : lossPhrase}
                 </p>
@@ -1269,10 +1271,10 @@ export function ContextPhase({
                     <>Scene Partner <span className="text-[#FF2D55]">♥</span> loved your message</>
                   ) : (
                     <>
-                      <span className="line-through text-rose-400/80">{clozeAnswer}</span>
-                      <span className="mx-1 text-zinc-600">→</span>
-                      <span className="font-semibold text-[#00FFC8]">{currentItem.word.word}</span>
-                      <span className="text-zinc-600"> · {currentItem.word.definition}</span>
+                      <span className="line-through text-rose-500">{clozeAnswer}</span>
+                      <span className="mx-1 text-zinc-400">→</span>
+                      <span className="font-semibold text-emerald-600">{currentItem.word.word}</span>
+                      <span className="text-zinc-400"> · {currentItem.word.definition}</span>
                     </>
                   )}
                 </motion.p>
@@ -1286,16 +1288,16 @@ export function ContextPhase({
                 transition={{ delay: isClozeCorrect ? 0.25 : 0.5, type: 'spring', stiffness: 300, damping: 22 }}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.96 }}
-                className="group relative shrink-0 h-12 px-5 rounded-2xl flex items-center gap-2 text-sm font-bold overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                className="group relative shrink-0 h-12 px-5 rounded-2xl flex items-center gap-2 text-sm font-bold overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40"
                 style={isClozeCorrect
-                  ? { background: 'linear-gradient(135deg, #2cffca 0%, #00FFC8 100%)', color: '#18181b', boxShadow: '0 0 20px rgba(0,255,200,0.25)' }
-                  : { background: 'rgba(244,63,94,0.12)', color: '#fecdd3', border: '1px solid rgba(244,63,94,0.4)' }}
+                  ? { background: HERO_GREEN, color: '#fff' }
+                  : { background: '#ffe4e6', color: '#be123c', border: '1px solid #fda4af' }}
               >
                 {isClozeCorrect && (
                   <motion.span
                     aria-hidden
                     className="absolute inset-y-0 w-1/2 -skew-x-12"
-                    style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)' }}
+                    style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)' }}
                     initial={{ left: '-60%' }}
                     animate={{ left: '130%' }}
                     transition={{ duration: 0.9, delay: 0.6, ease: 'easeInOut' }}
@@ -1308,7 +1310,7 @@ export function ContextPhase({
                 )}
                 <kbd
                   className="relative hidden sm:inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-md text-[10px] font-semibold"
-                  style={{ background: isClozeCorrect ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.08)' }}
+                  style={{ background: isClozeCorrect ? 'rgba(255,255,255,0.15)' : 'rgba(190,18,60,0.08)' }}
                 >
                   ↵
                 </kbd>

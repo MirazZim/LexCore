@@ -5,6 +5,7 @@ import {
   RotateCcw, Search, Sparkles, Trophy, Wand2, X,
 } from 'lucide-react';
 import type { DueWordItem, AiFeedback, WordCollocation } from './types';
+import { HERO, HERO_GREEN, ink } from './twoTone';
 import type { ReviewTier } from '@/lib/fsrs';
 import type { DailyTopic } from '@/lib/topic-of-day';
 import { mintTrophy } from '@/lib/trophies';
@@ -419,7 +420,7 @@ function highlightConnector(example: string, connector: string) {
   return (
     <>
       {example.slice(0, idx)}
-      <span className="font-bold text-white">{example.slice(idx, idx + clean.length)}</span>
+      <span className="font-bold text-zinc-900">{example.slice(idx, idx + clean.length)}</span>
       {example.slice(idx + clean.length)}
     </>
   );
@@ -462,13 +463,15 @@ export function ConnectorContent({ data }: { data: ChipCategory }) {
 }
 
 const verdictConfig = {
-  natural: { color: '#00FFC8', label: 'Natural' },
-  close: { color: '#f97316', label: 'Almost there' },
-  unnatural: { color: '#ef4444', label: 'Not quite' },
+  natural: { color: '#059669', label: 'Natural' },
+  close: { color: '#ea580c', label: 'Almost there' },
+  unnatural: { color: '#dc2626', label: 'Not quite' },
 } as const;
 
 const FONT_DISPLAY = "'Space Grotesk', sans-serif";
 const LAB = '#fbbf24';
+// Amber deep enough to read on the light surface
+const LAB_INK = ink(LAB);
 const CARD_STYLE = { height: 'min(calc(100dvh - 13rem), 760px)' };
 // Shared by the textarea and its highlight mirror — must stay identical
 const EDITOR_TEXT = 'text-[19px] lg:text-[22px] leading-[1.55] tracking-[-0.01em] px-1 py-1';
@@ -518,7 +521,7 @@ function findCollocation(text: string, collocations: WordCollocation[], word: st
   return null;
 }
 
-function highlightTarget(text: string, word: string, color = LAB) {
+function highlightTarget(text: string, word: string, color = LAB_INK) {
   return text.split(/([A-Za-z]+)/).map((p, i) =>
     i % 2 === 1 && isTargetToken(p, word)
       ? <span key={i} style={{ color, fontWeight: 600 }}>{p}</span>
@@ -593,28 +596,26 @@ function CommandPalette({
             className="fixed z-50 left-1/2 top-[12vh] w-[min(560px,calc(100vw-2rem))] -translate-x-1/2 rounded-3xl overflow-hidden flex flex-col"
             style={{
               maxHeight: '64vh',
-              background: 'rgba(20,20,24,0.92)',
-              backdropFilter: 'blur(30px)',
-              WebkitBackdropFilter: 'blur(30px)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              boxShadow: '0 30px 80px rgba(0,0,0,0.6)',
+              background: '#ffffff',
+              border: '1px solid rgba(15,23,20,0.08)',
+              boxShadow: '0 30px 80px rgba(0,0,0,0.45)',
             }}
           >
-            <div className="shrink-0 flex items-center gap-3 px-5 h-14" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <Search className="h-4 w-4 text-zinc-500" />
+            <div className="shrink-0 flex items-center gap-3 px-5 h-14" style={{ borderBottom: '1px solid rgba(15,23,20,0.06)' }}>
+              <Search className="h-4 w-4 text-zinc-400" />
               <input
                 autoFocus
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={onKeyDown}
                 placeholder="Search collocations, connectors, phrases…"
-                className="flex-1 bg-transparent outline-none text-[15px] text-zinc-100 placeholder:text-zinc-600"
+                className="flex-1 bg-transparent outline-none text-[15px] text-zinc-900 placeholder:text-zinc-400"
               />
-              <kbd className="text-[10px] text-zinc-500 px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(255,255,255,0.06)' }}>esc</kbd>
+              <kbd className="text-[10px] text-zinc-500 px-1.5 py-0.5 rounded-md" style={{ background: '#f4f4f5' }}>esc</kbd>
             </div>
             <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto p-2 [scrollbar-width:thin]">
               {results.length === 0 && (
-                <p className="text-sm text-zinc-600 text-center py-8">Nothing matches “{query}”.</p>
+                <p className="text-sm text-zinc-400 text-center py-8">Nothing matches “{query}”.</p>
               )}
               {results.map((item, idx) => {
                 const header = item.group !== lastGroup;
@@ -623,7 +624,7 @@ function CommandPalette({
                 return (
                   <div key={item.key}>
                     {header && (
-                      <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] font-bold text-zinc-600 px-3 pt-3 pb-1.5">
+                      <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] font-bold text-zinc-400 px-3 pt-3 pb-1.5">
                         <span className="w-1.5 h-1.5 rounded-full" style={{ background: item.color }} /> {item.group}
                       </p>
                     )}
@@ -632,15 +633,15 @@ function CommandPalette({
                       onMouseEnter={() => setActive(idx)}
                       onClick={() => onPick(item.insert)}
                       className="w-full text-left rounded-xl px-3 py-2 flex items-baseline gap-3 transition-colors"
-                      style={{ background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent' }}
+                      style={{ background: isActive ? '#f4f4f5' : 'transparent' }}
                     >
-                      <span className="text-[14px] font-semibold shrink-0" style={{ color: isActive ? item.color : '#e4e4e7', fontFamily: FONT_DISPLAY }}>
+                      <span className="text-[14px] font-semibold shrink-0" style={{ color: isActive ? ink(item.color) : '#27272a', fontFamily: FONT_DISPLAY }}>
                         {item.label}
                       </span>
                       {item.example && (
-                        <span className="text-[12px] text-zinc-600 truncate">{item.example}</span>
+                        <span className="text-[12px] text-zinc-400 truncate">{item.example}</span>
                       )}
-                      {isActive && <CornerDownLeft className="ml-auto h-3.5 w-3.5 shrink-0 text-zinc-500 self-center" />}
+                      {isActive && <CornerDownLeft className="ml-auto h-3.5 w-3.5 shrink-0 text-zinc-400 self-center" />}
                     </button>
                   </div>
                 );
@@ -684,7 +685,7 @@ function Toolkit({
   return (
     <div className="h-full flex flex-col min-h-0" onMouseLeave={() => setHoverKey(null)}>
       {/* Segmented tabs */}
-      <div className="shrink-0 flex gap-1 p-1 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="shrink-0 flex gap-1 p-1 rounded-2xl" style={{ background: '#fff', border: '1px solid rgba(15,23,20,0.08)' }}>
         {([
           ['collocations', `Collocations${collocations.length ? ` · ${collocations.length}` : ''}`],
           ['connectors', 'Connectors'],
@@ -694,7 +695,7 @@ function Toolkit({
             key={id}
             onClick={() => switchTab(id)}
             className="relative flex-1 rounded-xl py-2 text-[12px] font-bold transition-colors"
-            style={{ color: tab === id ? '#18181b' : '#a1a1aa' }}
+            style={{ color: tab === id ? '#18181b' : '#71717a' }}
           >
             {tab === id && (
               <motion.span
@@ -720,9 +721,9 @@ function Toolkit({
                 onClick={() => { setCatId(c.id); setHoverKey(null); }}
                 className="relative rounded-full px-3 py-1 text-[12px] font-semibold transition-colors"
                 style={{
-                  color: active ? '#0b0b0e' : '#a1a1aa',
-                  background: active ? 'transparent' : 'rgba(255,255,255,0.025)',
-                  border: `1px solid ${active ? c.color : 'rgba(255,255,255,0.06)'}`,
+                  color: active ? '#0b0b0e' : '#52525b',
+                  background: active ? 'transparent' : '#fff',
+                  border: `1px solid ${active ? c.color : 'rgba(15,23,20,0.08)'}`,
                 }}
               >
                 {active && (
@@ -743,7 +744,7 @@ function Toolkit({
         </div>
       )}
 
-      <div className="shrink-0 h-px my-4" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.08), transparent)' }} />
+      <div className="shrink-0 h-px my-4" style={{ background: 'linear-gradient(90deg, rgba(15,23,20,0.1), transparent)' }} />
 
       {/* Phrase cloud — tap to insert at the cursor */}
       <AnimatePresence mode="wait" initial={false}>
@@ -757,7 +758,7 @@ function Toolkit({
         >
           {tab !== 'collocations' && (
             <p className="text-[12px] text-zinc-500 mb-2.5">
-              <span className="font-bold" style={{ color: cat.color }}>{cat.label}</span> · {cat.description}
+              <span className="font-bold" style={{ color: ink(cat.color) }}>{cat.label}</span> · {cat.description}
             </p>
           )}
           <div className="flex flex-wrap gap-1.5">
@@ -776,13 +777,13 @@ function Toolkit({
                   className="rounded-xl px-3.5 py-2 text-[14px] font-semibold transition-all"
                   style={{
                     fontFamily: FONT_DISPLAY,
-                    color: chip.color,
+                    color: ink(chip.color),
                     background: lit ? `${chip.color}26` : `${chip.color}0d`,
                     border: `1px solid ${lit ? chip.color : chip.color + '30'}`,
                     boxShadow: lit ? `0 0 16px ${chip.color}30` : 'none',
                   }}
                 >
-                  {tab === 'collocations' ? highlightTarget(chip.label, word, '#00FFC8') : chip.label}
+                  {tab === 'collocations' ? highlightTarget(chip.label, word, '#047857') : chip.label}
                 </motion.button>
               );
             })}
@@ -793,23 +794,23 @@ function Toolkit({
       <div className="flex-1 min-h-3" />
 
       {/* Example + tip — full text, never clipped */}
-      <div className="shrink-0 rounded-2xl px-4 py-3.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="shrink-0 rounded-2xl px-4 py-3.5" style={{ background: '#fff', border: '1px solid rgba(15,23,20,0.08)' }}>
         <AnimatePresence mode="wait" initial={false}>
           {tab !== 'collocations' && previewChip?.example ? (
             <motion.div key={previewChip.key} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}>
               <p className="text-[10px] uppercase tracking-[0.18em] font-bold mb-1.5 text-zinc-500">
-                In use · <span className="normal-case tracking-normal" style={{ color: previewChip.color }}>{previewChip.label}</span>
+                In use · <span className="normal-case tracking-normal" style={{ color: ink(previewChip.color) }}>{previewChip.label}</span>
               </p>
-              <p className="text-[13.5px] text-zinc-300 leading-relaxed">{highlightConnector(previewChip.example, previewChip.label)}</p>
+              <p className="text-[13.5px] text-zinc-700 leading-relaxed">{highlightConnector(previewChip.example, previewChip.label)}</p>
             </motion.div>
           ) : (
-            <motion.p key="col-tip" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-[13px] text-zinc-400 leading-relaxed">
-              Natural partners for <span className="text-[#00FFC8] font-semibold">{word}</span>. Using one lights up the Collocation check.
+            <motion.p key="col-tip" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-[13px] text-zinc-600 leading-relaxed">
+              Natural partners for <span className="text-emerald-600 font-semibold">{word}</span>. Using one lights up the Collocation check.
             </motion.p>
           )}
         </AnimatePresence>
         {tab !== 'collocations' && (
-          <p className="flex gap-2 text-[12px] text-zinc-500 leading-snug mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <p className="flex gap-2 text-[12px] text-zinc-500 leading-snug mt-3 pt-3" style={{ borderTop: '1px solid rgba(15,23,20,0.06)' }}>
             <span className="shrink-0">💡</span>
             <span>{cat.tip}</span>
           </p>
@@ -969,19 +970,15 @@ export function GenerationPhase({
         style={CARD_STYLE}
       >
       <div
-        className="relative rounded-[2rem] overflow-hidden flex flex-col flex-1 min-w-0"
-        style={{ background: '#0e0e11', border: '1px solid rgba(255,255,255,0.06)' }}
+        className="rv-surface relative rounded-[2rem] overflow-hidden flex flex-col flex-1 min-w-0"
+        style={{ border: '1px solid rgba(15,23,20,0.08)' }}
       >
-        {/* Ambient mesh */}
-        <div aria-hidden className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-32 -left-24 w-96 h-96 rounded-full" style={{ background: 'radial-gradient(circle, rgba(251,191,36,0.10), transparent 65%)' }} />
-          <div className="absolute -bottom-40 -right-24 w-[28rem] h-[28rem] rounded-full" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.08), transparent 65%)' }} />
-        </div>
-
+        {/* ── Hero: top bar + prompt on the green ──────────────── */}
+        <div className="relative shrink-0 pb-5" style={{ background: HERO.background }}>
         {/* ── Top bar ─────────────────────────────────────────────── */}
         <div className="relative shrink-0 flex items-center gap-3 px-7 pt-6">
-          <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-zinc-500">Generation Lab</span>
-          <span className="w-1 h-1 rounded-full bg-zinc-700" />
+          <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-emerald-100/60">Generation Lab</span>
+          <span className="w-1 h-1 rounded-full bg-white/30" />
           <span className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: tierColor }}>{tierLabel}</span>
           <button
             onClick={onToggleRoast}
@@ -989,8 +986,8 @@ export function GenerationPhase({
             title={roastMode ? 'Roast mode on — brutal feedback' : 'Roast mode off — tap for brutal feedback'}
             className="ml-auto w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
             style={{
-              background: roastMode ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.04)',
-              color: roastMode ? '#f87171' : '#52525b',
+              background: roastMode ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.08)',
+              color: roastMode ? '#f87171' : 'rgba(209,250,229,0.55)',
               boxShadow: roastMode ? '0 0 18px rgba(239,68,68,0.35)' : 'none',
             }}
           >
@@ -1000,7 +997,7 @@ export function GenerationPhase({
 
         {/* ── Prompt line ─────────────────────────────────────────── */}
         <div className="relative shrink-0 px-7 pt-5">
-          <p className="text-[13px] text-zinc-500">
+          <p className="text-[13px] text-emerald-100/60">
             {tier === 'leech' ? 'One more time, with' : 'Write a sentence with'}
           </p>
           <div className="flex items-baseline gap-2.5 mt-1">
@@ -1022,17 +1019,18 @@ export function GenerationPhase({
               {word}
             </motion.h2>
             {pos && (
-              <span className="text-xs italic font-semibold" style={{ color: pos.source === 'oxford' ? '#a78bfa' : '#52525b' }}>
+              <span className="text-xs italic font-semibold" style={{ color: pos.source === 'oxford' ? '#c4b5fd' : 'rgba(209,250,229,0.5)' }}>
                 {pos.abbr}
               </span>
             )}
           </div>
-          <p className="text-[13px] text-zinc-500 mt-2 leading-snug line-clamp-1" title={currentItem.word.definition}>
+          <p className="text-[13px] text-emerald-100/60 mt-2 leading-snug line-clamp-1" title={currentItem.word.definition}>
             {currentItem.word.definition}
           </p>
-          <p className="text-[12px] text-zinc-600 mt-1.5 truncate" title={`${topic.title} · ${topic.prompt}`}>
-            <span className="text-zinc-400">◎ {topic.title}</span> — {topic.prompt}
+          <p className="text-[12px] text-emerald-100/45 mt-1.5 truncate" title={`${topic.title} · ${topic.prompt}`}>
+            <span className="text-emerald-50/80">◎ {topic.title}</span> — {topic.prompt}
           </p>
+        </div>
         </div>
 
         <AnimatePresence mode="wait" initial={false}>
@@ -1046,17 +1044,17 @@ export function GenerationPhase({
               transition={{ duration: 0.25 }}
               className="relative flex-1 min-h-0 flex flex-col px-7 pt-5 pb-6"
             >
-              <div className="shrink-0 h-px mb-4" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.08), transparent)' }} />
+              <div className="shrink-0 h-px mb-4" style={{ background: 'linear-gradient(90deg, rgba(15,23,20,0.1), transparent)' }} />
 
               {showRemix && priorSentence && (
                 <button
                   onClick={() => onGenerationTextChange(priorSentence)}
-                  className="group shrink-0 mb-3 flex items-center gap-2 text-left text-[12.5px] text-zinc-500 hover:text-zinc-300 transition-colors"
+                  className="group shrink-0 mb-3 flex items-center gap-2 text-left text-[12.5px] text-zinc-500 hover:text-zinc-800 transition-colors"
                   title="Load your previous sentence to rework it"
                 >
                   <History className="h-3.5 w-3.5 shrink-0" />
                   <span className="truncate italic">Last time: “{priorSentence}”</span>
-                  <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-[#00FFC8] opacity-60 group-hover:opacity-100">Remix</span>
+                  <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-emerald-600 opacity-70 group-hover:opacity-100">Remix</span>
                 </button>
               )}
 
@@ -1069,7 +1067,7 @@ export function GenerationPhase({
                 >
                   {generationText.split(/([A-Za-z]+)/).map((p, i) =>
                     i % 2 === 1 && isTargetToken(p, word)
-                      ? <mark key={i} className="text-transparent rounded-md" style={{ background: 'rgba(251,191,36,0.2)', boxShadow: '0 0 0 2px rgba(251,191,36,0.2)' }}>{p}</mark>
+                      ? <mark key={i} className="text-transparent rounded-md" style={{ background: '#fef3c7', boxShadow: '0 0 0 2px #fde68a' }}>{p}</mark>
                       : <span key={i}>{p}</span>
                   )}
                   {'\n'}
@@ -1083,7 +1081,7 @@ export function GenerationPhase({
                   onScroll={e => { if (mirrorRef.current) mirrorRef.current.scrollTop = e.currentTarget.scrollTop; }}
                   placeholder={placeholder}
                   spellCheck
-                  className={`absolute inset-0 w-full h-full resize-none bg-transparent outline-none text-zinc-100 placeholder:text-zinc-700 caret-amber-400 ${EDITOR_TEXT}`}
+                  className={`absolute inset-0 w-full h-full resize-none bg-transparent outline-none text-zinc-900 placeholder:text-zinc-400 caret-amber-600 ${EDITOR_TEXT}`}
                 />
               </div>
 
@@ -1092,16 +1090,16 @@ export function GenerationPhase({
                 <div className="flex gap-1.5">
                   {checks.map(c => (
                     <div key={c.label} className="flex-1" title={`${c.label}${c.ok ? ' ✓' : ''}`}>
-                      <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                      <div className="h-1 rounded-full overflow-hidden" style={{ background: '#e4e4e7' }}>
                         <motion.div
                           className="h-full rounded-full"
                           initial={false}
                           animate={{ width: c.ok ? '100%' : '0%' }}
                           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                          style={{ background: 'linear-gradient(90deg, #fbbf24, #00FFC8)' }}
+                          style={{ background: 'linear-gradient(90deg, #f59e0b, #059669)' }}
                         />
                       </div>
-                      <p className="text-[9px] uppercase tracking-[0.15em] font-bold mt-1.5" style={{ color: c.ok ? '#a1a1aa' : '#3f3f46' }}>
+                      <p className="text-[9px] uppercase tracking-[0.15em] font-bold mt-1.5" style={{ color: c.ok ? '#52525b' : '#d4d4d8' }}>
                         {c.label}
                       </p>
                     </div>
@@ -1127,8 +1125,8 @@ export function GenerationPhase({
                 <button
                   onClick={() => (window.matchMedia('(min-width: 1024px)').matches ? openPalette() : setSheetOpen(true))}
                   title="Search collocations, connectors & phrases (/ or Ctrl+K)"
-                  className="shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                  className="shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors"
+                  style={{ background: '#fff', border: '1px solid rgba(15,23,20,0.1)' }}
                 >
                   <Command className="h-4 w-4" />
                 </button>
@@ -1138,8 +1136,8 @@ export function GenerationPhase({
                     onClick={onSave}
                     disabled={!canSubmit}
                     title="Audit with AI"
-                    className="shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-colors disabled:opacity-30"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    className="shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors disabled:opacity-30"
+                    style={{ background: '#fff', border: '1px solid rgba(15,23,20,0.1)' }}
                   >
                     <Sparkles className="h-4 w-4" />
                   </button>
@@ -1152,9 +1150,9 @@ export function GenerationPhase({
                   title={tier === 'mature' ? 'Save (Enter)' : 'Send for review (Enter)'}
                   className="shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all"
                   style={{
-                    background: canSubmit ? 'linear-gradient(135deg, #fde68a, #fbbf24 55%, #f59e0b)' : 'rgba(255,255,255,0.05)',
-                    color: canSubmit ? '#1c1408' : '#3f3f46',
-                    boxShadow: canSubmit ? '0 8px 28px rgba(251,191,36,0.35)' : 'none',
+                    background: canSubmit ? HERO_GREEN : '#e4e4e7',
+                    color: canSubmit ? '#fff' : '#a1a1aa',
+                    boxShadow: canSubmit ? '0 8px 24px rgba(10,50,41,0.3)' : 'none',
                   }}
                 >
                   {isSaving || aiLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowUp className="h-5 w-5" strokeWidth={2.5} />}
@@ -1170,20 +1168,20 @@ export function GenerationPhase({
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
               className="relative flex-1 min-h-0 flex flex-col px-7 pt-5 pb-6"
             >
-              <div className="shrink-0 h-px mb-5" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.08), transparent)' }} />
+              <div className="shrink-0 h-px mb-5" style={{ background: 'linear-gradient(90deg, rgba(15,23,20,0.1), transparent)' }} />
 
               <div className="flex-1 min-h-0 overflow-y-auto pr-1 [scrollbar-width:thin]">
                 {aiLoading ? (
                   <div className="space-y-3 pt-2">
                     <p className="text-[13px] text-zinc-500 flex items-center gap-2">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: LAB }} />
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: LAB_INK }} />
                       {roastMode ? 'Sharpening the knives…' : 'Reading your sentence…'}
                     </p>
                     {[92, 78, 64].map((w, i) => (
                       <motion.div
                         key={i}
                         className="h-3 rounded-full"
-                        style={{ width: `${w}%`, background: 'rgba(255,255,255,0.05)' }}
+                        style={{ width: `${w}%`, background: '#e4e4e7' }}
                         animate={{ opacity: [0.4, 1, 0.4] }}
                         transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.15 }}
                       />
@@ -1198,12 +1196,12 @@ export function GenerationPhase({
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ type: 'spring', stiffness: 260, damping: 16 }}
                           className="font-black leading-none tabular-nums"
-                          style={{ fontSize: '4.5rem', fontFamily: FONT_DISPLAY, color: verdict.color, letterSpacing: '-0.05em', textShadow: `0 0 40px ${verdict.color}40` }}
+                          style={{ fontSize: '4.5rem', fontFamily: FONT_DISPLAY, color: verdict.color, letterSpacing: '-0.05em' }}
                         >
                           {aiFeedback.score}
                         </motion.span>
                         <div className="pb-2">
-                          <p className="text-zinc-600 text-sm font-bold">/10</p>
+                          <p className="text-zinc-400 text-sm font-bold">/10</p>
                           <p className="text-lg font-bold leading-tight" style={{ color: verdict.color, fontFamily: FONT_DISPLAY }}>{verdict.label}</p>
                         </div>
                         {trophyMinted && (
@@ -1212,7 +1210,7 @@ export function GenerationPhase({
                             animate={{ opacity: 1, rotate: 0, scale: 1 }}
                             transition={{ type: 'spring', stiffness: 260, damping: 12, delay: 0.3 }}
                             className="ml-auto mb-2 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full"
-                            style={{ color: '#f0c96a', background: 'rgba(240,201,106,0.1)', border: '1px solid rgba(240,201,106,0.4)' }}
+                            style={{ color: '#b45309', background: '#fef3c7', border: '1px solid #fcd34d' }}
                             title="Saved to your trophy wall"
                           >
                             <Trophy className="h-3.5 w-3.5" /> Greatest Hit
@@ -1224,8 +1222,8 @@ export function GenerationPhase({
                     {/* Yours vs stronger */}
                     <div className="space-y-4">
                       <div>
-                        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-600 mb-1.5">Yours</p>
-                        <p className="text-[17px] leading-relaxed text-zinc-200" style={{ fontFamily: FONT_DISPLAY }}>
+                        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-400 mb-1.5">Yours</p>
+                        <p className="text-[17px] leading-relaxed text-zinc-900" style={{ fontFamily: FONT_DISPLAY }}>
                           {highlightTarget(generationText, word)}
                         </p>
                       </div>
@@ -1237,8 +1235,8 @@ export function GenerationPhase({
                           className="pl-4"
                           style={{ borderLeft: '2px solid #fbbf24' }}
                         >
-                          <p className="text-[10px] uppercase tracking-[0.2em] font-bold mb-1.5" style={{ color: LAB }}>Stronger</p>
-                          <p className="text-[17px] leading-relaxed text-zinc-300" style={{ fontFamily: FONT_DISPLAY }}>
+                          <p className="text-[10px] uppercase tracking-[0.2em] font-bold mb-1.5" style={{ color: LAB_INK }}>Stronger</p>
+                          <p className="text-[17px] leading-relaxed text-zinc-700" style={{ fontFamily: FONT_DISPLAY }}>
                             {highlightTarget(aiFeedback.better_example, word)}
                           </p>
                         </motion.div>
@@ -1252,16 +1250,16 @@ export function GenerationPhase({
                         transition={{ delay: 0.4 }}
                         className="space-y-2.5 text-[13.5px] leading-relaxed"
                       >
-                        <Note color="#00FFC8" label="Works">{aiFeedback.what_worked}</Note>
-                        {aiFeedback.mistake && <Note color="#f87171" label="Issue">{aiFeedback.mistake}</Note>}
-                        {aiFeedback.fix && <Note color="#fb923c" label="Fix">{aiFeedback.fix}</Note>}
+                        <Note color="#059669" label="Works">{aiFeedback.what_worked}</Note>
+                        {aiFeedback.mistake && <Note color="#dc2626" label="Issue">{aiFeedback.mistake}</Note>}
+                        {aiFeedback.fix && <Note color="#ea580c" label="Fix">{aiFeedback.fix}</Note>}
                       </motion.div>
                     )}
 
                     {aiError && (
                       <div className="text-[13px] space-y-1">
-                        <p className="text-zinc-400">AI feedback unavailable — your sentence is still saved when you continue.</p>
-                        <p className="text-xs text-red-400/70 font-mono break-words">{aiError}</p>
+                        <p className="text-zinc-600">AI feedback unavailable — your sentence is still saved when you continue.</p>
+                        <p className="text-xs text-red-600/80 font-mono break-words">{aiError}</p>
                       </div>
                     )}
                   </div>
@@ -1272,8 +1270,8 @@ export function GenerationPhase({
                 <div className="shrink-0 flex items-center gap-3 mt-4">
                   <button
                     onClick={onRetry}
-                    className="h-12 px-5 rounded-full flex items-center gap-2 text-sm font-semibold text-zinc-400 hover:text-white transition-colors"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    className="h-12 px-5 rounded-full flex items-center gap-2 text-sm font-semibold text-zinc-600 hover:text-zinc-900 transition-colors"
+                    style={{ background: '#fff', border: '1px solid rgba(15,23,20,0.1)' }}
                   >
                     <RotateCcw className="h-4 w-4" /> Rewrite
                   </button>
@@ -1281,7 +1279,7 @@ export function GenerationPhase({
                     onClick={onNextWord}
                     whileTap={{ scale: 0.97 }}
                     className="ml-auto h-12 pl-6 pr-5 rounded-full flex items-center gap-2 text-sm font-bold"
-                    style={{ background: 'linear-gradient(135deg, #2cffca, #00FFC8)', color: '#0b1512', boxShadow: '0 8px 28px rgba(0,255,200,0.25)' }}
+                    style={{ background: HERO_GREEN, color: '#fff' }}
                   >
                     {currentIndex + 1 >= totalWords ? 'View summary' : 'Next word'}
                     <ArrowRight className="h-4 w-4" />
@@ -1296,11 +1294,11 @@ export function GenerationPhase({
 
         {/* ══ Writer's toolkit (desktop sidebar) ════════════════════════ */}
         <aside
-          className="hidden lg:flex w-[50%] shrink-0 flex-col p-6 min-h-0 rounded-[2rem]"
-          style={{ background: '#0e0e11', border: '1px solid rgba(255,255,255,0.06)' }}
+          className="rv-surface hidden lg:flex w-[50%] shrink-0 flex-col p-6 min-h-0 rounded-[2rem]"
+          style={{ border: '1px solid rgba(15,23,20,0.08)' }}
         >
           <p className="shrink-0 flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] font-bold text-zinc-500 mb-3">
-            <Wand2 className="h-3.5 w-3.5" style={{ color: LAB }} /> Writer's toolkit
+            <Wand2 className="h-3.5 w-3.5" style={{ color: LAB_INK }} /> Writer's toolkit
           </p>
           <div className="flex-1 min-h-0">
             <Toolkit collocations={collocations} word={word} onInsert={insertAtCursor} />
@@ -1329,20 +1327,18 @@ export function GenerationPhase({
               className="fixed bottom-0 left-0 right-0 z-50 rounded-t-[2rem] p-5 flex flex-col"
               style={{
                 height: '72vh',
-                background: 'rgba(18,18,22,0.92)',
-                backdropFilter: 'blur(28px)',
-                WebkitBackdropFilter: 'blur(28px)',
+                background: '#f4f6f4',
                 borderTop: '1px solid rgba(251,191,36,0.3)',
               }}
             >
               <div className="shrink-0 flex items-center justify-between mb-3">
                 <p className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] font-bold text-zinc-500">
-                  <Wand2 className="h-3.5 w-3.5" style={{ color: LAB }} /> Writer's toolkit
+                  <Wand2 className="h-3.5 w-3.5" style={{ color: LAB_INK }} /> Writer's toolkit
                 </p>
                 <button
                   onClick={() => setSheetOpen(false)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400"
-                  style={{ background: 'rgba(255,255,255,0.08)' }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-600"
+                  style={{ background: '#e4e4e7' }}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -1369,7 +1365,7 @@ function Kbd({ children, dark = false }: { children: React.ReactNode; dark?: boo
   return (
     <kbd
       className="hidden sm:inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-md text-[10px] font-semibold align-middle mx-0.5"
-      style={{ background: dark ? 'rgba(0,0,0,0.14)' : 'rgba(255,255,255,0.07)', color: dark ? 'inherit' : '#a1a1aa' }}
+      style={{ background: dark ? 'rgba(255,255,255,0.15)' : '#f4f4f5', color: dark ? 'inherit' : '#71717a' }}
     >
       {children}
     </kbd>
@@ -1378,7 +1374,7 @@ function Kbd({ children, dark = false }: { children: React.ReactNode; dark?: boo
 
 function Note({ color, label, children }: { color: string; label: string; children: React.ReactNode }) {
   return (
-    <p className="text-zinc-400">
+    <p className="text-zinc-600">
       <span className="text-[10px] uppercase tracking-[0.18em] font-bold mr-2" style={{ color }}>{label}</span>
       {children}
     </p>

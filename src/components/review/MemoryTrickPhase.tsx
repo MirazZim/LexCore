@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Volume2, ArrowDown, ArrowRight } from 'lucide-react';
 import type { DueWordItem } from './types';
+import { HERO, HERO_BUTTON, HERO_MUTED, SURFACE, ink } from './twoTone';
 
 interface Props {
   currentItem: DueWordItem;
@@ -10,7 +11,8 @@ interface Props {
 }
 
 const AMBER = '#fbbf24';
-const AMBER_SOFT = '#fde68a';
+// The hook is drawn on the light surface, so it uses the deeper amber.
+const AMBER_INK = ink(AMBER);
 const FONT_DISPLAY = "'Space Grotesk', sans-serif";
 const CARD_STYLE = { height: 'min(calc(100dvh - 13rem), 640px)' };
 
@@ -114,10 +116,10 @@ const pop = (i: number) => ({
 
 function Chip({ children, tone = 'amber', strike = false }: { children: React.ReactNode; tone?: 'amber' | 'rose' | 'mint' | 'plain'; strike?: boolean }) {
   const tones = {
-    amber: { bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.35)', color: AMBER_SOFT },
-    rose: { bg: 'rgba(244,63,94,0.08)', border: 'rgba(244,63,94,0.35)', color: '#fda4af' },
-    mint: { bg: 'rgba(0,255,200,0.08)', border: 'rgba(0,255,200,0.3)', color: '#a7fff0' },
-    plain: { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.1)', color: '#e4e4e7' },
+    amber: { bg: '#fef3c7', border: '#fcd34d', color: '#92400e' },
+    rose: { bg: '#ffe4e6', border: '#fda4af', color: '#be123c' },
+    mint: { bg: '#d1fae5', border: '#6ee7b7', color: '#047857' },
+    plain: { bg: '#ffffff', border: 'rgba(15,23,20,0.12)', color: '#18181b' },
   }[tone];
   return (
     <span
@@ -142,7 +144,7 @@ function Meaning({ text, delay }: { text: string; delay: number }) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.35 }}
-      className="text-[15px] leading-snug text-center text-zinc-200 max-w-sm"
+      className="text-[15px] leading-snug text-center text-zinc-800 max-w-sm"
     >
       {text}
     </motion.p>
@@ -156,9 +158,9 @@ function DownArrow({ delay }: { delay: number }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.3 }}
       className="w-7 h-7 rounded-full flex items-center justify-center"
-      style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.25)' }}
+      style={{ background: '#fef3c7', border: '1px solid #fcd34d' }}
     >
-      <ArrowDown className="h-3.5 w-3.5" style={{ color: AMBER }} />
+      <ArrowDown className="h-3.5 w-3.5" style={{ color: AMBER_INK }} />
     </motion.span>
   );
 }
@@ -172,7 +174,7 @@ function HookVisual({ hook, word }: { hook: Hook; word: string }) {
           <div className="flex flex-wrap items-start justify-center gap-2">
             {hook.parts.map((p, i) => (
               <motion.div key={i} {...pop(i)} className="flex items-start gap-2">
-                {i > 0 && <span className="text-zinc-600 font-bold mt-1.5">+</span>}
+                {i > 0 && <span className="text-zinc-400 font-bold mt-1.5">+</span>}
                 <div className="flex flex-col items-center">
                   <Chip>{p.main}</Chip>
                   {p.note && <span className="text-[11px] text-zinc-500 mt-1 max-w-[9rem] text-center leading-tight">{p.note}</span>}
@@ -189,10 +191,10 @@ function HookVisual({ hook, word }: { hook: Hook; word: string }) {
       return (
         <div className="flex flex-wrap items-center justify-center gap-2">
           <motion.span {...pop(0)}><Chip tone="plain">{hook.lhs || word}</Chip></motion.span>
-          <motion.span {...pop(1)} className="text-xl font-black" style={{ color: AMBER }}>=</motion.span>
+          <motion.span {...pop(1)} className="text-xl font-black" style={{ color: AMBER_INK }}>=</motion.span>
           {hook.terms.map((t, i) => (
             <motion.span key={i} {...pop(i + 2)} className="flex items-center gap-2">
-              {i > 0 && <span className="text-zinc-500 font-bold">+</span>}
+              {i > 0 && <span className="text-zinc-400 font-bold">+</span>}
               <Chip>{t}</Chip>
             </motion.span>
           ))}
@@ -202,13 +204,13 @@ function HookVisual({ hook, word }: { hook: Hook; word: string }) {
       return (
         <div className="flex flex-col items-center gap-3">
           <motion.div {...pop(0)} className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-rose-400/80">Not</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-rose-600">Not</span>
             <Chip tone="rose" strike>{hook.not}</Chip>
           </motion.div>
           <DownArrow delay={0.5} />
           <motion.div {...pop(2)} className="flex items-start gap-2 max-w-sm">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#00FFC8] mt-1">Is</span>
-            <p className="text-[15px] leading-snug text-zinc-100">{hook.is}</p>
+            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-1">Is</span>
+            <p className="text-[15px] leading-snug text-zinc-900">{hook.is}</p>
           </motion.div>
         </div>
       );
@@ -217,7 +219,7 @@ function HookVisual({ hook, word }: { hook: Hook; word: string }) {
         <div className="flex flex-col items-center gap-3">
           <div className="flex items-center gap-2.5">
             <motion.span {...pop(0)}><Chip tone="plain">{word}</Chip></motion.span>
-            <motion.span {...pop(1)} className="text-xl font-black" style={{ color: AMBER }}>≈</motion.span>
+            <motion.span {...pop(1)} className="text-xl font-black" style={{ color: AMBER_INK }}>≈</motion.span>
             <motion.span {...pop(2)}><Chip>“{hook.alike}”</Chip></motion.span>
           </div>
           <DownArrow delay={0.75} />
@@ -233,8 +235,8 @@ function HookVisual({ hook, word }: { hook: Hook; word: string }) {
           </motion.div>
           <DownArrow delay={0.45} />
           <motion.div {...pop(2)} className="flex items-start gap-2">
-            <span className="text-[10px] font-black uppercase tracking-widest mt-1" style={{ color: AMBER }}>But</span>
-            <p className="text-[15px] leading-snug text-zinc-100">{hook.but}</p>
+            <span className="text-[10px] font-black uppercase tracking-widest mt-1" style={{ color: AMBER_INK }}>But</span>
+            <p className="text-[15px] leading-snug text-zinc-900">{hook.but}</p>
           </motion.div>
         </div>
       );
@@ -247,7 +249,7 @@ function HookVisual({ hook, word }: { hook: Hook; word: string }) {
 function Typewriter({ text }: { text: string }) {
   const words = text.split(/\s+/);
   return (
-    <p className="text-lg leading-relaxed text-center text-zinc-100 max-w-sm" style={{ fontFamily: FONT_DISPLAY }}>
+    <p className="text-lg leading-relaxed text-center text-zinc-900 max-w-sm" style={{ fontFamily: FONT_DISPLAY }}>
       {words.map((w, i) => (
         <motion.span
           key={i}
@@ -265,7 +267,7 @@ function Typewriter({ text }: { text: string }) {
 function highlight(sentence: string, word: string) {
   const re = new RegExp(`(${escapeRegex(word)}\\w*)`, 'gi');
   return sentence.split(re).map((part, i) =>
-    i % 2 === 1 ? <span key={i} className="font-semibold" style={{ color: AMBER }}>{part}</span> : <span key={i}>{part}</span>
+    i % 2 === 1 ? <span key={i} className="font-semibold" style={{ color: AMBER_INK }}>{part}</span> : <span key={i}>{part}</span>
   );
 }
 
@@ -307,54 +309,42 @@ export function MemoryTrickPhase({ currentItem, onNext }: Props) {
       transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
       className="mt-4"
     >
-      <div className="rv-glass rounded-[2rem] overflow-hidden flex flex-col relative" style={CARD_STYLE}>
-        {/* Warm glow behind the hook */}
-        <div
-          aria-hidden
-          className="absolute inset-x-0 top-1/3 h-1/2 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at center, rgba(251,191,36,0.08), transparent 70%)' }}
-        />
-
-        {/* ── Header ───────────────────────────────────────────────── */}
-        <div className="relative shrink-0 px-6 pt-5 flex items-center justify-between gap-2">
-          <span
-            className="text-[9px] uppercase tracking-[0.25em] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
-            style={{ background: 'rgba(251,191,36,0.07)', color: AMBER, border: '1px solid rgba(251,191,36,0.2)' }}
-          >
-            🪝 Memory Hook
-          </span>
-          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full text-zinc-400" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            {label}
-          </span>
-        </div>
-
-        {/* ── Word + definition ────────────────────────────────────── */}
-        <div className="relative shrink-0 px-6 pt-5 text-center">
-          <div className="inline-flex items-center gap-2.5">
-            <motion.h2
-              initial={{ opacity: 0, scale: 0.85, filter: 'blur(8px)' }}
-              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-              transition={{ type: 'spring', stiffness: 180, damping: 18 }}
-              className="font-bold leading-none"
-              style={{
-                fontSize: 'clamp(2rem, 6vw, 2.75rem)',
-                color: AMBER,
-                fontFamily: FONT_DISPLAY,
-                textShadow: '0 0 32px rgba(251,191,36,0.25)',
-              }}
+      <div className="rounded-[2rem] overflow-hidden flex flex-col relative" style={{ ...SURFACE, ...CARD_STYLE }}>
+        {/* ── Hero: badge, word, definition on the green ───────────── */}
+        <div className="relative shrink-0 pb-5" style={{ background: HERO.background }}>
+          <div className="px-6 pt-5 flex items-center justify-between gap-2">
+            <span
+              className="text-[9px] uppercase tracking-[0.25em] font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
+              style={{ background: 'rgba(251,191,36,0.14)', color: AMBER }}
             >
-              {word}
-            </motion.h2>
-            <button
-              onClick={speak}
-              aria-label={`Pronounce ${word}`}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
-            >
-              <Volume2 className="h-4 w-4" />
-            </button>
+              🪝 Memory Hook
+            </span>
+            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/10" style={{ color: HERO_MUTED }}>
+              {label}
+            </span>
           </div>
-          <p className="text-[13px] text-zinc-500 mt-2.5 leading-snug max-w-sm mx-auto">{currentItem.word.definition}</p>
+
+          <div className="px-6 pt-5 text-center">
+            <div className="inline-flex items-center gap-2.5">
+              <motion.h2
+                initial={{ opacity: 0, scale: 0.85, filter: 'blur(8px)' }}
+                animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                transition={{ type: 'spring', stiffness: 180, damping: 18 }}
+                className="font-bold leading-none text-white"
+                style={{ fontSize: 'clamp(2rem, 6vw, 2.75rem)', fontFamily: FONT_DISPLAY }}
+              >
+                {word}
+              </motion.h2>
+              <button
+                onClick={speak}
+                aria-label={`Pronounce ${word}`}
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 text-white transition-colors"
+              >
+                <Volume2 className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-[13px] mt-2.5 leading-snug max-w-sm mx-auto" style={{ color: HERO_MUTED }}>{currentItem.word.definition}</p>
+          </div>
         </div>
 
         {/* ── The hook, drawn ──────────────────────────────────────── */}
@@ -368,10 +358,10 @@ export function MemoryTrickPhase({ currentItem, onNext }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2 }}
-            className="relative shrink-0 mx-6 mb-4 rounded-2xl px-4 py-3 text-[13px] leading-relaxed text-zinc-400"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+            className="relative shrink-0 mx-6 mb-4 rounded-2xl px-4 py-3 text-[13px] leading-relaxed text-zinc-600 bg-white"
+            style={{ border: '1px solid rgba(15,23,20,0.08)', boxShadow: '0 1px 2px rgba(15,23,20,0.05)' }}
           >
-            <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-zinc-600 block mb-1">In the wild</span>
+            <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-zinc-400 block mb-1">In the wild</span>
             {highlight(example, word)}
           </motion.div>
         )}
@@ -380,14 +370,14 @@ export function MemoryTrickPhase({ currentItem, onNext }: Props) {
         <div className="relative shrink-0 px-6 pb-6">
           <motion.button
             onClick={onNext}
-            whileHover={{ scale: 1.015 }}
-            whileTap={{ scale: 0.97 }}
-            className="rv-btn-mint"
+            whileHover={{ filter: 'brightness(1.25)' }}
+            whileTap={{ scale: 0.985 }}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-semibold"
+            style={HERO_BUTTON}
           >
             Got it <ArrowRight className="h-4 w-4" />
             <kbd
-              className="hidden sm:inline-flex items-center justify-center h-5 px-1 rounded-md text-[10px]"
-              style={{ background: 'rgba(0,0,0,0.12)' }}
+              className="hidden sm:inline-flex items-center justify-center h-5 px-1 rounded-md text-[10px] bg-white/15"
             >
               ↵
             </kbd>
