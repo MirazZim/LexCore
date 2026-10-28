@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, Moon, CheckCircle2, Flame, X, Brain, Zap, Clock3 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Moon, CheckCircle2, Flame, X, Brain, Zap, Clock3 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Rating } from 'ts-fsrs';
 import { dbStateToCard, getReviewTier, currentRetrievability } from '@/lib/fsrs';
@@ -702,7 +702,7 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className={`min-h-screen pt-8 ${phase === 'battle' ? 'pb-6' : 'pb-24'} px-4 max-w-lg mx-auto ${phase === 'battle' ? 'lg:max-w-2xl' : phase === 'context' ? 'lg:max-w-6xl lg:px-8' : phase === 'generation' ? 'lg:max-w-7xl lg:px-8' : ''}`}>
+    <div className={`min-h-screen pt-8 ${phase === 'battle' || phase === 'generation' ? 'pb-6' : 'pb-24'} px-4 max-w-lg mx-auto ${phase === 'battle' ? 'lg:max-w-2xl' : phase === 'context' ? 'lg:max-w-6xl lg:px-8' : phase === 'generation' ? 'lg:max-w-7xl lg:px-8' : ''}`}>
       <style>{RV_STYLES}</style>
 
       {/* Header */}
@@ -864,74 +864,19 @@ export default function ReviewPage() {
         </AnimatePresence>
 
         {/* Outside AnimatePresence — mode="wait" supports only one child */}
+        {/* Skipping is optional, so it's a quiet pill — the send button stays the main action */}
         {phase === 'generation' && (
-          <button
-            onClick={() => setPhase('synonyms')}
-            className="group relative w-full mt-2 overflow-hidden"
-            style={{
-              padding: '0',
-              border: 'none',
-              borderRadius: '16px',
-              background: 'transparent',
-              cursor: 'pointer',
-            }}
-          >
-            {/* Glow layer */}
-            <span
-              style={{
-                position: 'absolute',
-                inset: 0,
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, #2cffca, #00c896)',
-                filter: 'blur(8px)',
-                opacity: 0.45,
-                transform: 'scaleY(0.85) translateY(4px)',
-                transition: 'opacity 0.25s ease, transform 0.25s ease',
-                pointerEvents: 'none',
-              }}
-              className="group-hover:opacity-70 group-hover:scale-105"
-            />
-
-            {/* Button face */}
-            <span
-              style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '11px 20px',
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, #2cffca 0%, #00c896 100%)',
-                color: '#071a14',
-                fontSize: '13px',
-                fontWeight: '700',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                transition: 'filter 0.2s ease, transform 0.2s ease',
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25)',
-              }}
-              className="group-hover:brightness-110 group-active:scale-95"
+          <div className="mt-3 flex justify-end">
+            <button
+              onClick={() => setPhase('synonyms')}
+              className="group inline-flex items-center gap-2.5 h-10 pl-4 pr-1.5 rounded-full text-[13px] font-semibold text-zinc-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 transition-colors active:scale-[0.97]"
             >
-              Skip to Synonyms
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 16 16"
-                fill="none"
-                style={{ transition: 'transform 0.2s ease' }}
-                className="group-hover:translate-x-1"
-              >
-                <path
-                  d="M3 8h10M9 4l4 4-4 4"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-          </button>
+              Skip to synonyms
+              <span className="w-7 h-7 rounded-full flex items-center justify-center bg-[#00FFC8] text-zinc-950 transition-transform group-hover:translate-x-0.5">
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.6} />
+              </span>
+            </button>
+          </div>
         )}
       </div>
     </div>

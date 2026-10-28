@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowRight, ArrowUp, Command, CornerDownLeft, Flame, History, Loader2,
-  RotateCcw, Search, Sparkles, Trophy, Wand2, X,
+  ArrowRight, ArrowUp, Check, Command, CornerDownLeft, Flame, History, Lightbulb, Link2, Loader2,
+  RotateCcw, Search, Shuffle, Sparkles, Trophy, Wand2, Wrench, X, Zap,
 } from 'lucide-react';
 import type { DueWordItem, AiFeedback, WordCollocation } from './types';
 import { HERO, HERO_GREEN, ink } from './twoTone';
@@ -330,6 +330,46 @@ export const CONNECTORS = [
     ],
   },
   {
+    id: 'past',
+    hint: 'back then…',
+    label: 'Past Events',
+    color: '#a3e635',
+    description: 'Use to describe what happened before or how things used to be',
+    tip: 'Pair these with past tenses: "In the past, people travelled…". Use "used to" for habits that have stopped, and "Since then," to link the past to today.',
+    items: [
+      { connector: 'In the past,', example: 'In the past, most families in my village travelled to the city by boat.' },
+      { connector: 'Back then,', example: 'I started school in 2010. Back then, very few classrooms had computers.' },
+      { connector: 'Previously,', example: 'Previously, the town relied on a single hospital for all emergencies.' },
+      { connector: 'At that time,', example: 'At that time, mobile phones were a luxury that few students could afford.' },
+      { connector: 'Years ago,', example: 'Years ago, this street was lined with small family-run shops.' },
+      { connector: 'Historically,', example: 'Historically, river trade was the main source of income for the region.' },
+      { connector: 'used to', example: 'People used to write letters, but now they send instant messages.' },
+      { connector: 'By the time', example: 'By the time the bridge opened, the old ferry service had already closed.' },
+      { connector: 'Before that,', example: 'I moved to Dhaka in 2018. Before that, I had never lived in a big city.' },
+      { connector: 'Since then,', example: 'The metro opened in 2022. Since then, commuting times have fallen sharply.' },
+    ],
+  },
+  {
+    id: 'future',
+    hint: 'will / soon',
+    label: 'Future Events',
+    color: '#818cf8',
+    description: 'Use to predict, plan or describe what is going to happen',
+    tip: 'Predictions sound more academic when softened: prefer "is likely to" or "is expected to" over a flat "will" unless you are certain.',
+    items: [
+      { connector: 'In the coming years,', example: 'In the coming years, more students will study online from home.' },
+      { connector: 'In the near future,', example: 'In the near future, the city plans to open three new metro lines.' },
+      { connector: 'In the long run,', example: 'In the long run, investing in education will strengthen the economy.' },
+      { connector: 'Over the next decade,', example: 'Over the next decade, electric buses are expected to replace diesel ones.' },
+      { connector: 'By 2030,', example: 'By 2030, most households will probably rely on solar power.' },
+      { connector: 'Before long,', example: 'Before long, paper tickets will disappear from public transport entirely.' },
+      { connector: 'Sooner or later,', example: 'Sooner or later, cities will have to limit private car use in their centres.' },
+      { connector: 'is likely to', example: 'Remote work is likely to change how offices are designed.' },
+      { connector: 'is expected to', example: 'The population of the capital is expected to double by 2050.' },
+      { connector: 'From now on,', example: 'From now on, all new buildings must include rainwater storage.' },
+    ],
+  },
+  {
     id: 'solutions',
     hint: 'fix it by…',
     label: 'Solutions',
@@ -413,14 +453,33 @@ export const POWER_PHRASES = [
 export type ConnectorCategory = typeof CONNECTORS[number];
 export type PowerPhraseCategory = typeof POWER_PHRASES[number];
 
-function highlightConnector(example: string, connector: string) {
+/** Bolds the connector inside its example; with `marker` (a 6-digit hex), it's
+ *  swept in like a highlighter pen in that colour instead. */
+function highlightConnector(example: string, connector: string, marker?: string) {
   const clean = connector.replace('…, ', '').replace('… ', '');
   const idx = example.toLowerCase().indexOf(clean.toLowerCase());
   if (idx === -1) return <>{example}</>;
+  const hit = example.slice(idx, idx + clean.length);
   return (
     <>
       {example.slice(0, idx)}
-      <span className="font-bold text-zinc-900">{example.slice(idx, idx + clean.length)}</span>
+      {marker ? (
+        <motion.mark
+          initial={{ backgroundSize: '0% 100%' }}
+          animate={{ backgroundSize: '100% 100%' }}
+          transition={{ duration: 0.45, delay: 0.1, ease: 'easeOut' }}
+          className="rounded-sm px-0.5 font-bold text-zinc-900"
+          style={{
+            backgroundColor: 'transparent',
+            backgroundImage: `linear-gradient(transparent 50%, ${marker}40 50%)`,
+            backgroundRepeat: 'no-repeat',
+          }}
+        >
+          {hit}
+        </motion.mark>
+      ) : (
+        <span className="font-bold text-zinc-900">{hit}</span>
+      )}
       {example.slice(idx + clean.length)}
     </>
   );
@@ -472,7 +531,8 @@ const FONT_DISPLAY = "'Space Grotesk', sans-serif";
 const LAB = '#fbbf24';
 // Amber deep enough to read on the light surface
 const LAB_INK = ink(LAB);
-const CARD_STYLE = { height: 'min(calc(100dvh - 13rem), 760px)' };
+// Viewport minus the page chrome: header, top margin, the skip pill and bottom padding
+const CARD_STYLE = { height: 'min(calc(100dvh - 12rem), 880px)' };
 // Shared by the textarea and its highlight mirror — must stay identical
 const EDITOR_TEXT = 'text-[19px] lg:text-[22px] leading-[1.55] tracking-[-0.01em] px-1 py-1';
 
@@ -657,9 +717,18 @@ function CommandPalette({
 // ── Writer's toolkit (collocations / connectors / power phrases) ──
 type ToolTab = 'connectors' | 'phrases' | 'collocations';
 
+// Each tab has its own icon; the active one shows its label and tints its icon.
+const TOOL_TABS = [
+  { id: 'collocations', label: 'Collocations', Icon: Link2, color: '#059669' },
+  { id: 'connectors', label: 'Connectors', Icon: Shuffle, color: '#7c3aed' },
+  { id: 'phrases', label: 'Power phrases', Icon: Zap, color: '#d97706' },
+] as const;
+
+/** `showBadge` puts the toolkit's wand badge at the start of the tab row (the
+ *  mobile sheet has its own titled header instead). */
 function Toolkit({
-  collocations, word, onInsert,
-}: { collocations: WordCollocation[]; word: string; onInsert: (text: string) => void }) {
+  collocations, word, onInsert, showBadge = false,
+}: { collocations: WordCollocation[]; word: string; onInsert: (text: string) => void; showBadge?: boolean }) {
   const [tab, setTab] = useState<ToolTab>(collocations.length ? 'collocations' : 'connectors');
   const list: readonly ChipCategory[] = tab === 'connectors' ? CONNECTORS : POWER_PHRASES;
   const [catId, setCatId] = useState<string>(CONNECTORS[0].id);
@@ -684,42 +753,74 @@ function Toolkit({
 
   return (
     <div className="h-full flex flex-col min-h-0" onMouseLeave={() => setHoverKey(null)}>
-      {/* Segmented tabs */}
-      <div className="shrink-0 flex gap-1 p-1 rounded-2xl" style={{ background: '#fff', border: '1px solid rgba(15,23,20,0.08)' }}>
-        {([
-          ['collocations', `Collocations${collocations.length ? ` · ${collocations.length}` : ''}`],
-          ['connectors', 'Connectors'],
-          ['phrases', 'Power phrases'],
-        ] as const).filter(([id]) => id !== 'collocations' || collocations.length > 0).map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => switchTab(id)}
-            className="relative flex-1 rounded-xl py-2 text-[12px] font-bold transition-colors"
-            style={{ color: tab === id ? '#18181b' : '#71717a' }}
+      {/* Tabs: a dark track; the active tab is a white pill with its label,
+          the others are just icons. The pill slides between them. */}
+      <div className="shrink-0 flex items-center gap-2.5">
+        <div className="inline-flex items-center gap-0.5 p-[3px] rounded-full" style={{ background: '#161618', boxShadow: '0 6px 18px -8px rgba(0,0,0,0.5)' }}>
+          {TOOL_TABS.filter(t => t.id !== 'collocations' || collocations.length > 0).map(t => {
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => switchTab(t.id)}
+                title={active ? undefined : t.label}
+                aria-label={t.label}
+                className={`relative h-7 rounded-full flex items-center gap-1 text-[12px] font-semibold transition-colors ${
+                  active ? 'pl-2.5 pr-3 text-zinc-900' : 'w-7 justify-center text-white/65 hover:text-white'
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="toolkit-tab"
+                    className="absolute inset-0 rounded-full bg-white"
+                    style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.25)' }}
+                    transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                  />
+                )}
+                <t.Icon className="relative h-3.5 w-3.5 shrink-0" strokeWidth={2} style={active ? { color: t.color } : undefined} />
+                {active && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -4 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.08, duration: 0.18 }}
+                    className="relative whitespace-nowrap"
+                  >
+                    {t.label}
+                  </motion.span>
+                )}
+                {active && t.id === 'collocations' && (
+                  <span
+                    className="relative min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black flex items-center justify-center text-white"
+                    style={{ background: t.color }}
+                  >
+                    {collocations.length}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {showBadge && (
+          <span
+            title="Writer's toolkit"
+            className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ background: '#161618', boxShadow: '0 6px 18px -8px rgba(0,0,0,0.5)' }}
           >
-            {tab === id && (
-              <motion.span
-                layoutId="toolkit-tab"
-                className="absolute inset-0 rounded-xl"
-                style={{ background: LAB }}
-                transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-              />
-            )}
-            <span className="relative">{label}</span>
-          </button>
-        ))}
+            <Wand2 className="h-3.5 w-3.5 text-white" strokeWidth={2} />
+          </span>
+        )}
       </div>
 
       {/* Category cloud — every category visible, one click to switch */}
       {tab !== 'collocations' && (
-        <div className="shrink-0 flex flex-wrap gap-1.5 mt-4">
+        <div className="shrink-0 flex flex-wrap gap-1 mt-3">
           {list.map(c => {
             const active = c.id === cat.id;
             return (
               <button
                 key={c.id}
                 onClick={() => { setCatId(c.id); setHoverKey(null); }}
-                className="relative rounded-full px-3 py-1 text-[12px] font-semibold transition-colors"
+                className="relative rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold transition-colors"
                 style={{
                   color: active ? '#0b0b0e' : '#52525b',
                   background: active ? 'transparent' : '#fff',
@@ -744,7 +845,7 @@ function Toolkit({
         </div>
       )}
 
-      <div className="shrink-0 h-px my-4" style={{ background: 'linear-gradient(90deg, rgba(15,23,20,0.1), transparent)' }} />
+      <div className="shrink-0 h-px my-3" style={{ background: 'linear-gradient(90deg, rgba(15,23,20,0.1), transparent)' }} />
 
       {/* Phrase cloud — tap to insert at the cursor */}
       <AnimatePresence mode="wait" initial={false}>
@@ -754,7 +855,9 @@ function Toolkit({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.15 }}
-          className="shrink-0"
+          // Scrolls on its own if a long category doesn't fit, so the
+          // example + tip below are never pushed out of the card
+          className="min-h-0 overflow-y-auto [scrollbar-width:thin]"
         >
           {tab !== 'collocations' && (
             <p className="text-[12px] text-zinc-500 mb-2.5">
@@ -794,26 +897,55 @@ function Toolkit({
       <div className="flex-1 min-h-3" />
 
       {/* Example + tip — full text, never clipped */}
-      <div className="shrink-0 rounded-2xl px-4 py-3.5" style={{ background: '#fff', border: '1px solid rgba(15,23,20,0.08)' }}>
+      <div className="shrink-0 space-y-1.5">
         <AnimatePresence mode="wait" initial={false}>
           {tab !== 'collocations' && previewChip?.example ? (
-            <motion.div key={previewChip.key} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}>
-              <p className="text-[10px] uppercase tracking-[0.18em] font-bold mb-1.5 text-zinc-500">
-                In use · <span className="normal-case tracking-normal" style={{ color: ink(previewChip.color) }}>{previewChip.label}</span>
+            // The example as a card: connector pill on top, the sentence with
+            // the connector swept in highlighter in its category colour
+            <motion.div
+              key={previewChip.key}
+              initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}
+              className="relative rounded-xl bg-white pl-4 pr-3 py-2 overflow-hidden"
+              style={{ border: '1px solid rgba(15,23,20,0.08)' }}
+            >
+              <span aria-hidden className="absolute left-0 inset-y-0 w-1" style={{ background: ink(previewChip.color) }} />
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="rounded-full px-2 py-px text-[10.5px] font-bold text-white" style={{ background: ink(previewChip.color) }}>
+                  {previewChip.label}
+                </span>
+                <span className="text-[9px] uppercase tracking-[0.16em] font-bold text-zinc-400">in a sentence</span>
+              </div>
+              <p className="text-[13.5px] font-medium leading-snug text-zinc-800">
+                {highlightConnector(previewChip.example, previewChip.label, ink(previewChip.color))}
               </p>
-              <p className="text-[13.5px] text-zinc-700 leading-relaxed">{highlightConnector(previewChip.example, previewChip.label)}</p>
             </motion.div>
           ) : (
-            <motion.p key="col-tip" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-[13px] text-zinc-600 leading-relaxed">
-              Natural partners for <span className="text-emerald-600 font-semibold">{word}</span>. Using one lights up the Collocation check.
-            </motion.p>
+            <motion.div
+              key="col-tip"
+              initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="flex items-start gap-2 rounded-xl px-3 py-2"
+              style={{ background: '#e9fbf5', border: '1.5px solid #a7ecd6' }}
+            >
+              <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-white" style={{ background: '#059669' }}>
+                <Link2 className="h-3 w-3" strokeWidth={2.6} />
+              </span>
+              <p className="text-[12.5px] leading-snug text-zinc-800">
+                Natural partners for <span className="font-bold text-emerald-700">{word}</span>. Use one to light up the <span className="font-bold">Collocation</span> check.
+              </p>
+            </motion.div>
           )}
         </AnimatePresence>
         {tab !== 'collocations' && (
-          <p className="flex gap-2 text-[12px] text-zinc-500 leading-snug mt-3 pt-3" style={{ borderTop: '1px solid rgba(15,23,20,0.06)' }}>
-            <span className="shrink-0">💡</span>
-            <span>{cat.tip}</span>
-          </p>
+          // The tip as a sticky note
+          <div className="flex items-start gap-2 rounded-xl px-3 py-2" style={{ background: '#fff8e1', border: '1.5px solid #fde68a' }}>
+            <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-white" style={{ background: '#f59e0b' }}>
+              <Lightbulb className="h-3 w-3" strokeWidth={2.6} />
+            </span>
+            <p className="min-w-0 text-[12px] leading-snug text-zinc-800">
+              <span className="mr-1 text-[9px] uppercase tracking-[0.16em] font-bold text-amber-700">Tip</span>
+              {cat.tip}
+            </p>
+          </div>
         )}
       </div>
     </div>
@@ -857,6 +989,29 @@ export function GenerationPhase({
 
   // Reset mint guard between words so the next word can mint
   useEffect(() => { mintedRef.current = null; }, [currentItem.word.id]);
+
+  // Shrink-to-fit for the feedback: no scrolling, so if it overflows its box
+  // (long AI notes, short screens), step the zoom down until it fits.
+  const reviewBoxRef = useRef<HTMLDivElement>(null);
+  const reviewContentRef = useRef<HTMLDivElement>(null);
+  const [reviewZoom, setReviewZoom] = useState(1);
+  const [viewportH, setViewportH] = useState(() => window.innerHeight);
+  useEffect(() => {
+    const onResize = () => setViewportH(window.innerHeight);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  useLayoutEffect(() => {
+    setReviewZoom(1);
+  }, [aiFeedback, aiError, aiLoading, generationSaved, viewportH]);
+  useLayoutEffect(() => {
+    const box = reviewBoxRef.current;
+    const content = reviewContentRef.current;
+    if (!box || !content) return;
+    if (content.getBoundingClientRect().height > box.clientHeight && reviewZoom > 0.7) {
+      setReviewZoom(z => Math.round((z - 0.05) * 100) / 100);
+    }
+  }, [reviewZoom, aiFeedback, aiError, aiLoading, generationSaved, viewportH]);
 
   const placeholder = tier === 'learning'
     ? 'A few words is enough…'
@@ -973,41 +1128,38 @@ export function GenerationPhase({
         className="rv-surface relative rounded-[2rem] overflow-hidden flex flex-col flex-1 min-w-0"
         style={{ border: '1px solid rgba(15,23,20,0.08)' }}
       >
-        {/* ── Hero: top bar + prompt on the green ──────────────── */}
-        <div className="relative shrink-0 pb-5" style={{ background: HERO.background }}>
-        {/* ── Top bar ─────────────────────────────────────────────── */}
-        <div className="relative shrink-0 flex items-center gap-3 px-7 pt-6">
-          <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-emerald-100/60">Generation Lab</span>
-          <span className="w-1 h-1 rounded-full bg-white/30" />
-          <span className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: tierColor }}>{tierLabel}</span>
-          <button
-            onClick={onToggleRoast}
-            aria-pressed={roastMode}
-            title={roastMode ? 'Roast mode on — brutal feedback' : 'Roast mode off — tap for brutal feedback'}
-            className="ml-auto w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
-            style={{
-              background: roastMode ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.08)',
-              color: roastMode ? '#f87171' : 'rgba(209,250,229,0.55)',
-              boxShadow: roastMode ? '0 0 18px rgba(239,68,68,0.35)' : 'none',
-            }}
-          >
-            <Flame className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* ── Prompt line ─────────────────────────────────────────── */}
-        <div className="relative shrink-0 px-7 pt-5">
-          <p className="text-[13px] text-emerald-100/60">
-            {tier === 'leech' ? 'One more time, with' : 'Write a sentence with'}
-          </p>
-          <div className="flex items-baseline gap-2.5 mt-1">
+        {/* ── Hero: tier · topic, the word, its meaning — kept compact ── */}
+        <div className="relative shrink-0 px-7 pt-5 pb-4" style={{ background: HERO.background }}>
+          <div className="flex items-center gap-2">
+            <span className="shrink-0 text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: tierColor }}>{tierLabel}</span>
+            <span
+              title={`${topic.title} · ${topic.prompt}`}
+              className="min-w-0 truncate rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-50/80"
+            >
+              ◎ {topic.title}
+            </span>
+            <button
+              onClick={onToggleRoast}
+              aria-pressed={roastMode}
+              title={roastMode ? 'Roast mode on — brutal feedback' : 'Roast mode off — tap for brutal feedback'}
+              className="ml-auto shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
+              style={{
+                background: roastMode ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.08)',
+                color: roastMode ? '#f87171' : 'rgba(209,250,229,0.55)',
+                boxShadow: roastMode ? '0 0 18px rgba(239,68,68,0.35)' : 'none',
+              }}
+            >
+              <Flame className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex items-baseline gap-2.5 mt-1.5">
             <motion.h2
               initial={{ opacity: 0, y: 8, filter: 'blur(6px)' }}
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="font-bold leading-none"
               style={{
-                fontSize: 'clamp(2rem, 4.5vw, 2.9rem)',
+                fontSize: 'clamp(1.8rem, 4vw, 2.4rem)',
                 fontFamily: FONT_DISPLAY,
                 letterSpacing: '-0.03em',
                 background: 'linear-gradient(120deg, #fde68a 0%, #fbbf24 45%, #f59e0b 100%)',
@@ -1024,13 +1176,9 @@ export function GenerationPhase({
               </span>
             )}
           </div>
-          <p className="text-[13px] text-emerald-100/60 mt-2 leading-snug line-clamp-1" title={currentItem.word.definition}>
+          <p className="text-[13px] text-emerald-100/60 mt-1.5 leading-snug line-clamp-1" title={currentItem.word.definition}>
             {currentItem.word.definition}
           </p>
-          <p className="text-[12px] text-emerald-100/45 mt-1.5 truncate" title={`${topic.title} · ${topic.prompt}`}>
-            <span className="text-emerald-50/80">◎ {topic.title}</span> — {topic.prompt}
-          </p>
-        </div>
         </div>
 
         <AnimatePresence mode="wait" initial={false}>
@@ -1042,9 +1190,8 @@ export function GenerationPhase({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.25 }}
-              className="relative flex-1 min-h-0 flex flex-col px-7 pt-5 pb-6"
+              className="relative flex-1 min-h-0 flex flex-col px-7 pt-4 pb-6"
             >
-              <div className="shrink-0 h-px mb-4" style={{ background: 'linear-gradient(90deg, rgba(15,23,20,0.1), transparent)' }} />
 
               {showRemix && priorSentence && (
                 <button
@@ -1166,11 +1313,9 @@ export function GenerationPhase({
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="relative flex-1 min-h-0 flex flex-col px-7 pt-5 pb-6"
+              className="relative flex-1 min-h-0 flex flex-col px-7 pt-4 pb-5"
             >
-              <div className="shrink-0 h-px mb-5" style={{ background: 'linear-gradient(90deg, rgba(15,23,20,0.1), transparent)' }} />
-
-              <div className="flex-1 min-h-0 overflow-y-auto pr-1 [scrollbar-width:thin]">
+              <div ref={reviewBoxRef} className="flex-1 min-h-0 overflow-hidden">
                 {aiLoading ? (
                   <div className="space-y-3 pt-2">
                     <p className="text-[13px] text-zinc-500 flex items-center gap-2">
@@ -1188,28 +1333,26 @@ export function GenerationPhase({
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div ref={reviewContentRef} className="space-y-3" style={{ zoom: reviewZoom }}>
                     {aiFeedback && verdict && (
-                      <div className="flex items-end gap-4">
+                      <div className="flex items-center gap-3">
                         <motion.span
                           initial={{ opacity: 0, scale: 0.6 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ type: 'spring', stiffness: 260, damping: 16 }}
                           className="font-black leading-none tabular-nums"
-                          style={{ fontSize: '4.5rem', fontFamily: FONT_DISPLAY, color: verdict.color, letterSpacing: '-0.05em' }}
+                          style={{ fontSize: '2.6rem', fontFamily: FONT_DISPLAY, color: verdict.color, letterSpacing: '-0.04em' }}
                         >
                           {aiFeedback.score}
+                          <span className="ml-0.5 text-sm font-bold text-zinc-400 tracking-normal">/10</span>
                         </motion.span>
-                        <div className="pb-2">
-                          <p className="text-zinc-400 text-sm font-bold">/10</p>
-                          <p className="text-lg font-bold leading-tight" style={{ color: verdict.color, fontFamily: FONT_DISPLAY }}>{verdict.label}</p>
-                        </div>
+                        <p className="text-lg font-bold leading-tight" style={{ color: verdict.color, fontFamily: FONT_DISPLAY }}>{verdict.label}</p>
                         {trophyMinted && (
                           <motion.span
                             initial={{ opacity: 0, rotate: -20, scale: 0.5 }}
                             animate={{ opacity: 1, rotate: 0, scale: 1 }}
                             transition={{ type: 'spring', stiffness: 260, damping: 12, delay: 0.3 }}
-                            className="ml-auto mb-2 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full"
+                            className="ml-auto flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full"
                             style={{ color: '#b45309', background: '#fef3c7', border: '1px solid #fcd34d' }}
                             title="Saved to your trophy wall"
                           >
@@ -1220,23 +1363,25 @@ export function GenerationPhase({
                     )}
 
                     {/* Yours vs stronger */}
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-zinc-400 mb-1.5">Yours</p>
-                        <p className="text-[17px] leading-relaxed text-zinc-900" style={{ fontFamily: FONT_DISPLAY }}>
+                    <div className={`grid gap-2 ${aiFeedback?.better_example ? 'sm:grid-cols-2' : ''}`}>
+                      <div className="rounded-xl px-3.5 py-2.5 bg-white" style={{ border: '1.5px solid #e4e4e7' }}>
+                        <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-zinc-500 mb-0.5">Yours</p>
+                        <p className="text-[15px] font-medium leading-snug text-zinc-900">
                           {highlightTarget(generationText, word)}
                         </p>
                       </div>
                       {aiFeedback?.better_example && (
                         <motion.div
-                          initial={{ opacity: 0, x: -8 }}
-                          animate={{ opacity: 1, x: 0 }}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.25 }}
-                          className="pl-4"
-                          style={{ borderLeft: '2px solid #fbbf24' }}
+                          className="rounded-xl px-3.5 py-2.5"
+                          style={{ background: '#fff6e0', border: '1.5px solid #fbdc8f' }}
                         >
-                          <p className="text-[10px] uppercase tracking-[0.2em] font-bold mb-1.5" style={{ color: LAB_INK }}>Stronger</p>
-                          <p className="text-[17px] leading-relaxed text-zinc-700" style={{ fontFamily: FONT_DISPLAY }}>
+                          <p className="flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] font-bold mb-0.5" style={{ color: LAB_INK }}>
+                            <Sparkles className="h-3 w-3" strokeWidth={2.6} /> Stronger
+                          </p>
+                          <p className="text-[15px] font-medium leading-snug text-zinc-900">
                             {highlightTarget(aiFeedback.better_example, word)}
                           </p>
                         </motion.div>
@@ -1248,11 +1393,12 @@ export function GenerationPhase({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.4 }}
-                        className="space-y-2.5 text-[13.5px] leading-relaxed"
+                        // Side by side on wider screens: shorter than a stack
+                        className="flex flex-col sm:flex-row gap-2"
                       >
-                        <Note color="#059669" label="Works">{aiFeedback.what_worked}</Note>
-                        {aiFeedback.mistake && <Note color="#dc2626" label="Issue">{aiFeedback.mistake}</Note>}
-                        {aiFeedback.fix && <Note color="#ea580c" label="Fix">{aiFeedback.fix}</Note>}
+                        <Note tone="works">{aiFeedback.what_worked}</Note>
+                        {aiFeedback.mistake && <Note tone="issue">{aiFeedback.mistake}</Note>}
+                        {aiFeedback.fix && <Note tone="fix">{aiFeedback.fix}</Note>}
                       </motion.div>
                     )}
 
@@ -1267,10 +1413,10 @@ export function GenerationPhase({
               </div>
 
               {!aiLoading && (
-                <div className="shrink-0 flex items-center gap-3 mt-4">
+                <div className="shrink-0 flex items-center gap-3 mt-3">
                   <button
                     onClick={onRetry}
-                    className="h-12 px-5 rounded-full flex items-center gap-2 text-sm font-semibold text-zinc-600 hover:text-zinc-900 transition-colors"
+                    className="h-11 px-5 rounded-full flex items-center gap-2 text-sm font-semibold text-zinc-600 hover:text-zinc-900 transition-colors"
                     style={{ background: '#fff', border: '1px solid rgba(15,23,20,0.1)' }}
                   >
                     <RotateCcw className="h-4 w-4" /> Rewrite
@@ -1278,7 +1424,7 @@ export function GenerationPhase({
                   <motion.button
                     onClick={onNextWord}
                     whileTap={{ scale: 0.97 }}
-                    className="ml-auto h-12 pl-6 pr-5 rounded-full flex items-center gap-2 text-sm font-bold"
+                    className="ml-auto h-11 pl-6 pr-5 rounded-full flex items-center gap-2 text-sm font-bold"
                     style={{ background: HERO_GREEN, color: '#fff' }}
                   >
                     {currentIndex + 1 >= totalWords ? 'View summary' : 'Next word'}
@@ -1294,14 +1440,11 @@ export function GenerationPhase({
 
         {/* ══ Writer's toolkit (desktop sidebar) ════════════════════════ */}
         <aside
-          className="rv-surface hidden lg:flex w-[50%] shrink-0 flex-col p-6 min-h-0 rounded-[2rem]"
+          className="rv-surface hidden lg:flex w-[50%] shrink-0 flex-col px-6 pt-5 pb-6 min-h-0 rounded-[2rem] overflow-hidden"
           style={{ border: '1px solid rgba(15,23,20,0.08)' }}
         >
-          <p className="shrink-0 flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] font-bold text-zinc-500 mb-3">
-            <Wand2 className="h-3.5 w-3.5" style={{ color: LAB_INK }} /> Writer's toolkit
-          </p>
           <div className="flex-1 min-h-0">
-            <Toolkit collocations={collocations} word={word} onInsert={insertAtCursor} />
+            <Toolkit collocations={collocations} word={word} onInsert={insertAtCursor} showBadge />
           </div>
         </aside>
       </motion.div>
@@ -1372,11 +1515,24 @@ function Kbd({ children, dark = false }: { children: React.ReactNode; dark?: boo
   );
 }
 
-function Note({ color, label, children }: { color: string; label: string; children: React.ReactNode }) {
+const NOTE_TONES = {
+  works: { label: 'Works', color: '#059669', soft: '#e9fbf5', edge: '#a7ecd6', Icon: Check },
+  issue: { label: 'Issue', color: '#dc2626', soft: '#fef0f0', edge: '#fbc8c8', Icon: X },
+  fix: { label: 'Fix', color: '#ea580c', soft: '#fff3ea', edge: '#fcd0ae', Icon: Wrench },
+} as const;
+
+/** One feedback point as a tinted card with a solid icon badge. */
+function Note({ tone, children }: { tone: keyof typeof NOTE_TONES; children: React.ReactNode }) {
+  const { label, color, soft, edge, Icon } = NOTE_TONES[tone];
   return (
-    <p className="text-zinc-600">
-      <span className="text-[10px] uppercase tracking-[0.18em] font-bold mr-2" style={{ color }}>{label}</span>
-      {children}
-    </p>
+    <div className="flex-1 min-w-0 rounded-xl px-3 py-2.5" style={{ background: soft, border: `1.5px solid ${edge}` }}>
+      <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] font-bold mb-1" style={{ color }}>
+        <span className="w-4 h-4 rounded-full flex items-center justify-center text-white" style={{ background: color }}>
+          <Icon className="h-2.5 w-2.5" strokeWidth={3.2} />
+        </span>
+        {label}
+      </p>
+      <p className="text-[13px] leading-snug text-zinc-800">{children}</p>
+    </div>
   );
 }

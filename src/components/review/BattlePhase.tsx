@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, animate, useReducedMotion } from 'framer-motion';
-import { RotateCcw, Zap, Check, Sparkles, Flame, Target, Dices } from 'lucide-react';
+import { RotateCcw, Zap, Check, Sparkles, Flame, Target, Dices, Brain } from 'lucide-react';
 import { Rating, State, type Card, type Grade } from 'ts-fsrs';
 import type { DueWordItem } from './types';
 import type { Word } from '@/lib/types';
@@ -16,9 +16,9 @@ const ratingConfig = [
 ];
 
 const MC_STYLES = [
-  { label: 'A', accent: '#a78bfa' },
-  { label: 'B', accent: '#6ee7b7' },
-  { label: 'C', accent: '#fbbf24' },
+  { accent: '#a78bfa' },
+  { accent: '#6ee7b7' },
+  { accent: '#fbbf24' },
 ];
 
 const WIN_PHRASES  = ['Flawless.', 'Sharp.', 'Locked in.', 'You own this.', 'Crisp.', 'Perfect.'];
@@ -41,11 +41,7 @@ interface BattlePhaseProps {
 
 type BattleStep = 'recall' | 'confidence' | 'quiz' | 'quiz-result';
 
-const TURNS: { step: BattleStep; label: string }[] = [
-  { step: 'recall', label: 'Recall' },
-  { step: 'confidence', label: 'Wager' },
-  { step: 'quiz', label: 'Prove it' },
-];
+const TURNS: BattleStep[] = ['recall', 'confidence', 'quiz'];
 
 // ── Formatting ────────────────────────────────────────────────────
 
@@ -154,7 +150,7 @@ function calloutFor(beat: DuelBeat): { text: string; color: string; big?: boolea
         : beat.rating === Rating.Good ? { text: 'Ready', color: '#c4b5fd' }
         : { text: 'Unstoppable!', color: MINT };
     case 'wager':
-      return beat.sure ? { text: 'All in!', color: MINT } : { text: 'Guard up', color: '#c4b5fd' };
+      return beat.sure ? { text: 'Sure!', color: MINT } : { text: 'Playing safe', color: '#c4b5fd' };
     case 'result':
       return beat.correct
         ? beat.sure ? { text: 'CRITICAL!', color: MINT, big: true } : { text: 'Slain!', color: MINT }
@@ -647,7 +643,7 @@ function MemoryDuel({ rNow, dueIn, dueAfter, beat, accent }: {
               />
             )}
 
-            {/* All in: energy pouring into the blade */}
+            {/* "I'm sure": energy pouring into the blade */}
             {beat.kind === 'wager' && beat.sure && !reduce && (
               <g transform="translate(2.3 -28)">
                 <motion.circle
@@ -670,7 +666,7 @@ function MemoryDuel({ rNow, dueIn, dueAfter, beat, accent }: {
               </g>
             )}
 
-            {/* Hedge: a guard barrier in front — it shatters if the ghost gets through */}
+            {/* "Not sure": a guard barrier in front — it shatters if the ghost gets through */}
             {sureBet === false && (
               <motion.path
                 d={BARRIER} fill="rgba(167,139,250,0.16)" stroke="#c4b5fd" strokeWidth="2"
@@ -847,12 +843,9 @@ function StatChip({ label, short, value, tone }: { label: string; short?: string
   );
 }
 
-function StepHeading({ title, sub }: { title: string; sub: string }) {
+function StepHeading({ title }: { title: string }) {
   return (
-    <div className="mb-3">
-      <h3 className="text-lg font-bold text-zinc-900 leading-tight" style={{ fontFamily: DISPLAY_FONT }}>{title}</h3>
-      <p className="text-[13px] text-zinc-600 mt-0.5">{sub}</p>
-    </div>
+    <h3 className="mb-3 text-lg font-bold text-zinc-900 leading-tight" style={{ fontFamily: DISPLAY_FONT }}>{title}</h3>
   );
 }
 
@@ -965,10 +958,10 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const activeTurn = answered ? 3 : TURNS.findIndex(t => t.step === step);
+  const activeTurn = answered ? 3 : TURNS.indexOf(step);
   const goodReview = finalRating === Rating.Good || finalRating === Rating.Easy;
   const accent = goodReview ? MINT : ORANGE;
-  // Each turn advances the fight in the duel above
+  // Each turn advances the fight in the duel below
   const duelBeat: DuelBeat = answered
     ? { kind: 'result', correct: isCorrect, sure: confidence === 'sure' }
     : confidence ? { kind: 'wager', sure: confidence === 'sure' }
@@ -985,121 +978,61 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
       className="mt-2 flex flex-col gap-3"
       style={{ fontFamily: DISPLAY_FONT }}
     >
-      {/* ── Memory strip: the word and its real forgetting curve ─────── */}
-      <div
-        className="rounded-[1.75rem] overflow-hidden px-4 lg:px-5 pt-3 pb-3"
-        style={{
-          ...HERO,
-          borderColor: answered ? tint(isCorrect ? MINT : RED, '80') : HERO_EDGE,
-          transition: 'border-color 0.45s ease',
-        }}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <Badge color={stage.color} className="text-[9px] uppercase tracking-[0.18em]">{stage.label}</Badge>
-          {streak > 0 && (
-            <Badge color="#fb923c" className="text-xs">
-              <Flame className="h-3.5 w-3.5" strokeWidth={2.4} />
-              {streak} day streak
-            </Badge>
-          )}
-        </div>
+      {/* ── The word, centre stage, with its status as quiet pills ─────── */}
+      <div className="rounded-[1.75rem] overflow-hidden px-4 lg:px-5 pt-4 pb-3.5 text-center" style={HERO}>
+        <motion.h2
+          initial={{ opacity: 0, y: 6, filter: 'blur(8px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ type: 'spring', stiffness: 180, damping: 18, delay: 0.05 }}
+          className="font-black leading-none truncate"
+          style={{ fontSize: 'clamp(2rem, 4.6vw, 2.6rem)', color: '#fff', fontFamily: DISPLAY_FONT, letterSpacing: '-0.02em' }}
+        >
+          {currentItem.word.word}
+        </motion.h2>
 
-        {/* Word on the left, recall chance (the real headline number) on the right */}
-        <div className="mt-2 flex items-end justify-between gap-4">
-          <motion.h2
-            initial={{ opacity: 0, y: 6, filter: 'blur(8px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            transition={{ type: 'spring', stiffness: 180, damping: 18, delay: 0.05 }}
-            className="min-w-0 font-black leading-none truncate"
-            style={{ fontSize: 'clamp(1.6rem, 3.6vw, 2.1rem)', color: '#fff', fontFamily: DISPLAY_FONT, letterSpacing: '-0.02em' }}
+        <div className="mt-2.5 flex items-center justify-center gap-2">
+          <Badge color={stage.color} className="text-[9px] uppercase tracking-[0.18em] py-1 rounded-full">{stage.label}</Badge>
+          <span
+            title={answered ? 'Recall after this review' : rNow === null ? 'New word — no memory to measure yet' : 'Chance you recall it right now'}
+            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/25 text-sm font-bold tabular-nums"
+            style={{ color: answered ? accent : '#fff' }}
           >
-            {currentItem.word.word}
-          </motion.h2>
-          <div className="shrink-0 text-right">
-            <p className="text-[9px] uppercase tracking-widest text-emerald-100/80 font-bold">
-              {answered ? 'Recall after review' : 'Recall chance now'}
-            </p>
-            <div className="mt-1 flex items-center justify-end gap-2">
-              <AnimatePresence>
-                {answered && rNow !== null && pct(rNow) < 100 && (
-                  <motion.span
-                    initial={{ opacity: 0, x: 8, scale: 0.6 }}
-                    animate={{ opacity: 1, x: 0, scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 380, damping: 16, delay: 0.5 }}
-                    className="text-[11px] font-bold px-1.5 py-0.5 rounded-md"
-                    style={{ color: accent, background: tint(accent) }}
-                  >
-                    +{100 - pct(rNow)}%
-                  </motion.span>
-                )}
-              </AnimatePresence>
-              <p className="font-black leading-none tabular-nums text-2xl" style={{ fontFamily: DISPLAY_FONT, color: answered ? accent : '#fff' }}>
-                {rNow === null && !answered ? '—' : <><CountUp value={answered ? 100 : pct(rNow ?? 0)} delay={answered ? 0.25 : 0} />%</>}
-              </p>
-            </div>
-          </div>
-        </div>
-        {rNow === null && !answered && (
-          <p className="mt-1 text-[11px] text-emerald-100/80">First time — no memory to measure yet.</p>
-        )}
-
-        {/* The duel */}
-        <div className="mt-1 h-[88px] -mx-4 lg:-mx-5">
-          <MemoryDuel
-            rNow={rNow}
-            dueIn={cardBefore.due.getTime() - now.getTime()}
-            dueAfter={cardAfter ? cardAfter.due.getTime() - now.getTime() : null}
-            beat={duelBeat}
-            accent={accent}
-          />
-        </div>
-
-        {/* Track record */}
-        <div className="mt-2 grid grid-cols-4 gap-2">
-          <StatChip label="Reviews" value={`${stats.repetitions}`} />
-          <StatChip
-            label="Accuracy"
-            short="Right"
-            value={attempts ? `${pct(stats.times_correct / attempts)}%` : '—'}
-            tone={attempts ? (stats.times_correct / attempts >= 0.8 ? MINT : stats.times_correct / attempts >= 0.5 ? '#fbbf24' : '#fb7185') : undefined}
-          />
-          <StatChip label="Forgotten" short="Forgot" value={`${stats.lapses}×`} tone={stats.lapses >= 3 ? '#fb7185' : undefined} />
-          <StatChip label="Holds ≥90%" short="Holds" value={stats.state === State.New ? '—' : fmtDays(cardBefore.stability)} />
+            <Brain className="h-3.5 w-3.5" style={{ color: MINT }} strokeWidth={2.2} />
+            {rNow === null && !answered ? 'New' : <><CountUp value={answered ? 100 : pct(rNow ?? 0)} delay={answered ? 0.25 : 0} />%</>}
+            <AnimatePresence>
+              {answered && rNow !== null && pct(rNow) < 100 && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 380, damping: 16, delay: 0.5 }}
+                  className="text-[10px] font-bold"
+                >
+                  +{100 - pct(rNow)}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </span>
+          {streak > 0 && (
+            <span
+              title={`${streak} day streak`}
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/25 text-sm font-bold tabular-nums text-orange-400"
+            >
+              <Flame className="h-3.5 w-3.5" strokeWidth={2.4} />
+              {streak}
+            </span>
+          )}
         </div>
       </div>
 
       {/* ── Turn panel ──────────────────────────────────────────────── */}
       <div className="rounded-[1.75rem] overflow-hidden flex flex-col" style={SURFACE}>
-        <div className="flex items-center gap-1.5 px-4 lg:px-5 pt-4">
-          {TURNS.map((t, i) => {
-            const done = i < activeTurn;
-            const active = i === activeTurn;
-            return (
-              <div key={t.step} className="flex-1 min-w-0">
-                <div className="h-1.5 rounded-full overflow-hidden bg-zinc-200">
-                  <motion.div
-                    className="h-full rounded-full"
-                    initial={false}
-                    animate={{ width: done || active ? '100%' : '0%' }}
-                    transition={{ duration: 0.35 }}
-                    style={{ background: active ? ink(MINT) : tint(ink(MINT), '66') }}
-                  />
-                </div>
-                <p className="mt-1.5 text-[9px] uppercase tracking-[0.18em] font-bold" style={{ color: active ? ink(MINT) : done ? tint(ink(MINT), 'b3') : '#71717a' }}>
-                  {i + 1} · {t.label}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="flex-1 px-4 lg:px-5 pt-4 pb-5 flex flex-col">
+        <div className={`flex-1 px-4 lg:px-5 pt-4 ${answered ? 'pb-5' : 'pb-3.5'} flex flex-col`}>
           <AnimatePresence mode="wait">
 
             {/* Turn 1 · Recall ─────────────────────────────────────── */}
             {step === 'recall' && (
               <motion.div key="recall" {...stepMotion}>
-                <StepHeading title="How well did it come back?" sub="Each choice shows when you'd see this word next." />
+                <StepHeading title="How well did it come back?" />
                 <div className="grid grid-cols-2 gap-2.5">
                   {ratingConfig.map((btn, i) => (
                       <motion.button
@@ -1129,16 +1062,11 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
             {/* Turn 2 · Wager ──────────────────────────────────────── */}
             {step === 'confidence' && (
               <motion.div key="confidence" {...stepMotion}>
-                <StepHeading
-                  title="Place your bet"
-                  sub={bufferedRating === Rating.Good || bufferedRating === Rating.Easy
-                    ? "Sure it's right? Your bet counts toward your calibration score — and a miss on Good/Easy drops this review to Hard."
-                    : 'Your bet counts toward your calibration score.'}
-                />
+                <StepHeading title="How sure are you?" />
                 <div className="grid grid-cols-2 gap-2.5">
                   {([
-                    { c: 'sure' as const, title: 'All in', sub: 'I know it', color: MINT, Icon: Target },
-                    { c: 'unsure' as const, title: 'Hedge', sub: "I'm guessing", color: VIOLET, Icon: Dices },
+                    { c: 'sure' as const, title: "I'm sure", color: MINT, Icon: Target },
+                    { c: 'unsure' as const, title: 'Not sure', color: VIOLET, Icon: Dices },
                   ]).map((w, i) => (
                       <motion.button
                         key={w.c}
@@ -1151,10 +1079,7 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
                         style={softCard(w.color)}
                       >
                         <Disc color={w.color} size="w-8 h-8"><w.Icon className="h-4 w-4" strokeWidth={2.4} /></Disc>
-                        <span className="flex-1 min-w-0">
-                          <span className="block text-[15px] font-semibold text-zinc-900 leading-tight">{w.title}</span>
-                          <span className="block text-xs text-zinc-600">{w.sub}</span>
-                        </span>
+                        <span className="flex-1 min-w-0 text-[15px] font-semibold text-zinc-900">{w.title}</span>
                         <Keycap>{i + 1}</Keycap>
                       </motion.button>
                   ))}
@@ -1165,7 +1090,7 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
             {/* Turn 3 · Prove it ───────────────────────────────────── */}
             {step === 'quiz' && (
               <motion.div key="quiz" {...stepMotion}>
-                <StepHeading title="Prove it" sub="Three cards, one true meaning. Play yours." />
+                <StepHeading title="Prove it" />
                 {/* The card you play stays lit; the others fade back */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   {choices.map((choice, i) => {
@@ -1189,7 +1114,6 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
                         className="flex sm:flex-col items-start gap-3 sm:gap-2.5 text-left w-full h-full px-3.5 py-3 sm:p-4 rounded-xl"
                         style={softCard(cfg.accent)}
                       >
-                        <Disc color={cfg.accent} size="w-6 h-6">{cfg.label}</Disc>
                         <span className="text-[15px] leading-snug font-medium text-zinc-900 flex-1">{choice}</span>
                       </motion.button>
                     );
@@ -1214,6 +1138,12 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
                   <h3 className="text-2xl font-bold leading-none" style={{ color: ink(isCorrect ? MINT : RED), fontFamily: DISPLAY_FONT }}>
                     {isCorrect ? winPhrase : lossPhrase}
                   </h3>
+                  {/* Wide screens: the downgrade note rides on the verdict row */}
+                  {overconfident && (
+                    <p className="hidden sm:block ml-auto text-right text-[11px] font-bold leading-tight text-orange-600">
+                      Rated {bufferedRating === Rating.Easy ? 'Easy' : 'Good'} but missed<br />counted as Hard
+                    </p>
+                  )}
                 </div>
 
                 <div className="rounded-xl px-3.5 py-2.5" style={softCard(MINT)}>
@@ -1257,7 +1187,7 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
                 </div>
 
                 {overconfident && (
-                  <p className="mt-2.5 text-[11px] font-bold text-orange-600">
+                  <p className="sm:hidden mt-2.5 text-[11px] font-bold text-orange-600">
                     You rated it {bufferedRating === Rating.Easy ? 'Easy' : 'Good'} but missed — counted as Hard.
                   </p>
                 )}
@@ -1279,6 +1209,61 @@ export function BattlePhase({ currentItem, currentIndex, onRate, allWords, strea
             )}
 
           </AnimatePresence>
+        </div>
+
+        {/* Turn progress, along the bottom. Hidden once answered — all three
+            turns are done, and the result needs the room. */}
+        {!answered && (
+          <div className="flex items-center gap-1.5 px-4 lg:px-5 pb-4">
+            {TURNS.map((t, i) => {
+              const done = i < activeTurn;
+              const active = i === activeTurn;
+              return (
+                <div key={t} className="flex-1 min-w-0 h-1.5 rounded-full overflow-hidden bg-zinc-200">
+                  <motion.div
+                    className="h-full rounded-full"
+                    initial={false}
+                    animate={{ width: done || active ? '100%' : '0%' }}
+                    transition={{ duration: 0.35 }}
+                    style={{ background: active ? ink(MINT) : tint(ink(MINT), '66') }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── The duel: plays out as you take your turns ──────────────── */}
+      <div
+        className="rounded-[1.75rem] overflow-hidden pt-2 pb-3"
+        style={{
+          ...HERO,
+          borderColor: answered ? tint(isCorrect ? MINT : RED, '80') : HERO_EDGE,
+          transition: 'border-color 0.45s ease',
+        }}
+      >
+        <div className="h-[88px]">
+          <MemoryDuel
+            rNow={rNow}
+            dueIn={cardBefore.due.getTime() - now.getTime()}
+            dueAfter={cardAfter ? cardAfter.due.getTime() - now.getTime() : null}
+            beat={duelBeat}
+            accent={accent}
+          />
+        </div>
+
+        {/* Track record */}
+        <div className="mt-2 px-4 lg:px-5 grid grid-cols-4 gap-2">
+          <StatChip label="Reviews" value={`${stats.repetitions}`} />
+          <StatChip
+            label="Accuracy"
+            short="Right"
+            value={attempts ? `${pct(stats.times_correct / attempts)}%` : '—'}
+            tone={attempts ? (stats.times_correct / attempts >= 0.8 ? MINT : stats.times_correct / attempts >= 0.5 ? '#fbbf24' : '#fb7185') : undefined}
+          />
+          <StatChip label="Forgotten" short="Forgot" value={`${stats.lapses}×`} tone={stats.lapses >= 3 ? '#fb7185' : undefined} />
+          <StatChip label="Holds ≥90%" short="Holds" value={stats.state === State.New ? '—' : fmtDays(cardBefore.stability)} />
         </div>
       </div>
     </motion.div>
