@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useIsMutating } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Moon, CheckCircle2, Flame, X, Brain, Zap, Clock3 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Rating } from 'ts-fsrs';
@@ -24,6 +25,7 @@ import { getTopicOfDay } from '@/lib/topic-of-day';
 import { getRoastMode, setRoastMode } from '@/lib/local-prefs';
 import { calculateStreak } from '@/lib/streak';
 import { matureNeedsGeneration, markGenerated } from '@/lib/generation-log';
+import { REVIEW_CHUNK_SIZE } from '@/lib/review-chunks';
 
 
 export default function ReviewPage() {
@@ -32,7 +34,8 @@ export default function ReviewPage() {
   const isSleepPrep = searchParams.get('mode') === 'sleep_prep';
   const sessionStartRef = useRef(new Date().toISOString());
 
-  const { data: dueWordsData = [], isLoading } = useDueWords();
+  const { data: dueWordsData = [], isLoading, isFetching } = useDueWords();
+  const pendingWrites = useIsMutating();
   const { data: allWords = [], isLoading: wordsLoading } = useWords();
   const { data: allStats = [], isLoading: statsLoading } = useWordStats();
   const updateWordStats = useUpdateWordStats();
@@ -104,14 +107,17 @@ export default function ReviewPage() {
         stats,
       }))
       .filter(item => item.word)
-    : dueWordsData;
+    : dueWordsData.slice(0, REVIEW_CHUNK_SIZE);
 
   // Sleep prep builds its list from words + stats, and the normal queue
   // depends on prefs (new-cards cap changes the due_words query key) — so
   // gate the one-time session snapshot on the sources it actually uses.
+  // When starting the next set, the previous set's stat writes and the due
+  // refetch they trigger must land first, or the snapshot would re-serve
+  // words that were just reviewed.
   const sourcesReady = isSleepPrep
     ? !wordsLoading && !statsLoading
-    : !isLoading && !prefsLoading;
+    : !isLoading && !prefsLoading && !isFetching && pendingWrites === 0;
 
   useEffect(() => {
     if (sourcesReady && !sessionReady) {

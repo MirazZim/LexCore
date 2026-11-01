@@ -1,6 +1,6 @@
 import { useRef, useEffect, useLayoutEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, PlusCircle, BookOpen, TrendingUp, BookText, Settings, Menu, X, LogOut, BookMarked } from 'lucide-react';
+import { Home, PlusCircle, BookOpen, TrendingUp, BookText, Settings, Menu, X, LogOut, BookMarked, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -12,6 +12,7 @@ const navItems = [
   { path: '/library', icon: BookOpen, label: 'Library' },
   { path: '/dictionary', icon: BookMarked, label: 'Dictionary' },
   { path: '/progress', icon: TrendingUp, label: 'Progress' },
+  { path: '/achievements', icon: Trophy, label: 'Achievements' },
   { path: '/grammar', icon: BookText, label: 'Grammar' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];

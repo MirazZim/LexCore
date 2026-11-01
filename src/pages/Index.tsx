@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
-import { BookOpen, Brain, Clock, Compass, Flame, Moon, PenLine, Sparkles, ArrowRight, MoreHorizontal, Target, Trophy } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { BookOpen, Check, Compass, Flame, Moon, PenLine, Sparkles, ArrowRight, Target, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/AppLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EaseBadge } from '@/components/EaseBadge';
 import { useWords, useWordStats, useDueWords, useReviewSessions, useReviewEvents, useCalibration, useUserPreferences, useApplyStreakRecovery } from '@/hooks/useWords';
+import { chunkSizes, dayProgress } from '@/lib/review-chunks';
+import { GlassTrophy } from '@/components/achievements/GlassTrophy';
+import { useDailyClears } from '@/hooks/useDailyClears';
+import { clearStreaks } from '@/lib/daily-clears';
 import { useAuth } from '@/contexts/AuthContext';
 import { seedWordsIfEmpty } from '@/lib/seed-words';
 import { getIdentity } from '@/lib/identity';
@@ -26,262 +30,61 @@ const item = {
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-/* ─── Hero rotating word ─────────────────────────────────────────── */
-/* Sleek palette — desaturated tints (200-level) for a sophisticated cool
-   base, with a soft warm complement that produces tension without going
-   neon. Chromatic vibration is still the goal, but tuned down so the
-   overall feel is liquid-metal / iridescent foil instead of arcade. */
-const HERO_WORDS = [
-  { text: 'sharpening.', b1: '#93C5FD', b2: '#C4B5FD', o1: '#FED7AA', o2: '#FECDD3' },
-  { text: 'compounding.', b1: '#A5B4FC', b2: '#C7D2FE', o1: '#FDE68A', o2: '#FED7AA' },
-  { text: 'deepening.', b1: '#DDD6FE', b2: '#FBCFE8', o1: '#BBF7D0', o2: '#A7F3D0' },
-  { text: 'expanding.', b1: '#FBCFE8', b2: '#FED7AA', o1: '#BAE6FD', o2: '#A5B4FC' },
-  { text: 'crystallizing.', b1: '#FDE68A', b2: '#A7F3D0', o1: '#DDD6FE', o2: '#C7D2FE' },
-];
-
-const letterVariants = {
-  hidden: { opacity: 0, y: 24, filter: 'blur(8px)' },
-  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } },
-};
-const lineVariants = {
-  hidden: { opacity: 1 },
-  show: { opacity: 1, transition: { staggerChildren: 0.035, delayChildren: 0.1 } },
-};
-
-function ScatterWord({ text, b1, b2, o1, o2 }: { text: string; b1: string; b2: string; o1: string; o2: string }) {
-  const chars = Array.from(text);
+/* ─── Hero: set path ────────────────────────────────────────────── */
+/** Today's sets as a path: finished sets in gold, the next one lit, the rest waiting. */
+function SetPath({ done, upcoming }: { done: number; upcoming: number[] }) {
+  const nodes = [
+    ...Array.from({ length: done }, () => ({ state: 'done' as const, size: 0 })),
+    ...upcoming.map((size, i) => ({ state: i === 0 ? 'next' as const : 'later' as const, size })),
+  ];
   return (
-    <span className="relative inline-block" style={{ whiteSpace: 'pre' }}>
-      <AnimatePresence mode="popLayout" initial={false}>
-        {chars.map((char, i) => {
-          const inAngle = Math.random() * Math.PI * 2;
-          const inDist = 90 + Math.random() * 90;
-          const outAngle = Math.random() * Math.PI * 2;
-          const outDist = 120 + Math.random() * 120;
-          return (
-            <motion.span
-              key={`${text}-${i}-${char}`}
-              layout
-              className="hero-rotword inline-block will-change-transform"
-              style={{
-                ['--b1' as never]: b1,
-                ['--b2' as never]: b2,
-                ['--o1' as never]: o1,
-                ['--o2' as never]: o2,
-                whiteSpace: 'pre',
-                transformOrigin: '50% 60%',
-              }}
-              initial={{
-                opacity: 0,
-                x: Math.cos(inAngle) * inDist,
-                y: Math.sin(inAngle) * inDist - 20,
-                rotate: (Math.random() - 0.5) * 160,
-                scale: 0.25,
-                filter: 'blur(8px)',
-              }}
-              animate={{
-                opacity: 1,
-                x: 0,
-                y: 0,
-                rotate: 0,
-                scale: 1,
-                filter: 'blur(0px)',
-                transition: {
-                  type: 'spring',
-                  stiffness: 280,
-                  damping: 18,
-                  mass: 0.7,
-                  delay: i * 0.035,
-                },
-              }}
-              exit={{
-                opacity: 0,
-                x: Math.cos(outAngle) * outDist,
-                y: Math.sin(outAngle) * outDist - 40,
-                rotate: (Math.random() - 0.5) * 240,
-                scale: 0.4,
-                filter: 'blur(6px)',
-                transition: {
-                  duration: 0.45,
-                  ease: [0.4, 0, 0.7, 0.2],
-                  delay: i * 0.015,
-                },
-              }}
-            >
-              {char}
-            </motion.span>
-          );
-        })}
-      </AnimatePresence>
-    </span>
+    <div className="flex items-center w-full max-w-md" aria-label={`${done} of ${nodes.length} sets done`}>
+      {nodes.map((n, i) => (
+        <div key={i} className={`flex items-center ${i < nodes.length - 1 ? 'flex-1' : ''}`}>
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 18, delay: 0.7 + i * 0.07 }}
+            className="relative shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold tabular-nums"
+            style={
+              n.state === 'done'
+                ? { background: 'linear-gradient(135deg, #f6dc94, #c8922a)', color: '#3a2606', boxShadow: '0 0 14px rgba(240,201,106,0.35)' }
+                : n.state === 'next'
+                  ? { background: 'rgba(0,255,200,0.12)', color: '#00FFC8', border: '1.5px solid #00FFC8' }
+                  : { color: '#71717a', border: '1.5px dashed rgba(255,255,255,0.14)' }
+            }
+          >
+            {n.state === 'next' && <span className="absolute inset-0 rounded-full hero-node-ping" aria-hidden />}
+            {n.state === 'done' ? <Check className="h-4 w-4" strokeWidth={3} /> : n.size}
+          </motion.div>
+          {i < nodes.length - 1 && (
+            <div
+              className="flex-1 h-[2px] mx-1 rounded-full"
+              style={{ background: i < done ? 'linear-gradient(90deg, #c8922a, #f0c96a)' : 'rgba(255,255,255,0.08)' }}
+            />
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 
-/* ─── Hero brain visual ──────────────────────────────────────────── */
-function HeroBrain({ tintB1, tintB2 }: { tintB1: string; tintB2: string }) {
-  // Mouse-tracked parallax tilt — punchy amplitudes for a real 3D read
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const rySpring = useSpring(useTransform(mx, [-1, 1], [-16, 16]), { stiffness: 110, damping: 16 });
-  const rxSpring = useSpring(useTransform(my, [-1, 1], [12, -12]), { stiffness: 110, damping: 16 });
-
-  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    mx.set(((e.clientX - r.left) / r.width) * 2 - 1);
-    my.set(((e.clientY - r.top) / r.height) * 2 - 1);
-  };
-  const handleLeave = () => { mx.set(0); my.set(0); };
-
-  // Glint positions (stable per mount). Stored as numeric % so we can
-  // also draw the constellation lines between them in SVG coords.
-  const glints = useMemo(
-    () => [
-      { top: 12, left: 8, size: 5, dur: 5.2, delay: 0 },
-      { top: 28, left: 88, size: 4, dur: 6.4, delay: 0.6 },
-      { top: 52, left: 4, size: 6, dur: 5.8, delay: 1.1 },
-      { top: 70, left: 82, size: 4, dur: 6.2, delay: 1.8 },
-      { top: 86, left: 24, size: 5, dur: 5.5, delay: 2.3 },
-    ],
-    []
-  );
-  // Connect adjacent glints with thin "synapse" lines.
-  const links: Array<[number, number]> = [[0, 1], [1, 3], [3, 4], [4, 2], [2, 0], [0, 3]];
-
+/* ─── Pulse strip ring ──────────────────────────────────────────── */
+function Ring({ pct, color, size = 44 }: { pct: number; color: string; size?: number }) {
+  const r = 18;
+  const c = 2 * Math.PI * r;
   return (
-    <motion.div
-      className="relative w-full max-w-[230px] xl:max-w-[260px] mx-auto"
-      style={{
-        perspective: 800,
-        perspectiveOrigin: '50% 50%',
-        aspectRatio: '3 / 4',
-        transformStyle: 'preserve-3d',
-      }}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-      initial={{ opacity: 0, scale: 0.9, y: 30 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 1.0, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-    >
-      {/* Synced colored halo — sits BEHIND the brain (negative Z) */}
-      <motion.div
-        className="absolute pointer-events-none"
-        style={{
-          inset: '-18%',
-          background: `radial-gradient(closest-side, ${tintB1}66 0%, ${tintB2}33 42%, transparent 78%)`,
-          filter: 'blur(52px)',
-          transform: 'translateZ(-60px)',
-          transition: 'background 0.8s ease',
-        }}
-        animate={{ scale: [1, 1.07, 1], opacity: [0.85, 1, 0.85] }}
-        transition={{ duration: 6.5, repeat: Infinity, ease: 'easeInOut' }}
+    <svg width={size} height={size} viewBox="0 0 44 44" className="shrink-0 -rotate-90" aria-hidden>
+      <circle cx="22" cy="22" r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="4" />
+      <motion.circle
+        cx="22" cy="22" r={r} fill="none" stroke={color} strokeWidth="4" strokeLinecap="round"
+        strokeDasharray={c}
+        initial={{ strokeDashoffset: c }}
+        animate={{ strokeDashoffset: c * (1 - Math.min(100, Math.max(0, pct)) / 100) }}
+        transition={{ duration: 1.1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        style={{ filter: `drop-shadow(0 0 4px ${color}88)` }}
       />
-
-      {/* Ambient floor shadow — anchors the brain to a plane */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          left: '15%', right: '15%', bottom: '4%',
-          height: '10%',
-          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, transparent 70%)',
-          filter: 'blur(8px)',
-          transform: 'translateZ(-30px)',
-        }}
-      />
-
-      {/* Faint orbit ring — sits behind the brain plane */}
-      <motion.div
-        className="absolute pointer-events-none rounded-full"
-        style={{
-          inset: '6%',
-          border: '1px dashed rgba(255,255,255,0.08)',
-          transform: 'translateZ(-20px)',
-        }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
-      />
-
-      {/* Neural constellation — thin pulsing synapse lines linking the glints */}
-      <svg
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{ transform: 'translateZ(20px)' }}
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <linearGradient id="hero-synapse" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor={tintB1} stopOpacity="0" />
-            <stop offset="50%" stopColor={tintB1} stopOpacity="0.65" />
-            <stop offset="100%" stopColor={tintB2} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        {links.map(([a, b], i) => {
-          const ga = glints[a];
-          const gb = glints[b];
-          return (
-            <motion.line
-              key={i}
-              x1={ga.left} y1={ga.top}
-              x2={gb.left} y2={gb.top}
-              stroke="url(#hero-synapse)"
-              strokeWidth={0.25}
-              strokeLinecap="round"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: [0, 1, 1, 0], opacity: [0, 0.7, 0.7, 0] }}
-              transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut', delay: i * 0.6 }}
-            />
-          );
-        })}
-      </svg>
-
-      {/* Floating glints — neural firing, lifted in front of brain */}
-      {glints.map((g, i) => (
-        <motion.span
-          key={i}
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            top: `${g.top}%`,
-            left: `${g.left}%`,
-            width: g.size,
-            height: g.size,
-            background: tintB1,
-            boxShadow: `0 0 14px ${tintB1}, 0 0 4px ${tintB2}`,
-            transform: 'translateZ(60px)',
-            transition: 'background 0.6s ease, box-shadow 0.6s ease',
-          }}
-          animate={{
-            y: [0, -14, 0],
-            x: [0, i % 2 ? 6 : -6, 0],
-            opacity: [0.25, 0.9, 0.25],
-            scale: [0.8, 1.2, 0.8],
-          }}
-          transition={{ duration: g.dur, repeat: Infinity, ease: 'easeInOut', delay: g.delay }}
-        />
-      ))}
-
-      {/* The brain — parallax-tilted, breathing, with soft bottom fade */}
-      <motion.div
-        className="relative w-full h-full"
-        style={{
-          rotateX: rxSpring,
-          rotateY: rySpring,
-          z: 20,
-          transformStyle: 'preserve-3d',
-        }}
-      >
-        <motion.img
-          src="/hero-brain.png"
-          alt=""
-          draggable={false}
-          className="hero-brain-img relative w-full h-full object-contain select-none pointer-events-none"
-          style={{
-            maskImage: 'linear-gradient(to bottom, black 78%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, black 78%, transparent 100%)',
-          }}
-          animate={{ y: [0, -8, 0], scale: [1, 1.018, 1] }}
-          transition={{ duration: 7.5, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      </motion.div>
-    </motion.div>
+    </svg>
   );
 }
 
@@ -353,6 +156,11 @@ export default function Dashboard() {
   /* ── Derived stats ───────────────────────────────────────────────── */
   const totalWords = words.length;
   const dueToday = dueWords.length;
+  const dueSets = chunkSizes(dueToday);
+  const todayProgress = dayProgress(reviewEvents, dueWords.map(d => d.word.id));
+  // Sets already finished today, so numbering carries on ("Set 2 of 3")
+  const setsTotal = chunkSizes(todayProgress.total).length;
+  const setsDone = setsTotal - dueSets.length;
   const mastered = wordStats.filter(s => s.state === 2 && s.stability >= 21).length;
   const masteredPct = totalWords > 0 ? Math.round((mastered / totalWords) * 100) : 0;
 
@@ -424,11 +232,20 @@ export default function Dashboard() {
       // review_events, so adding both would double-count. Sessions only win
       // for history predating the event log.
       const value = Math.max(eventCounts.get(key) ?? 0, fromSessions);
-      return { day: DAY_LABELS[d.getDay()], value, active: i === 6 };
+      return { key, day: DAY_LABELS[d.getDay()], value, active: i === 6 };
     });
     const max = Math.max(...bars.map(b => b.value), 1);
     return bars.map(b => ({ ...b, heightPx: Math.max(Math.round((b.value / max) * 128), 6) }));
   }, [reviewSessions, reviewEvents]);
+
+  const weekTotal = velocityBars.reduce((sum, b) => sum + b.value, 0);
+  const weekActiveDays = velocityBars.filter(b => b.value > 0).length;
+
+  /* ── Day clears (trophies) ───────────────────────────────────────── */
+  const { data: clears = [] } = useDailyClears();
+  const clearedDays = useMemo(() => new Set(clears.map(c => c.day)), [clears]);
+  const { best: bestClearRun } = useMemo(() => clearStreaks(clears.map(c => c.day)), [clears]);
+  const addedThisWeek = words.filter(w => Date.now() - new Date(w.created_at).getTime() < 7 * 86400000).length;
 
   /* ── Calibration ─────────────────────────────────────────────────── */
   const { data: cal } = useCalibration();
@@ -440,18 +257,27 @@ export default function Dashboard() {
   /* ── Recent words ────────────────────────────────────────────────── */
   const recentWords = [...words]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 5);
+    .slice(0, 6);
 
   /* ── Greatest Hits (10/10 trophies) ──────────────────────────────── */
   const [trophies, setTrophies] = useState<TrophyEntry[]>([]);
   useEffect(() => { setTrophies(getTrophies()); }, []);
 
-  /* ── Hero rotating word ──────────────────────────────────────────── */
-  const [heroIdx, setHeroIdx] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setHeroIdx(i => (i + 1) % HERO_WORDS.length), 2600);
-    return () => clearInterval(id);
-  }, []);
+  /* ── Hero mission ────────────────────────────────────────────────── */
+  // Your real pace from finished sessions, so the time estimate is honest
+  const secPerWord = useMemo(() => {
+    let secs = 0;
+    let n = 0;
+    for (const s of reviewSessions) {
+      if (!s.ended_at || s.words_reviewed <= 0) continue;
+      const d = (new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 1000;
+      if (d > 0 && d / s.words_reviewed < 300) { secs += d; n += s.words_reviewed; }
+    }
+    return n > 0 ? Math.min(120, Math.max(5, secs / n)) : 20;
+  }, [reviewSessions]);
+  const nextSetMinutes = dueSets.length > 0 ? Math.max(1, Math.round((dueSets[0] * secPerWord) / 60)) : 0;
+  const missionState = dueToday > 0 ? 'due' : todayProgress.done > 0 ? 'conquered' : 'clear';
+  const hasSetPath = missionState === 'due' && setsTotal > 1;
 
   /* ── Identity ───────────────────────────────────────────────────── */
   const identity = getIdentity(Math.max(1, streak));
@@ -465,25 +291,9 @@ export default function Dashboard() {
   return (
     <AppLayout>
       <style>{`
-        .glass-panel {
-          background: rgba(24, 24, 27, 0.55);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          border: 1px solid rgba(255,255,255,0.05);
-        }
-        .glow-mint { box-shadow: 0 0 28px rgba(0,255,200,0.25); }
-        .bar-hover:hover { background-color: #00FFC8 !important; }
         @keyframes hero-grid-drift {
           0%   { transform: translate3d(0, 0, 0); }
           100% { transform: translate3d(40px, 40px, 0); }
-        }
-        @keyframes hero-cursor-blink {
-          0%, 49%   { opacity: 1; }
-          50%, 100% { opacity: 0; }
-        }
-        @keyframes hero-shimmer {
-          0%   { background-position: 200% 50%; }
-          100% { background-position: 0% 50%; }
         }
         .hero-grid {
           position: absolute; inset: 0;
@@ -495,51 +305,6 @@ export default function Dashboard() {
           -webkit-mask-image: radial-gradient(ellipse at 30% 40%, black 0%, transparent 70%);
           animation: hero-grid-drift 18s linear infinite;
           pointer-events: none;
-        }
-        .hero-cursor {
-          display: inline-block;
-          width: 0.05em;
-          height: 0.85em;
-          margin-left: 0.08em;
-          vertical-align: -0.08em;
-          background: #F8FAFC;
-          box-shadow: 0 0 14px rgba(199,210,254,0.65);
-          animation: hero-cursor-blink 1.1s steps(1) infinite;
-          border-radius: 2px;
-        }
-        .hero-rotword {
-          /* Liquid-metal sheen: a wide soft base, a narrow warm complement
-             band, with a pearl-white core. As the strip pans, the eye sees a
-             metallic highlight pass over a cool surface — chromatic tension
-             without saturation. */
-          background-image: linear-gradient(
-            110deg,
-            var(--b1) 0%,
-            var(--b2) 38%,
-            var(--o1) 46%,
-            #FFFFFF   50%,
-            var(--o2) 54%,
-            var(--b2) 62%,
-            var(--b1) 100%
-          );
-          background-size: 280% 100%;
-          background-position: 100% 50%;
-          animation: hero-shimmer 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-          -webkit-background-clip: text;
-          background-clip: text;
-          -webkit-text-fill-color: transparent;
-          transition: --b1 0.6s ease, --b2 0.6s ease, --o1 0.6s ease, --o2 0.6s ease;
-          font-variant-ligatures: none;
-          font-feature-settings: "kern" 0;
-        }
-        @keyframes hero-rotword-settle {
-          0%   { transform: scale(1)    translateY(0);    filter: brightness(1); }
-          35%  { transform: scale(1.06) translateY(-2px); filter: brightness(1.25); }
-          100% { transform: scale(1)    translateY(0);    filter: brightness(1); }
-        }
-        .hero-rotword-pulse {
-          display: inline-block;
-          animation: hero-rotword-settle 0.55s ease;
         }
         @keyframes hero-cta-shine {
           0%   { transform: translateX(-120%) skewX(-20deg); }
@@ -572,14 +337,72 @@ export default function Dashboard() {
           50%      { box-shadow: 0 0 22px rgba(0,255,200,0.28); }
         }
         .hero-sleep-active { animation: hero-soft-pulse 2.6s ease-in-out infinite; }
-        .hero-brain-img {
-          /* No drop-shadow — depth comes from the halo + floor shadow behind
-             the brain, which stay anchored when the image tilts on hover. */
-          filter:
-            grayscale(0.1)
-            contrast(1.12)
-            brightness(1.06);
+        .hero-shell {
+          background:
+            radial-gradient(ellipse 80% 60% at 0% 100%, rgba(124,58,237,0.12) 0%, transparent 60%),
+            linear-gradient(135deg, #0b0a10 0%, #07060a 55%, #0d0a07 100%);
+          border: 1px solid rgba(255,255,255,0.08);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 24px 64px rgba(0,0,0,0.45);
         }
+        .hero-mint-text {
+          background: linear-gradient(110deg, #00FFC8 0%, #7dd3fc 50%, #c4b5fd 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        @keyframes hero-orbit-spin { to { transform: rotate(360deg); } }
+        .hero-orbit {
+          border: 1px dashed rgba(240,201,106,0.18);
+          animation: hero-orbit-spin 60s linear infinite;
+        }
+        .hero-orbit::after {
+          content: ''; position: absolute; top: -3px; left: 50%;
+          width: 6px; height: 6px; border-radius: 9999px;
+          background: #f0c96a; box-shadow: 0 0 10px #f0c96a;
+        }
+        .hero-orbit-slow {
+          border-color: rgba(0,255,200,0.12);
+          animation-duration: 38s; animation-direction: reverse;
+        }
+        .hero-orbit-slow::after { background: #00FFC8; box-shadow: 0 0 10px #00FFC8; }
+        .hero-pedestal {
+          background: radial-gradient(ellipse at 50% 50%, rgba(240,201,106,0.35) 0%, rgba(240,201,106,0.08) 45%, transparent 70%);
+          filter: blur(2px);
+        }
+        @keyframes hero-node-ping {
+          0% { box-shadow: 0 0 0 0 rgba(0,255,200,0.55); }
+          100% { box-shadow: 0 0 0 10px rgba(0,255,200,0); }
+        }
+        .hero-node-ping { animation: hero-node-ping 1.8s ease-out infinite; }
+        .hero-chip {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 7px 13px; border-radius: 9999px;
+          font-size: 12px; font-weight: 600;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.09);
+          transition: background 0.15s, border-color 0.15s;
+        }
+        .hero-chip:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.16); }
+        @media (prefers-reduced-motion: reduce) {
+          .hero-orbit, .hero-node-ping { animation: none; }
+        }
+        .dash-card {
+          background: linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.015) 100%), #0a090d;
+          border: 1px solid rgba(255,255,255,0.07);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 16px 48px rgba(0,0,0,0.35);
+        }
+        .dash-pulse { border-color: rgba(255,255,255,0.06); transition: background 0.15s; }
+        .dash-pulse:not(:disabled):hover { background: rgba(255,255,255,0.03); }
+        .dash-pulse:disabled { cursor: default; }
+        .dash-pulse:first-child { border-top-left-radius: 1.75rem; }
+        .dash-word {
+          background: rgba(255,255,255,0.025);
+          border: 1px solid rgba(255,255,255,0.06);
+          transition: border-color 0.2s, background 0.2s, transform 0.2s;
+        }
+        .dash-word:hover { border-color: rgba(0,255,200,0.28); background: rgba(0,255,200,0.03); transform: translateY(-2px); }
+        .dash-identity { transition: box-shadow 0.25s; }
+        .dash-identity:hover { box-shadow: inset 0 1px 0 rgba(255,210,100,0.1), 0 20px 50px rgba(0,0,0,0.5), 0 0 60px rgba(180,130,30,0.2); }
         .id-card-home {
           background: linear-gradient(180deg, #0d0a07 0%, #110e0a 100%);
           border: 1px solid rgba(180,140,55,0.28);
@@ -598,469 +421,438 @@ export default function Dashboard() {
       `}</style>
 
       <div className="px-6 pt-8 pb-28 max-w-5xl mx-auto">
-        <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
+        <motion.div variants={container} initial="hidden" animate="show" className="space-y-5">
 
-          {/* ── Hero ─────────────────────────────────────────────────── */}
-          <section className="relative overflow-hidden rounded-[2.5rem]">
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #080b12 0%, #060608 60%, #0a0612 100%)' }} />
+          {/* ── Hero: today's mission ─────────────────────────────────── */}
+          <section className="hero-shell relative overflow-hidden rounded-[2.5rem]">
             <div className="hero-grid" />
             <motion.div
-              className="absolute -top-16 -right-16 w-[520px] h-[520px] pointer-events-none opacity-50"
-              style={{ background: 'radial-gradient(circle, #00FFC8 0%, transparent 60%)' }}
-              animate={{ x: [0, -30, 10, 0], y: [0, 20, -10, 0], scale: [1, 1.06, 0.97, 1] }}
+              className="absolute -top-24 right-[8%] w-[460px] h-[460px] pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(240,201,106,0.22) 0%, transparent 62%)' }}
+              animate={{ scale: [1, 1.08, 1], opacity: [0.8, 1, 0.8] }}
+              transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="absolute -bottom-32 -left-20 w-[480px] h-[480px] pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(0,255,200,0.14) 0%, transparent 62%)' }}
+              animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
               transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
             />
-            <motion.div
-              className="absolute -bottom-20 -left-12 w-[460px] h-[460px] pointer-events-none opacity-40"
-              style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 60%)' }}
-              animate={{ x: [0, 25, -15, 0], y: [0, -20, 15, 0], scale: [1, 1.08, 0.95, 1] }}
-              transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            <motion.div
-              className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[360px] h-[360px] pointer-events-none opacity-25"
-              style={{ background: 'radial-gradient(circle, #38bdf8 0%, transparent 60%)' }}
-              animate={{ x: [0, 40, -20, 0], y: [0, -30, 20, 0], scale: [1, 1.1, 0.92, 1] }}
-              transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-            />
 
-            <div
-              className="relative z-10 p-6 sm:p-7 lg:p-9"
-              style={{
-                background: 'rgba(255,255,255,0.06)',
-                backdropFilter: 'blur(72px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(72px) saturate(180%)',
-                border: '1px solid rgba(255,255,255,0.14)',
-                borderTop: '1px solid rgba(255,255,255,0.22)',
-                borderRadius: '2.5rem',
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12), 0 24px 64px rgba(0,0,0,0.4)',
-              }}
-            >
-              <div className="flex items-center justify-between mb-5 sm:mb-6">
-                <span
-                  className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em]"
-                  style={{ background: 'rgba(0,255,200,0.07)', color: '#00FFC8', border: '1px solid rgba(0,255,200,0.18)' }}
-                >
-                  <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-[#00FFC8] animate-pulse" />
-                  System Active
+            <div className="relative z-10 p-6 sm:p-8 lg:p-10">
+              {/* Top bar */}
+              <div className="flex items-center justify-between gap-3 mb-6">
+                <span className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] text-zinc-400 whitespace-nowrap">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#00FFC8] animate-pulse" />
+                  Good {greeting}
+                  <span className="text-zinc-700">·</span>
+                  <span className="id-gold-text">{identity.current.name}</span>
                 </span>
-                <div className="flex items-center gap-2">
+                {recoverable ? (
                   <button
-                    onClick={() => navigate('/daily')}
-                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full transition-all hover:scale-105 active:scale-95"
-                    style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.35)' }}
+                    onClick={handleRecover}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-opacity hover:opacity-80"
+                    style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.4)' }}
                   >
-                    <Compass className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: '#a78bfa' }} />
-                    <span className="hidden sm:inline text-xs font-bold" style={{ color: '#a78bfa' }}>Discover New Words</span>
+                    <Flame className="h-3.5 w-3.5" style={{ color: '#f97316' }} />
+                    <span className="text-orange-400 text-xs font-bold">Recover {recoverableStreak}-day streak</span>
                   </button>
-                  {recoverable ? (
-                    <button
-                      onClick={handleRecover}
-                      className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full transition-opacity hover:opacity-80"
-                      style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.4)' }}
-                    >
-                      <Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: '#f97316' }} />
-                      <span className="text-orange-400 text-[10px] sm:text-xs font-bold">Recover {recoverableStreak}-day streak</span>
-                    </button>
-                  ) : (
-                    <div
-                      className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full"
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}
-                    >
-                      <Flame className="h-3 w-3 sm:h-3.5 sm:w-3.5" style={{ color: '#f97316' }} />
-                      <span className="text-white text-[10px] sm:text-xs font-bold">{streak}</span>
-                      <span className="text-zinc-500 text-[10px] sm:text-xs">day streak</span>
-                    </div>
-                  )}
-                </div>
+                ) : (
+                  <div
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                    style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.22)' }}
+                  >
+                    <Flame className="h-3.5 w-3.5" style={{ color: '#f97316' }} />
+                    <span className="text-white text-xs font-bold tabular-nums">{streak}</span>
+                    <span className="hidden sm:inline text-zinc-500 text-xs">day streak</span>
+                  </div>
+                )}
               </div>
 
-              <div className="lg:flex lg:items-center lg:gap-10 xl:gap-14">
-                <div className="lg:flex-1 lg:min-w-0">
-
-                  <h2
-                    className="text-3xl sm:text-4xl xl:text-5xl font-bold text-white leading-[1.08] tracking-tight mb-3"
-                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                  >
-                    <motion.span
-                      className="block"
-                      variants={lineVariants}
-                      initial="hidden"
-                      animate="show"
-                      aria-label={`Good ${greeting}.`}
-                    >
-                      {Array.from(`Good ${greeting}.`).map((c, i) => (
-                        <motion.span
-                          key={i}
-                          variants={letterVariants}
-                          className="inline-block"
-                          style={{ whiteSpace: 'pre' }}
-                        >
-                          {c}
-                        </motion.span>
-                      ))}
-                    </motion.span>
-
-                    <motion.span
-                      className="block"
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      Your edge is{' '}
-                      <span className="relative inline-block align-baseline" style={{ minWidth: '7ch' }}>
-                        <ScatterWord
-                          text={HERO_WORDS[heroIdx].text}
-                          b1={HERO_WORDS[heroIdx].b1}
-                          b2={HERO_WORDS[heroIdx].b2}
-                          o1={HERO_WORDS[heroIdx].o1}
-                          o2={HERO_WORDS[heroIdx].o2}
-                        />
-                      </span>
-                    </motion.span>
-                  </h2>
-
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] items-center gap-x-10">
+                {/* Mission */}
+                <div className="min-w-0">
                   <motion.p
-                    className="text-zinc-400 text-sm leading-relaxed mb-5 max-w-md"
+                    className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#c8922a] mb-3"
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.85, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
                   >
-                    {dueToday > 0 ? (
-                      <>
-                        You have{' '}
-                        <span className="text-white font-bold tabular-nums">
-                          <CountUp to={dueToday} />
-                        </span>{' '}
-                        word{dueToday > 1 ? 's' : ''} due for review. Don't break the chain.
-                      </>
-                    ) : (
-                      "You're all caught up. Add new words to keep growing."
-                    )}
+                    {missionState === 'due' ? "Today's mission" : missionState === 'conquered' ? 'Mission complete' : 'All clear'}
                   </motion.p>
 
-                  <motion.div
-                    className="flex flex-wrap items-center gap-3"
-                    initial="hidden"
-                    animate="show"
-                    variants={{
-                      hidden: { opacity: 1 },
-                      show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 1.05 } },
-                    }}
+                  <motion.h2
+                    className="text-[1.9rem] sm:text-4xl xl:text-[2.75rem] font-bold text-white leading-[1.08] tracking-tight"
+                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    initial={{ opacity: 0, y: 16, filter: 'blur(6px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <motion.button
-                      variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } } }}
-                      whileHover={{ scale: 1.04, y: -1 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => navigate('/review')}
-                      className="hero-cta group w-full sm:w-auto inline-flex items-center justify-center gap-2 sm:gap-2.5 px-5 sm:px-7 py-3 rounded-full font-bold text-sm text-zinc-900 whitespace-nowrap"
-                      style={{
-                        backgroundImage: 'linear-gradient(135deg, #2cffca 0%, #38bdf8 50%, #a78bfa 100%)',
-                        boxShadow: '0 0 32px rgba(0,255,200,0.32), 0 4px 24px rgba(56,189,248,0.22)',
-                      }}
-                    >
-                      <Brain className="h-4 w-4 shrink-0" />
-                      <span>Start Today's Review</span>
-                      {dueToday > 0 && (
-                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-zinc-900/25 tabular-nums shrink-0">
-                          <CountUp to={dueToday} /> due
+                    {missionState === 'due' ? (
+                      <>
+                        <span className="hero-mint-text tabular-nums"><CountUp to={dueToday} /> word{dueToday > 1 ? 's' : ''}</span>{' '}
+                        stand between you and today&apos;s trophy.
+                      </>
+                    ) : missionState === 'conquered' ? (
+                      <>Today is <span className="id-gold-text">conquered.</span></>
+                    ) : (
+                      <>You&apos;re all <span className="hero-mint-text">caught up.</span></>
+                    )}
+                  </motion.h2>
+
+                  <motion.p
+                    className="text-zinc-400 text-sm leading-relaxed mt-3 max-w-md"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5, delay: 0.5 }}
+                  >
+                    {missionState === 'due'
+                      ? todayProgress.done > 0
+                        ? `${todayProgress.done} already conquered today — the gold keeps rising.`
+                        : dueSets.length > 1
+                          ? `${dueSets.length} small sets. One at a time.`
+                          : 'One short set and the day is yours.'
+                      : missionState === 'conquered'
+                        ? `All ${todayProgress.done} words reviewed. Your trophy is on the shelf.`
+                        : 'Nothing due right now. Add new words to keep growing.'}
+                  </motion.p>
+                </div>
+
+                {/* Trophy stage */}
+                <motion.div
+                  className="relative hidden lg:flex lg:row-span-3 items-center justify-center w-[300px] aspect-square"
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <div className="hero-orbit absolute inset-[4%] rounded-full" aria-hidden />
+                  <div className="hero-orbit hero-orbit-slow absolute inset-[16%] rounded-full" aria-hidden />
+                  <div className="hero-pedestal absolute bottom-[6%] left-1/2 -translate-x-1/2 w-[70%] h-[14%]" aria-hidden />
+                  <div className="relative w-[78%]">
+                    <GlassTrophy
+                      percent={missionState === 'due' ? todayProgress.percent : 100}
+                      fluid
+                      minimal
+                      showLabel={missionState === 'due'}
+                    />
+                  </div>
+                </motion.div>
+
+                {/* Set path — on phones the trophy rides alongside it */}
+                <motion.div
+                  className={`mt-6 flex items-center gap-4 ${hasSetPath ? '' : 'lg:hidden'}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 0.6 }}
+                >
+                  <div className="lg:hidden w-[72px] shrink-0">
+                    <GlassTrophy
+                      percent={missionState === 'due' ? todayProgress.percent : 100}
+                      fluid
+                      minimal
+                      showLabel={missionState === 'due'}
+                    />
+                  </div>
+                  {hasSetPath ? (
+                    <div className="flex-1 min-w-0">
+                      <SetPath done={setsDone} upcoming={dueSets} />
+                      <p className="text-[11px] text-zinc-500 mt-2.5 tabular-nums">
+                        Set {setsDone + 1} of {setsTotal} · {todayProgress.percent}% of today conquered
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="lg:hidden text-xs text-zinc-500 tabular-nums">
+                      {missionState === 'due' ? `${todayProgress.percent}% of today conquered` : 'Trophy filled for today'}
+                    </p>
+                  )}
+                </motion.div>
+
+                {/* Actions */}
+                <motion.div
+                  className="mt-6 flex flex-col gap-3"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate(missionState === 'due' ? '/review' : missionState === 'conquered' ? '/achievements' : '/add')}
+                    className="hero-cta group w-full sm:w-auto sm:self-start inline-flex items-center justify-between gap-6 pl-6 pr-3 py-3 rounded-2xl text-zinc-900"
+                    style={missionState === 'conquered'
+                      ? { backgroundImage: 'linear-gradient(120deg, #c8922a 0%, #f0c96a 50%, #c08828 100%)', boxShadow: '0 0 32px rgba(240,201,106,0.3)' }
+                      : { backgroundImage: 'linear-gradient(135deg, #2cffca 0%, #38bdf8 55%, #a78bfa 100%)', boxShadow: '0 0 32px rgba(0,255,200,0.28), 0 4px 24px rgba(56,189,248,0.2)' }}
+                  >
+                    <span className="text-left">
+                      <span className="block font-bold text-[15px]">
+                        {missionState === 'due'
+                          ? setsTotal > 1 ? `Start Set ${setsDone + 1}` : "Start today's review"
+                          : missionState === 'conquered' ? 'See your trophy shelf' : 'Add new words'}
+                      </span>
+                      {missionState === 'due' && (
+                        <span className="block text-[11px] font-semibold text-zinc-900/65 tabular-nums">
+                          {dueSets[0]} word{dueSets[0] > 1 ? 's' : ''} · ≈ {nextSetMinutes} min
                         </span>
                       )}
-                      <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
-                    </motion.button>
+                    </span>
+                    <span className="w-9 h-9 rounded-xl bg-zinc-900/15 flex items-center justify-center shrink-0">
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </span>
+                  </motion.button>
 
-                    <motion.button
-                      variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } } }}
-                      whileHover={isSleepPrepActive ? { scale: 1.04, y: -1 } : undefined}
-                      whileTap={isSleepPrepActive ? { scale: 0.97 } : undefined}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
                       onClick={() => isSleepPrepActive && navigate('/review?mode=sleep_prep')}
-                      className={`inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-medium transition-colors ${isSleepPrepActive ? 'hero-sleep-active' : ''}`}
-                      style={isSleepPrepActive
-                        ? { color: '#00FFC8', border: '1px solid rgba(0,255,200,0.28)', background: 'rgba(0,255,200,0.08)' }
-                        : { color: '#52525b', border: '1px solid rgba(255,255,255,0.07)', cursor: 'default' }}
+                      className={`hero-chip ${isSleepPrepActive ? 'hero-sleep-active' : 'opacity-60 cursor-default'}`}
+                      style={{ color: isSleepPrepActive ? '#00FFC8' : '#a1a1aa' }}
                     >
-                      <Moon className="h-4 w-4 shrink-0" />
-                      {isSleepPrepActive
-                        ? 'Sleep Prep'
-                        : <>Sleep Prep in <span className="tabular-nums">{sleepCountdown}</span></>}
-                    </motion.button>
-
-                    <motion.button
-                      variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } } }}
-                      whileHover={{ scale: 1.04, y: -1 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => navigate('/writing')}
-                      className="group inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-medium transition-colors"
-                      style={{ color: '#fbbf24', border: '1px solid rgba(251,191,36,0.28)', background: 'rgba(251,191,36,0.06)' }}
-                    >
-                      <PenLine className="h-4 w-4 shrink-0 transition-transform group-hover:rotate-[-8deg]" />
-                      Writing Practice
-                    </motion.button>
-                  </motion.div>
-
-                </div>
-
-                <div className="hidden lg:block lg:w-[40%] xl:w-[44%] shrink-0">
-                  <HeroBrain
-                    tintB1={HERO_WORDS[heroIdx].b1}
-                    tintB2={HERO_WORDS[heroIdx].b2}
-                  />
-                </div>
+                      <Moon className="h-3.5 w-3.5" />
+                      {isSleepPrepActive ? 'Sleep Prep' : <span className="tabular-nums">Sleep Prep in {sleepCountdown}</span>}
+                    </button>
+                    <button onClick={() => navigate('/writing')} className="hero-chip" style={{ color: '#fbbf24' }}>
+                      <PenLine className="h-3.5 w-3.5" />
+                      Writing
+                    </button>
+                    <button onClick={() => navigate('/daily')} className="hero-chip" style={{ color: '#a78bfa' }}>
+                      <Compass className="h-3.5 w-3.5" />
+                      Discover
+                    </button>
+                  </div>
+                </motion.div>
               </div>
             </div>
           </section>
 
-          {/* ── Main grid ────────────────────────────────────────────── */}
+          {/* ── Below the hero ─────────────────────────────────────────── */}
           {isLoading ? (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <Skeleton className="h-48 rounded-[1.5rem] bg-zinc-800/60" />
-                <Skeleton className="h-48 rounded-[1.5rem] bg-zinc-800/60" />
+            <div className="space-y-5">
+              <Skeleton className="h-24 w-full rounded-[1.75rem] bg-zinc-800/60" />
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <Skeleton className="lg:col-span-7 h-72 rounded-[2rem] bg-zinc-800/60" />
+                <Skeleton className="lg:col-span-5 h-72 rounded-[2rem] bg-zinc-800/60" />
               </div>
               <Skeleton className="h-64 w-full rounded-[2rem] bg-zinc-800/60" />
-              <Skeleton className="h-72 w-full rounded-[2rem] bg-zinc-800/60" />
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="space-y-5">
 
-              {/* 1 · Bento stats — lg row 1 left ─────────────────────── */}
-              <motion.div variants={item} className="lg:col-span-7 grid grid-cols-2 gap-4">
-
-                <div className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Total Words</span>
-                    <BookOpen className="h-4 w-4 text-zinc-600" />
-                  </div>
-                  <div>
-                    <span className="text-5xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                      {totalWords}
-                    </span>
-                    <p className="text-[#00FFC8] text-xs mt-1">+{dueToday} due today</p>
-                  </div>
-                </div>
-
-                <div 
-                  className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors cursor-pointer active:scale-[0.98]"
-                  onClick={() => navigate('/library?filter=due')}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Due Today</span>
-                    <Clock className="h-4 w-4 text-zinc-600" />
-                  </div>
-                  <div>
-                    <span className="text-5xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                      {dueToday}
-                    </span>
-                    <p className="text-zinc-500 text-xs mt-1">cards pending · click to view</p>
-                  </div>
-                </div>
-
-                <div className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Mastered</span>
-                    <Sparkles className="h-4 w-4 text-zinc-600" />
-                  </div>
-                  <div>
-                    <div className="flex items-end gap-2">
-                      <span className="text-5xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                        {mastered}
-                      </span>
-                      <span className="text-zinc-500 text-sm mb-1.5">/ {totalWords} words</span>
-                    </div>
-                    <div className="mt-3 h-1 w-full rounded-full bg-zinc-800 overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-700" style={{ width: `${masteredPct}%`, background: '#00FFC8' }} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="glass-panel p-6 rounded-[1.5rem] flex flex-col justify-between h-44 hover:border-[#00FFC8]/20 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">Gut Check Score</span>
-                    <Target className="h-4 w-4 text-zinc-600" />
-                  </div>
-                  <div>
-                    {sureTotal >= 5 ? (
-                      <>
-                        <span className="text-5xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif", color: calibrationColor }}>
-                          {calibrationPct}%
-                        </span>
-                        <p className="text-zinc-500 text-xs mt-1">{sureCorrect}/{sureTotal} &ldquo;sure&rdquo; correct</p>
-                      </>
+              {/* 1 · Pulse strip */}
+              <motion.section variants={item} className="dash-card rounded-[1.75rem] grid grid-cols-2 lg:grid-cols-4">
+                {[
+                  {
+                    label: 'Library', icon: BookOpen, onClick: () => navigate('/library'),
+                    value: totalWords, sub: addedThisWeek > 0 ? `+${addedThisWeek} this week` : 'words collected',
+                    ring: null as null | { pct: number; color: string },
+                  },
+                  {
+                    label: 'Mastered', icon: Sparkles, onClick: () => navigate('/library?filter=mastered'),
+                    value: mastered, sub: `${masteredPct}% of library`,
+                    ring: { pct: masteredPct, color: '#00FFC8' },
+                  },
+                  {
+                    label: 'Gut check', icon: Target, onClick: undefined,
+                    value: sureTotal >= 5 ? `${calibrationPct}%` : '—',
+                    sub: sureTotal >= 5 ? `${sureCorrect}/${sureTotal} “sure” right` : `${sureTotal}/5 bets to unlock`,
+                    ring: sureTotal >= 5 ? { pct: calibrationPct, color: calibrationColor } : null,
+                  },
+                  {
+                    label: 'Trophies', icon: Trophy, onClick: () => navigate('/achievements'),
+                    value: clears.length, sub: clears.length > 0 ? `best run ${bestClearRun} day${bestClearRun === 1 ? '' : 's'}` : 'clear a day to earn one',
+                    ring: null,
+                    gold: true,
+                  },
+                ].map((st, i) => (
+                  <button
+                    key={st.label}
+                    onClick={st.onClick}
+                    disabled={!st.onClick}
+                    className={`dash-pulse group text-left p-4 sm:p-5 flex items-center gap-2.5 sm:gap-3 min-w-0 ${i % 2 === 1 ? 'border-l' : ''} ${i >= 2 ? 'border-t lg:border-t-0' : ''} ${i === 2 ? 'lg:border-l' : ''}`}
+                  >
+                    {st.ring ? (
+                      <Ring pct={st.ring.pct} color={st.ring.color} size={38} />
                     ) : (
-                      <>
-                        <span className="text-5xl font-bold text-zinc-700" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>—</span>
-                        <p className="text-zinc-600 text-xs mt-1">{sureTotal}/5 bets to unlock</p>
-                      </>
+                      <span
+                        className="w-[38px] h-[38px] sm:w-11 sm:h-11 shrink-0 rounded-xl sm:rounded-2xl flex items-center justify-center"
+                        style={'gold' in st && st.gold
+                          ? { background: 'rgba(240,201,106,0.1)', border: '1px solid rgba(240,201,106,0.28)' }
+                          : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                      >
+                        <st.icon className="h-4 w-4" style={{ color: 'gold' in st && st.gold ? '#f0c96a' : '#a1a1aa' }} />
+                      </span>
                     )}
-                  </div>
-                </div>
-              </motion.div>
+                    <span className="min-w-0">
+                      <span className="block text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] font-bold text-zinc-500 whitespace-nowrap">{st.label}</span>
+                      <span
+                        className={`block text-2xl font-bold leading-tight tabular-nums ${'gold' in st && st.gold ? 'id-gold-text' : 'text-white'}`}
+                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                      >
+                        {st.value}
+                      </span>
+                      <span className="block text-[10px] sm:text-[11px] text-zinc-500 leading-snug">{st.sub}</span>
+                    </span>
+                  </button>
+                ))}
+              </motion.section>
 
-              {/* 2 · Identity card — lg row 1 right | mobile: after bento */}
-              <motion.div variants={item} className="lg:col-span-5">
-                <div
-                  className="id-card-home rounded-[2rem] overflow-hidden cursor-pointer"
-                  onClick={() => setShowJourney(true)}
-                  style={{ transition: 'box-shadow 0.2s' }}
-                  onMouseEnter={e => ((e.currentTarget as HTMLDivElement).style.boxShadow = 'inset 0 1px 0 rgba(255,210,100,0.10), 0 20px 50px rgba(0,0,0,0.5), 0 0 60px rgba(180,130,30,0.18)')}
-                  onMouseLeave={e => ((e.currentTarget as HTMLDivElement).style.boxShadow = '')}
-                >
-                  <div className="w-full flex items-center justify-center" style={{ height: 220, background: '#0c0907' }}>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                {/* 2 · Rhythm */}
+                <motion.section variants={item} className="dash-card lg:col-span-7 rounded-[2rem] p-6 sm:p-7 flex flex-col">
+                  <div className="flex items-start justify-between gap-4 mb-6">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#00FFC8]/80">Rhythm</p>
+                      <h3 className="text-xl font-bold text-white mt-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                        Your last 7 days
+                      </h3>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-white tabular-nums leading-none" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                        {weekTotal}
+                      </p>
+                      <p className="text-[11px] text-zinc-500 mt-1">reviews · {weekActiveDays}/7 days</p>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 flex items-end justify-between gap-2 sm:gap-3 min-h-[170px]">
+                    {velocityBars.map(({ key, day, heightPx, value, active }, i) => {
+                      const cleared = clearedDays.has(key);
+                      return (
+                        <div key={key} className="flex-1 h-full flex flex-col items-center justify-end gap-2">
+                          <div className="h-4 flex items-center justify-center">
+                            {cleared ? (
+                              <Trophy className="h-3.5 w-3.5" style={{ color: '#f0c96a', filter: 'drop-shadow(0 0 4px rgba(240,201,106,0.6))' }} />
+                            ) : (
+                              <span className="text-[10px] font-bold tabular-nums" style={{ color: active ? '#00FFC8' : '#52525b' }}>
+                                {value > 0 ? value : ''}
+                              </span>
+                            )}
+                          </div>
+                          <motion.div
+                            className="w-full max-w-[44px] rounded-full"
+                            initial={{ height: 6 }}
+                            animate={{ height: heightPx }}
+                            transition={{ duration: 0.8, delay: 0.2 + i * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                            title={`${value} reviews${cleared ? ' · day cleared' : ''}`}
+                            style={{
+                              background: active
+                                ? 'linear-gradient(180deg, #2cffca 0%, #00a884 100%)'
+                                : cleared
+                                  ? 'linear-gradient(180deg, #f0c96a 0%, #8a5a12 100%)'
+                                  : value > 0 ? 'linear-gradient(180deg, rgba(255,255,255,0.32), rgba(255,255,255,0.1))' : 'rgba(255,255,255,0.05)',
+                              boxShadow: active ? '0 0 22px rgba(0,255,200,0.35)' : cleared ? '0 0 16px rgba(240,201,106,0.22)' : 'none',
+                            }}
+                          />
+                          <span
+                            className="text-[10px] uppercase tracking-widest font-bold"
+                            style={{ color: active ? '#00FFC8' : value > 0 ? '#71717a' : '#3f3f46' }}
+                          >
+                            {day}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center gap-4 mt-5 text-[10px] text-zinc-500">
+                    <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#00FFC8]" />Today</span>
+                    <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#f0c96a]" />Day cleared</span>
+                  </div>
+                </motion.section>
+
+                {/* 3 · Identity poster */}
+                <motion.section variants={item} className="lg:col-span-5">
+                  <button
+                    onClick={() => setShowJourney(true)}
+                    className="id-card-home dash-identity group relative w-full h-full min-h-[320px] rounded-[2rem] overflow-hidden text-left"
+                  >
                     <img
                       src={identity.current.image}
-                      alt={identity.current.name}
-                      style={{ display: 'block', maxHeight: '100%', maxWidth: '100%', width: 'auto', height: 'auto', objectFit: 'contain' }}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                     />
-                  </div>
-                  <div style={{ borderTop: '1px solid rgba(180,140,55,0.16)', padding: '1.25rem 1.75rem' }}>
-                    <div className="flex items-baseline justify-between mb-3">
-                      <span className="id-gold-text text-xl font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(13,10,7,0) 30%, rgba(13,10,7,0.75) 62%, #0d0a07 88%)' }} />
+                    <div className="relative h-full min-h-[320px] flex flex-col justify-end p-6">
+                      <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#c8922a]">Day {identity.daysIn} · your title</p>
+                      <p className="id-gold-text text-4xl font-bold tracking-tight mt-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                         {identity.current.name}
-                      </span>
-                      <span className="text-zinc-500 text-xs tabular-nums">Day {identity.daysIn}</span>
-                    </div>
-                    <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                      <div className="id-gold-bar h-full rounded-full transition-all duration-700" style={{ width: `${idProgressPct}%` }} />
-                    </div>
-                    <p className="mt-2 text-[11px] font-medium" style={{ color: 'rgba(192,148,60,0.7)' }}>
-                      {identity.next
-                        ? `${idDaysToNext} day${idDaysToNext === 1 ? '' : 's'} to ${identity.next.name} · keep your streak`
-                        : "You've reached the highest title"}
-                    </p>
-                    <p className="mt-2.5 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.15)' }}>
-                      Tap to explore journey →
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* 3 · Daily Velocity — lg row 2 left ───────────────────── */}
-              <motion.div variants={item} className="lg:col-span-7 glass-panel p-8 rounded-[2rem]">
-                <div className="flex justify-between items-center mb-8">
-                  <div>
-                    <h3 className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                      Daily Velocity
-                    </h3>
-                    <p className="text-sm text-zinc-500 mt-0.5">Words reviewed over 7 days</p>
-                  </div>
-                  <MoreHorizontal className="h-5 w-5 text-zinc-600" />
-                </div>
-
-                <div className="relative">
-                  <div className="absolute left-0 right-0 top-0 bottom-8 flex flex-col justify-between pointer-events-none">
-                    {[0, 1, 2, 3].map(i => (
-                      <div key={i} className="w-full border-t border-white/[0.04]" />
-                    ))}
-                  </div>
-
-                  <div className="flex items-end justify-between gap-1.5" style={{ height: 148 }}>
-                    {velocityBars.map(({ day, heightPx, value, active }) => (
-                      <div key={day} className="flex-1 flex flex-col items-center gap-1.5 group">
-                        <span
-                          className="text-[11px] font-bold tabular-nums transition-all duration-300"
-                          style={{
-                            color: active ? '#00FFC8' : value > 0 ? 'rgba(255,255,255,0.55)' : 'transparent',
-                            textShadow: active ? '0 0 8px rgba(0,255,200,0.6)' : 'none',
-                          }}
-                        >
-                          {value > 0 ? value : ' '}
-                        </span>
-                        <div
-                          className="w-full rounded-xl transition-all duration-500 cursor-pointer bar-hover"
-                          style={{
-                            height: heightPx,
-                            background: active
-                              ? 'linear-gradient(180deg, #00FFC8 0%, #00C4A0 100%)'
-                              : value > 0
-                                ? 'linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.25) 100%)'
-                                : 'rgba(255,255,255,0.05)',
-                            boxShadow: active ? '0 0 24px rgba(0,255,200,0.35), 0 4px 12px rgba(0,255,200,0.2)' : 'none',
-                          }}
-                        />
+                      </p>
+                      <div className="h-1.5 w-full rounded-full overflow-hidden mt-4" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                        <div className="id-gold-bar h-full rounded-full transition-all duration-700" style={{ width: `${Math.max(idProgressPct, 2)}%` }} />
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex items-center justify-between mt-2.5">
+                        <p className="text-[11px] font-semibold" style={{ color: 'rgba(214,170,80,0.85)' }}>
+                          {identity.next
+                            ? `${idDaysToNext} day${idDaysToNext === 1 ? '' : 's'} to ${identity.next.name}`
+                            : "You've reached the highest title"}
+                        </p>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/30 group-hover:text-white/70 transition-colors inline-flex items-center gap-1">
+                          Journey <ArrowRight className="h-3 w-3" />
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                </motion.section>
+              </div>
 
-                  <div className="flex justify-between mt-3">
-                    {velocityBars.map(({ day, active, value }) => (
-                      <span
-                        key={day}
-                        className="flex-1 text-center text-[10px] uppercase tracking-widest font-bold transition-colors duration-200"
-                        style={{ color: active ? '#00FFC8' : value > 0 ? '#71717a' : '#3f3f46' }}
-                      >
-                        {day}
-                      </span>
-                    ))}
+              {/* 4 · Fresh ink */}
+              <motion.section variants={item} className="dash-card rounded-[2rem] p-6 sm:p-7">
+                <div className="flex items-end justify-between gap-4 mb-5">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-[#a78bfa]">Fresh ink</p>
+                    <h3 className="text-xl font-bold text-white mt-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                      Newest in your library
+                    </h3>
                   </div>
-                </div>
-              </motion.div>
-
-              {/* 4 · Recent Acquisitions — lg row 2 right ──────────────── */}
-              <motion.div variants={item} className="lg:col-span-5 glass-panel p-8 rounded-[2rem]">
-                <div className="flex justify-between items-center mb-7">
-                  <h3 className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                    Recent Acquisitions
-                  </h3>
                   <button
                     onClick={() => navigate('/library')}
-                    className="text-[10px] font-bold uppercase tracking-widest hover:underline transition-colors"
-                    style={{ color: '#00FFC8' }}
+                    className="shrink-0 whitespace-nowrap text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors inline-flex items-center gap-1"
                   >
-                    View All
+                    View all <ArrowRight className="h-3 w-3" />
                   </button>
                 </div>
 
-                <div className="space-y-4">
-                  {recentWords.length === 0 ? (
-                    <div className="text-center py-12 text-zinc-600">
-                      <p className="text-sm">No words yet. Add your first word!</p>
-                    </div>
-                  ) : (
-                    recentWords.map((word) => {
+                {recentWords.length === 0 ? (
+                  <button
+                    onClick={() => navigate('/add')}
+                    className="w-full py-10 rounded-2xl border border-dashed border-white/10 text-sm text-zinc-500 hover:text-white hover:border-white/25 transition-colors"
+                  >
+                    No words yet — add your first one
+                  </button>
+                ) : (
+                  <div className="-mx-6 px-6 sm:mx-0 sm:px-0 flex sm:grid gap-3 sm:grid-cols-2 lg:grid-cols-3 overflow-x-auto sm:overflow-visible snap-x snap-mandatory pb-1 sm:pb-0 [scrollbar-width:none]">
+                    {recentWords.map(word => {
                       const stats = wordStats.find(s => s.word_id === word.id);
                       const mastery = stats ? Math.min(Math.round((stats.stability / 30) * 100), 100) : 0;
                       const isStar = !!(stats && stats.state === 2 && stats.stability >= 21);
-
                       return (
-                        <div
+                        <button
                           key={word.id}
                           onClick={() => navigate(`/library?word=${word.id}`)}
-                          className="p-5 rounded-2xl cursor-pointer transition-all duration-200"
-                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(0,255,200,0.25)'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.06)'; }}
+                          className="dash-word group text-left p-4 rounded-2xl shrink-0 w-[78%] sm:w-auto snap-start"
                         >
-                          <div className="flex justify-between items-start mb-1.5">
-                            <h4
-                              className="text-xl font-bold text-white leading-tight"
-                              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                            >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="text-lg font-bold text-white leading-tight truncate" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                               {word.word}
-                            </h4>
-                            <div className="flex items-center gap-2 shrink-0 ml-3">
+                            </span>
+                            <span className="flex items-center gap-1.5 shrink-0">
                               {stats && <EaseBadge difficulty={stats.difficulty} />}
-                              <span style={{ color: isStar ? '#00FFC8' : '#3f3f46', fontSize: 16 }}>★</span>
-                            </div>
+                              {isStar && <Sparkles className="h-3.5 w-3.5 text-[#00FFC8]" />}
+                            </span>
                           </div>
-
-                          <p className="text-zinc-500 text-xs leading-relaxed mb-3 line-clamp-1">
-                            {word.definition}
-                          </p>
-
-                          <div className="flex items-center gap-3">
-                            <div className="flex-1 h-[3px] rounded-full bg-zinc-800 overflow-hidden">
+                          <p className="text-zinc-500 text-xs leading-relaxed mt-1 line-clamp-2 min-h-[2.5em]">{word.definition}</p>
+                          <div className="flex items-center gap-2 mt-3">
+                            <div className="flex-1 h-[3px] rounded-full bg-white/[0.06] overflow-hidden">
                               <div
-                                className="h-full rounded-full transition-all duration-700"
-                                style={{ width: `${mastery}%`, background: '#00FFC8' }}
+                                className="h-full rounded-full"
+                                style={{ width: `${Math.max(mastery, 3)}%`, background: 'linear-gradient(90deg, #00FFC8, #7dd3fc)' }}
                               />
                             </div>
-                            <span className="text-[10px] text-zinc-600 font-bold">{mastery}%</span>
+                            <span className="text-[10px] text-zinc-500 font-bold tabular-nums w-8 text-right">{mastery}%</span>
                           </div>
-                        </div>
+                        </button>
                       );
-                    })
-                  )}
-                </div>
-              </motion.div>
+                    })}
+                  </div>
+                )}
+              </motion.section>
 
             </div>
           )}

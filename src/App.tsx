@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +12,7 @@ const AddWordPage = lazy(() => import("./pages/AddWordPage"));
 const LibraryPage = lazy(() => import("./pages/LibraryPage"));
 const ReviewPage = lazy(() => import("./pages/ReviewPage"));
 const ProgressPage = lazy(() => import("./pages/ProgressPage"));
+const AchievementsPage = lazy(() => import("./pages/AchievementsPage"));
 const GrammarRulesPage = lazy(() => import("./pages/GrammarRulesPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const DictionaryPage = lazy(() => import("./pages/DictionaryPage"));
@@ -44,6 +45,13 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Keyed by location so "Next set" (a navigate to /review from /review)
+// remounts the page with fresh session state instead of reusing the old one.
+function ReviewRoute() {
+  const location = useLocation();
+  return <ReviewPage key={location.key} />;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -51,8 +59,9 @@ function AppRoutes() {
       <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
       <Route path="/add" element={<ProtectedRoute><AddWordPage /></ProtectedRoute>} />
       <Route path="/library" element={<ProtectedRoute><LibraryPage /></ProtectedRoute>} />
-      <Route path="/review" element={<ProtectedRoute><ReviewPage /></ProtectedRoute>} />
+      <Route path="/review" element={<ProtectedRoute><ReviewRoute /></ProtectedRoute>} />
       <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
+      <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
       <Route path="/grammar" element={<ProtectedRoute><GrammarRulesPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="/dictionary" element={<ProtectedRoute><DictionaryPage /></ProtectedRoute>} />
