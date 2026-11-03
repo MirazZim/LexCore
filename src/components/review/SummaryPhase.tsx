@@ -5,7 +5,7 @@ import { Flame, ArrowRight } from 'lucide-react';
 import { useIsMutating } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Rating } from 'ts-fsrs';
-import { useSaveReviewSession, useReviewSessions, useReviewEvents, useUserPreferences, useDueWords } from '@/hooks/useWords';
+import { useSaveReviewSession, useReviewSessions, useReviewEvents, useUserPreferences, useDueWords, RATING_MUTATION_KEY } from '@/hooks/useWords';
 import { REVIEW_CHUNK_SIZE, chunkSizes, dayProgress } from '@/lib/review-chunks';
 import { quoteForDay, type DailyClear } from '@/lib/daily-clears';
 import { useDailyClears, useRecordDailyClear } from '@/hooks/useDailyClears';
@@ -51,15 +51,33 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
   const [setOutcome, setSetOutcome] = useState<'pending' | 'set' | 'day'>('pending');
   const clearCheckedRef = useRef(false);
   const { data: dueWords = [], isFetching: dueFetching } = useDueWords();
-  const pendingWrites = useIsMutating();
+  // Only this set's rating writes matter here — not the session save fired on mount
+  const pendingWrites = useIsMutating({ mutationKey: RATING_MUTATION_KEY });
   // The due list only settles once this set's stat writes and the refetch
   // they trigger are done; until then the count still includes these words.
   const dueSettled    = !dueFetching && pendingWrites === 0;
-  const remainingDue  = dueWords.length;
+  const progressReady = dueSettled && !eventsFetching;
+
+  // Until the writes and refetches land (the review log is re-downloaded in
+  // full, which takes seconds), assume what we already know: this set's words
+  // were reviewed today and have left the due list. Swapped for the real
+  // numbers once they settle, so the page never waits on the network to speak.
+  const dueIds = useMemo(() => {
+    const all = dueWords.map(d => d.word.id);
+    if (dueSettled) return all;
+    const reviewed = new Set(results.map(r => r.wordId));
+    return all.filter(id => !reviewed.has(id));
+  }, [dueWords, dueSettled, results]);
+  const progressEvents = useMemo(() => {
+    if (progressReady) return reviewEvents;
+    const now = new Date().toISOString();
+    return [...reviewEvents, ...results.map(r => ({ word_id: r.wordId, reviewed_at: now }))];
+  }, [reviewEvents, progressReady, results]);
+
+  const remainingDue  = dueIds.length;
   const nextSetSize   = Math.min(REVIEW_CHUNK_SIZE, remainingDue);
   const setsLeft      = chunkSizes(remainingDue).length;
-  const progress      = dayProgress(reviewEvents, dueWords.map(d => d.word.id));
-  const progressReady = dueSettled && !eventsFetching;
+  const progress      = dayProgress(progressEvents, dueIds);
   // Where the liquid stood before this set, so the pour visibly rises
   const fromPercent   = progress.total > 0
     ? Math.round((Math.max(0, progress.done - results.length) / progress.total) * 100)
@@ -132,7 +150,7 @@ export function SummaryPhase({ results, sessionStartedAt }: SummaryPhaseProps) {
   }, [dueSettled, eventsFetching, clearsLoading, remainingDue, clears, reviewEvents, results.length, accuracy, recordClear]);
 
   const ratingCounts = QUALITY_LABELS.map(q => ({ ...q, count: results.filter(r => r.quality === q.quality).length }));
-  const showProgress = results.length > 0 && progressReady && progress.total > 0;
+  const showProgress = results.length > 0 && progress.total > 0;
 
   return (
     <div className="sm-root min-h-screen lg:h-screen lg:overflow-hidden flex flex-col">

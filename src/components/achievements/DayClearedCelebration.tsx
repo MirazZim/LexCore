@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Confetti } from './Confetti';
 import { ClearTrophy } from './ClearTrophy';
@@ -17,12 +18,25 @@ const rise = (delay: number) => ({
   transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay },
 });
 
+// The celebration must fit one screen, so the trophy scales with its height.
+function useViewportHeight() {
+  const [h, setH] = useState(() => window.innerHeight);
+  useEffect(() => {
+    const onResize = () => setH(window.innerHeight);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return h;
+}
+
 export function DayClearedCelebration({ clear, clearNumber, onViewAll, onClose }: DayClearedCelebrationProps) {
   const plaque = new Date(`${clear.day}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  const vh = useViewportHeight();
+  const trophySize = Math.round(Math.min(220, Math.max(110, vh * 0.26)));
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] overflow-y-auto"
+      className="fixed inset-0 z-[100] overflow-hidden"
       style={{ background: 'radial-gradient(ellipse at 50% 30%, #2a1d0a 0%, #0d0a07 55%, #050403 100%)' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -36,7 +50,7 @@ export function DayClearedCelebration({ clear, clearNumber, onViewAll, onClose }
         @keyframes dc-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
         .dc-rays {
           position: absolute; left: 50%; top: 50%;
-          width: 560px; height: 560px;
+          width: 255%; height: 255%;
           transform: translate(-50%, -50%);
           background: repeating-conic-gradient(from 0deg, rgba(240,201,106,0.16) 0deg 7deg, transparent 7deg 20deg);
           -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 68%);
@@ -52,12 +66,12 @@ export function DayClearedCelebration({ clear, clearNumber, onViewAll, onClose }
 
       <Confetti />
 
-      <div className="relative min-h-full flex flex-col items-center justify-center px-6 py-12 text-center max-w-md mx-auto">
-        <div className="relative mb-2" style={{ width: 240, height: 280 }}>
+      <div className="relative h-full flex flex-col items-center justify-center px-6 py-[clamp(16px,4vh,48px)] text-center max-w-md mx-auto">
+        <div className="relative shrink-0" style={{ width: trophySize + 20, height: Math.round(trophySize * 1.27) }}>
           <div className="dc-rays" aria-hidden />
           <div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(240,201,106,0.35) 0%, transparent 70%)' }}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+            style={{ width: trophySize * 0.8, height: trophySize * 0.8, background: 'radial-gradient(circle, rgba(240,201,106,0.35) 0%, transparent 70%)' }}
             aria-hidden
           />
           <motion.div
@@ -70,26 +84,26 @@ export function DayClearedCelebration({ clear, clearNumber, onViewAll, onClose }
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut', delay: 1.4 }}
             >
-              <ClearTrophy size={220} animated plaque={plaque} />
+              <ClearTrophy size={trophySize} animated plaque={plaque} />
             </motion.div>
           </motion.div>
         </div>
 
-        <motion.p {...rise(0.9)} className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#c8922a]">
+        <motion.p {...rise(0.9)} className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#c8922a] mt-[clamp(4px,1vh,10px)]">
           Trophy #{clearNumber}
         </motion.p>
         <motion.h1
           {...rise(1.0)}
-          className="dc-title text-5xl font-bold tracking-tight mt-2"
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          className="dc-title font-bold tracking-tight mt-1.5 leading-none"
+          style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 'clamp(2.1rem, 5.5vh, 3rem)' }}
         >
           Day Cleared
         </motion.h1>
-        <motion.p {...rise(1.1)} className="text-zinc-300 text-sm mt-3">
+        <motion.p {...rise(1.1)} className="text-zinc-300 text-sm mt-[clamp(8px,1.5vh,12px)]">
           Every word that was due today — done. Not one left behind.
         </motion.p>
 
-        <motion.div {...rise(1.25)} className="flex gap-8 mt-6">
+        <motion.div {...rise(1.25)} className="flex gap-8 mt-[clamp(12px,2.5vh,24px)]">
           <div>
             <p className="text-3xl font-bold text-white tabular-nums" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               {clear.words_cleared}
@@ -105,26 +119,26 @@ export function DayClearedCelebration({ clear, clearNumber, onViewAll, onClose }
           </div>
         </motion.div>
 
-        <motion.figure {...rise(1.5)} className="mt-8 px-6 py-5 rounded-2xl border border-[#c8922a]/25 bg-[#c8922a]/[0.06]">
-          <blockquote className="text-lg leading-snug text-[#fff3c4] italic" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
+        <motion.figure {...rise(1.5)} className="w-full mt-[clamp(14px,3vh,32px)] px-6 py-[clamp(12px,2vh,20px)] rounded-2xl border border-[#c8922a]/25 bg-[#c8922a]/[0.06]">
+          <blockquote className="leading-snug text-[#fff3c4] italic" style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 'clamp(0.95rem, 2.1vh, 1.125rem)' }}>
             “{clear.quote}”
           </blockquote>
-          <figcaption className="text-xs text-[#c8922a] mt-3 tracking-wide">— {clear.quote_author}</figcaption>
+          <figcaption className="text-xs text-[#c8922a] mt-2 tracking-wide">— {clear.quote_author}</figcaption>
         </motion.figure>
 
-        <motion.div {...rise(1.7)} className="w-full space-y-3 mt-8">
-          <button
-            onClick={onViewAll}
-            className="w-full py-3.5 rounded-2xl font-bold text-sm text-zinc-900 transition-[filter] hover:brightness-110"
-            style={{ background: 'linear-gradient(120deg, #c8922a 0%, #f0c96a 50%, #c08828 100%)', boxShadow: '0 0 32px rgba(240,201,106,0.3)' }}
-          >
-            See my trophy shelf
-          </button>
+        <motion.div {...rise(1.7)} className="w-full grid grid-cols-2 gap-3 mt-[clamp(14px,3vh,32px)]">
           <button
             onClick={onClose}
-            className="w-full py-3.5 rounded-2xl text-sm font-semibold text-zinc-400 border border-white/10 hover:text-white hover:bg-white/5 transition-colors"
+            className="py-3.5 rounded-2xl text-sm font-semibold text-zinc-300 border border-white/10 hover:text-white hover:bg-white/5 transition-colors"
           >
             Continue
+          </button>
+          <button
+            onClick={onViewAll}
+            className="py-3.5 rounded-2xl font-bold text-sm text-zinc-900 transition-[filter] hover:brightness-110"
+            style={{ background: 'linear-gradient(120deg, #c8922a 0%, #f0c96a 50%, #c08828 100%)', boxShadow: '0 0 32px rgba(240,201,106,0.3)' }}
+          >
+            See trophy shelf
           </button>
         </motion.div>
       </div>

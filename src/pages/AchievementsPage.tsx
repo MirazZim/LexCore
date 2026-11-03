@@ -1,11 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ClearTrophy } from '@/components/achievements/ClearTrophy';
+import { TrophyCalendar } from '@/components/achievements/TrophyCalendar';
 import { useDailyClears } from '@/hooks/useDailyClears';
+import { useReviewEvents } from '@/hooks/useWords';
 import { clearStreaks } from '@/lib/daily-clears';
+import { dateKey } from '@/lib/streak';
 
 const container = {
   hidden: { opacity: 0 },
@@ -22,7 +25,19 @@ const shortDate = (day: string) =>
 export default function AchievementsPage() {
   const navigate = useNavigate();
   const { data: clears = [], isLoading } = useDailyClears();
+  const { data: reviewEvents = [] } = useReviewEvents();
   const { current, best } = useMemo(() => clearStreaks(clears.map(c => c.day)), [clears]);
+  const studiedDays = useMemo(
+    () => new Set(reviewEvents.map(e => dateKey(new Date(e.reviewed_at)))),
+    [reviewEvents],
+  );
+  // Trophy picked on the calendar: scrolled to on the shelf and briefly lit
+  const [highlight, setHighlight] = useState<string | null>(null);
+  const showTrophy = (day: string) => {
+    document.getElementById(`trophy-${day}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlight(day);
+    window.setTimeout(() => setHighlight(h => (h === day ? null : h)), 1800);
+  };
 
   if (isLoading) {
     return (
@@ -103,6 +118,13 @@ export default function AchievementsPage() {
             </div>
           </motion.div>
 
+          {/* ── Trophy calendar ──────────────────────────────────────── */}
+          {(clears.length > 0 || studiedDays.size > 0) && (
+            <motion.div variants={item}>
+              <TrophyCalendar clears={clears} studiedDays={studiedDays} onSelect={showTrophy} />
+            </motion.div>
+          )}
+
           {/* ── Trophy shelf ─────────────────────────────────────────── */}
           {clears.length === 0 ? (
             <motion.div variants={item} className="ach-card rounded-[1.5rem] p-10 text-center">
@@ -121,7 +143,13 @@ export default function AchievementsPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {clears.map((c, i) => (
-                <motion.figure key={c.id} variants={item} className="ach-card rounded-[1.5rem] p-6 flex flex-col items-center text-center">
+                <motion.figure
+                  key={c.id}
+                  id={`trophy-${c.day}`}
+                  variants={item}
+                  className="ach-card rounded-[1.5rem] p-6 flex flex-col items-center text-center scroll-mt-28"
+                  style={highlight === c.day ? { borderColor: 'rgba(240,201,106,0.85)', boxShadow: '0 0 48px rgba(240,201,106,0.3)' } : undefined}
+                >
                   <p className="section-label" style={{ color: '#c8922a' }}>Trophy #{clears.length - i}</p>
                   <div className="my-3">
                     <ClearTrophy size={96} plaque={shortDate(c.day)} />

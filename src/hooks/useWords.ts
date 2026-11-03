@@ -289,12 +289,16 @@ export function useAddWord() {
   });
 }
 
+// Lets the review summary wait on rating writes specifically (useIsMutating)
+export const RATING_MUTATION_KEY = ['word_stats_update'];
+
 export function useUpdateWordStats() {
   const { user } = useAuth();
   const { data: prefs } = useUserPreferences();
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: RATING_MUTATION_KEY,
     mutationFn: async (update: {
       wordStatsId: string;
       wordId: string;
@@ -353,12 +357,30 @@ export function useUpdateWordStats() {
           confidence: update.confidence ?? null,
         });
       if (logError) throw logError;
+
+      const event: ReviewEvent = {
+        word_id: update.wordId,
+        reviewed_at: now.toISOString(),
+        rating: update.rating,
+        state_after: cardAfter.state,
+        stability_after: cardAfter.stability,
+      };
+      return { event, confidence: update.confidence ?? null, correct: isCorrect };
     },
-    onSuccess: () => {
+    onSuccess: ({ event, confidence, correct }) => {
       queryClient.invalidateQueries({ queryKey: ['word_stats'] });
       queryClient.invalidateQueries({ queryKey: ['due_words'] });
-      queryClient.invalidateQueries({ queryKey: ['review_events'] });
-      queryClient.invalidateQueries({ queryKey: ['calibration'] });
+      // Append to the cached logs instead of invalidating: both are re-paged in
+      // full from the server, and a set of 15 ratings used to trigger 15 of them.
+      queryClient.setQueryData<ReviewEvent[]>(['review_events', user!.id], old => (old ? [...old, event] : old));
+      if (confidence) {
+        queryClient.setQueryData<Calibration>(['calibration', user!.id], old => {
+          if (!old) return old;
+          return confidence === 'sure'
+            ? { ...old, sureTotal: old.sureTotal + 1, sureCorrect: old.sureCorrect + (correct ? 1 : 0) }
+            : { ...old, guessTotal: old.guessTotal + 1, guessCorrect: old.guessCorrect + (correct ? 1 : 0) };
+        });
+      }
     },
   });
 }
@@ -392,19 +414,29 @@ export function useSaveReviewSession() {
   });
 }
 
+type ReviewEvent = {
+  word_id: string;
+  reviewed_at: string;
+  rating: number;
+  state_after: number;
+  stability_after: number;
+};
+
+type Calibration = { sureTotal: number; sureCorrect: number; guessTotal: number; guessCorrect: number };
+
+// The full review log is paged in from the server, so it is fetched once and
+// then kept current locally (useUpdateWordStats appends each new rating)
+// rather than re-downloaded on every page visit and tab switch.
+const LOG_STALE_TIME = 10 * 60 * 1000;
+
 export function useReviewEvents() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['review_events', user?.id],
     enabled: !!user,
+    staleTime: LOG_STALE_TIME,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
-      type ReviewEvent = {
-        word_id: string;
-        reviewed_at: string;
-        rating: number;
-        state_after: number;
-        stability_after: number;
-      };
       // PostgREST caps each response at 1000 rows; the full log is bigger, so
       // page through it — otherwise only the *oldest* 1000 reviews come back
       // and today's activity silently disappears.
@@ -431,7 +463,9 @@ export function useCalibration() {
   return useQuery({
     queryKey: ['calibration', user?.id],
     enabled: !!user,
-    queryFn: async () => {
+    staleTime: LOG_STALE_TIME,
+    refetchOnWindowFocus: false,
+    queryFn: async (): Promise<Calibration> => {
       // Same 1000-row PostgREST cap as useReviewEvents — page through so the
       // calibration score reflects all bets, not just the oldest 1000.
       const PAGE = 1000;
