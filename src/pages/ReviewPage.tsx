@@ -582,6 +582,10 @@ export default function ReviewPage() {
     }
   };
 
+  // From the Collocation Forge: skip the rest of this word's phases (generation,
+  // synonyms) and go straight to the next word. The rating was already saved in Battle.
+  const handleSkipWord = () => handleSynonymsNext();
+
   // Wrong answer: reset for another attempt on the SAME word — does NOT advance the phase.
   const handleClozeRetry = () => {
     setClozeAnswer('');
@@ -776,6 +780,8 @@ export default function ReviewPage() {
               collocations={collocations}
               mode={forgeMode}
               onNext={handleCollocationNext}
+              onSkipWord={handleSkipWord}
+              isLastWord={currentIndex + 1 >= totalWords}
             />
           )}
 

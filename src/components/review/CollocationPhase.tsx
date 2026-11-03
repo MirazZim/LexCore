@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
-import { ArrowRight, Flame, Zap, Check, RotateCcw } from 'lucide-react';
+import { ArrowRight, Flame, Zap, Check, RotateCcw, PenLine, Link2, SkipForward } from 'lucide-react';
+import { SkipWordButton } from './SkipWordButton';
+import { HERO_GREEN } from './twoTone';
 import {
   useCollocationHistoryForWord,
   useSaveCollocationAttempt,
@@ -205,6 +207,64 @@ function Chain({ states }: { states: LinkState[] }) {
   );
 }
 
+// ── Action buttons ────────────────────────────────────────────────
+// Main action in the hero's green: icon tile, label with a one-line hint, and
+// the Enter key it answers to.
+function PrimaryAction({ onClick, icon: Icon, label, hint }: {
+  onClick: () => void; icon: React.ElementType; label: string; hint: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative flex-1 min-w-0 h-12 pl-1.5 pr-3 rounded-2xl flex items-center gap-2.5 text-left text-white overflow-hidden transition-all duration-200 hover:-translate-y-px hover:brightness-110 active:translate-y-0 active:scale-[0.985] outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+      style={{
+        background: `radial-gradient(120% 140% at 0% 0%, rgba(0,255,200,0.22) 0%, transparent 55%), ${HERO_GREEN}`,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.14), 0 6px 16px -8px rgba(10,50,41,0.6)',
+      }}
+    >
+      <span className="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)' }}>
+        <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+      </span>
+      <span className="flex-1 min-w-0 flex flex-col leading-none">
+        <span className="text-[14px] font-bold truncate" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{label}</span>
+        <span className="text-[10px] font-medium mt-1 truncate" style={{ color: 'rgba(209,250,229,0.7)' }}>{hint}</span>
+      </span>
+      <ArrowRight className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
+      <kbd className="hidden sm:inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-md text-[10px] font-semibold" style={{ background: 'rgba(255,255,255,0.14)' }}>↵</kbd>
+    </button>
+  );
+}
+
+// Main action + Next word, side by side in a soft tray.
+function ActionDock({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="flex gap-1.5 p-1.5 rounded-[1.4rem]"
+      style={{ background: 'rgba(15,23,20,0.04)', border: '1px solid rgba(15,23,20,0.06)' }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Low-key way out while a card is still unanswered.
+function QuietAction({ onClick, icon: Icon, children }: {
+  onClick: () => void; icon: React.ElementType; children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group h-9 px-3.5 rounded-full inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-500 bg-white/70 transition-colors hover:text-zinc-800 hover:bg-white outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40"
+      style={{ border: '1px solid rgba(15,23,20,0.08)' }}
+    >
+      <Icon className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+      {children}
+    </button>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────
 interface CollocationPhaseProps {
   currentItem: DueWordItem;
@@ -213,6 +273,9 @@ interface CollocationPhaseProps {
   /** 'repair' = mature word: replay only the phrases missed last time. */
   mode?: ForgeMode;
   onNext: () => void;
+  /** Skip the remaining phases for this word and move on to the next one. */
+  onSkipWord: () => void;
+  isLastWord: boolean;
 }
 
 type CardResult = 'clean' | 'retry';
@@ -220,7 +283,7 @@ type CardResult = 'clean' | 'retry';
 const CARD_STYLE = { height: 'min(calc(100dvh - 13rem), 640px)' };
 
 export function CollocationPhase({
-  currentItem, currentIndex, collocations: allCollocations, mode = 'full', onNext,
+  currentItem, currentIndex, collocations: allCollocations, mode = 'full', onNext, onSkipWord, isLastWord,
 }: CollocationPhaseProps) {
   const targetWord = currentItem.word.word;
   const wordId = currentItem.word.id;
@@ -363,9 +426,10 @@ export function CollocationPhase({
       >
         <div className="rv-surface rounded-[2rem] p-8 text-center space-y-5">
           <p className="text-zinc-500 text-sm">No collocations saved for this word yet.</p>
-          <button onClick={onNext} className="rv-btn-hero">
-            Continue <ArrowRight className="h-4 w-4" />
-          </button>
+          <ActionDock>
+            <PrimaryAction onClick={onNext} icon={PenLine} label="Continue" hint="Write a sentence with it" />
+            <SkipWordButton onClick={onSkipWord} isLastWord={isLastWord} />
+          </ActionDock>
         </div>
       </motion.div>
     );
@@ -514,10 +578,12 @@ export function CollocationPhase({
                 })}
               </div>
 
-              <button onClick={onNext} className="rv-btn-hero mt-4 shrink-0">
-                Let's Write <ArrowRight className="h-4 w-4" />
-                <kbd className="hidden sm:inline-flex items-center justify-center h-5 px-1 rounded-md text-[10px]" style={{ background: 'rgba(255,255,255,0.15)' }}>↵</kbd>
-              </button>
+              <div className="mt-4 shrink-0">
+                <ActionDock>
+                  <PrimaryAction onClick={onNext} icon={PenLine} label="Let's Write" hint={`Use “${targetWord}” in your own sentence`} />
+                  <SkipWordButton onClick={onSkipWord} isLastWord={isLastWord} />
+                </ActionDock>
+              </div>
             </motion.div>
           ) : (
             /* ── Active challenge ────────────────────────────────────── */
@@ -654,29 +720,33 @@ export function CollocationPhase({
                   <div className="h-12 mt-3">
                     <AnimatePresence>
                       {isSolved && (
-                        <motion.button
+                        <motion.div
                           key="next"
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: challenge ? 0.25 : 0.1, duration: 0.22 }}
-                          onClick={advance}
-                          className="rv-btn-hero h-12"
-                          style={{ padding: 0 }}
+                          className="flex"
                         >
-                          {isLast ? 'Finish the chain' : 'Next link'} <ArrowRight className="h-4 w-4" />
-                          <kbd className="hidden sm:inline-flex items-center justify-center h-5 px-1 rounded-md text-[10px]" style={{ background: 'rgba(255,255,255,0.15)' }}>↵</kbd>
-                        </motion.button>
+                          <PrimaryAction
+                            onClick={advance}
+                            icon={Link2}
+                            label={isLast ? 'Finish the chain' : 'Next link'}
+                            hint={isLast ? 'See how the chain held up' : `Link ${cardIndex + 2} of ${total}`}
+                          />
+                        </motion.div>
                       )}
                       {!isSolved && (
-                        <motion.button
+                        <motion.div
                           key="skip"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
-                          onClick={onNext}
-                          className="w-full h-12 text-center text-xs text-zinc-400 hover:text-zinc-600 transition-colors"
+                          className="h-12 flex items-center justify-center gap-2"
                         >
-                          Skip to Generation Lab →
-                        </motion.button>
+                          <QuietAction onClick={onNext} icon={PenLine}>Skip to writing</QuietAction>
+                          <QuietAction onClick={onSkipWord} icon={SkipForward}>
+                            {isLastWord ? 'Finish session' : 'Next word'}
+                          </QuietAction>
+                        </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
