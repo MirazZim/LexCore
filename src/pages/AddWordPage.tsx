@@ -389,6 +389,7 @@ export default function AddWordPage() {
         word: word.trim(), definition: definition.trim(),
         example_sentence: exampleSentence.trim() || undefined,
         emotion_anchor: memoryTrick ? `${memoryTrick.breakdown}\n${memoryTrick.clarification}` : undefined,
+        memory_technique: memoryTrick?.technique || undefined,
         register, collocations, synonyms,
       });
       const fromDaily = searchParams.get('from') === 'daily';

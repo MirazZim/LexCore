@@ -242,6 +242,8 @@ export function useAddWord() {
       definition: string;
       example_sentence?: string;
       emotion_anchor?: string;
+      // Which memory-trick technique emotion_anchor was written with
+      memory_technique?: string;
       register: string;
       collocations?: string[];
       synonyms?: string[];
@@ -254,6 +256,7 @@ export function useAddWord() {
           definition: wordData.definition,
           example_sentence: wordData.example_sentence || null,
           emotion_anchor: wordData.emotion_anchor || null,
+          memory_technique: wordData.memory_technique || null,
           source: 'user',
           register: wordData.register,
           frequency_band: 3,
@@ -508,6 +511,8 @@ export function useUpdateWord() {
       collocations: string[];
       synonyms: string[];
       emotion_anchor?: string | null;
+      // Left as is when undefined; null clears it along with the trick
+      memory_technique?: string | null;
     }) => {
       const { error } = await supabase
         .from('words')
@@ -516,6 +521,7 @@ export function useUpdateWord() {
           definition: wordData.definition,
           register: wordData.register,
           emotion_anchor: wordData.emotion_anchor ?? null,
+          ...(wordData.memory_technique !== undefined && { memory_technique: wordData.memory_technique }),
         })
         .eq('id', wordData.id);
       if (error) throw error;

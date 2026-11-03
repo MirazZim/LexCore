@@ -7,6 +7,7 @@ export interface Word {
   definition: string;
   example_sentence: string | null;
   emotion_anchor: string | null;
+  memory_technique?: string | null;
   source: 'user' | 'native_pulse';
   register: Register;
   frequency_band: number;

@@ -131,6 +131,8 @@ export default function LibraryPage() {
   const [editCollocationInput, setEditCollocationInput] = useState('');
   const [editSynonymInput, setEditSynonymInput] = useState('');
   const [editMemoryTrick, setEditMemoryTrick] = useState('');
+  // Technique of a trick regenerated while editing; undefined leaves the saved one alone
+  const [editTechnique, setEditTechnique] = useState<string | null | undefined>(undefined);
   const [loadingEditTrick, setLoadingEditTrick] = useState(false);
   const now = useMemo(() => new Date(), []);
 
@@ -173,6 +175,7 @@ export default function LibraryPage() {
     setEditCollocations(selectedCollocations.map(c => c.collocation));
     setEditSynonyms(selectedConnections.filter(c => c.connection_type === 'synonym').map(c => c.connected_word));
     setEditMemoryTrick(selectedWord.emotion_anchor ?? '');
+    setEditTechnique(undefined);
     setEditCollocationInput('');
     setEditSynonymInput('');
     setIsEditing(true);
@@ -184,6 +187,7 @@ export default function LibraryPage() {
     try {
       const result = await generateMemoryTrick(editWord.trim(), editDefinition.trim());
       setEditMemoryTrick(`${result.breakdown}\n${result.clarification}`);
+      setEditTechnique(result.technique || null);
       memeToast.memoryTrickGenerated();
     } catch {
       toast.error('Failed to generate memory trick');
@@ -203,6 +207,7 @@ export default function LibraryPage() {
         collocations: editCollocations,
         synonyms: editSynonyms,
         emotion_anchor: editMemoryTrick.trim() || null,
+        memory_technique: editMemoryTrick.trim() ? editTechnique : null,
       });
       memeToast.wordUpdated();
       setIsEditing(false);

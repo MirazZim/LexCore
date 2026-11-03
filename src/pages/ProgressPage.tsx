@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { BarChart2, Calendar, ChevronLeft, ChevronRight, Target, TrendingUp, Zap } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import { EaseBadge } from '@/components/EaseBadge';
+import { CoachMemoryCard } from '@/components/CoachMemoryCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWords, useWordStats, useReviewSessions, useUserPreferences, useReviewEvents } from '@/hooks/useWords';
 import { dateKey, normalizeKey } from '@/lib/streak';
@@ -564,6 +565,11 @@ export default function ProgressPage() {
                 ))}
               </div>
             )}
+          </motion.div>
+
+          {/* ── What the AI coach remembers ───────────────────────────── */}
+          <motion.div variants={item}>
+            <CoachMemoryCard />
           </motion.div>
 
         </motion.div>
