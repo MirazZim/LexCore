@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Check, Compass, Flame, Moon, PenLine, Sparkles, ArrowRight, Target, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +14,10 @@ import { clearStreaks } from '@/lib/daily-clears';
 import { useAuth } from '@/contexts/AuthContext';
 import { seedWordsIfEmpty } from '@/lib/seed-words';
 import { getIdentity } from '@/lib/identity';
-import { IdentityJourneyMap } from '@/components/IdentityJourneyMap';
+// The journey is heavy and opened rarely, so its code downloads only when needed:
+// on hover/focus of the card that opens it, or on the click itself.
+const loadJourney = () => import('@/components/IdentityJourneyMap');
+const IdentityJourneyMap = lazy(() => loadJourney().then(m => ({ default: m.IdentityJourneyMap })));
 import { getTrophies, type Trophy as TrophyEntry } from '@/lib/trophies';
 import { calculateStreak, dateKey } from '@/lib/streak';
 
@@ -761,6 +764,8 @@ export default function Dashboard() {
                 <motion.section variants={item} className="lg:col-span-5">
                   <button
                     onClick={() => setShowJourney(true)}
+                    onPointerEnter={loadJourney}
+                    onFocus={loadJourney}
                     className="id-card-home dash-identity group relative w-full h-full min-h-[320px] rounded-[2rem] overflow-hidden text-left"
                   >
                     <img
@@ -920,10 +925,12 @@ export default function Dashboard() {
 
       <AnimatePresence>
         {showJourney && (
-          <IdentityJourneyMap
-            currentDay={Math.max(1, streak)}
-            onClose={() => setShowJourney(false)}
-          />
+          <Suspense key="journey" fallback={<div className="fixed inset-0 z-50" style={{ background: '#0f0a06' }} />}>
+            <IdentityJourneyMap
+              currentDay={Math.max(1, streak)}
+              onClose={() => setShowJourney(false)}
+            />
+          </Suspense>
         )}
       </AnimatePresence>
     </AppLayout>
