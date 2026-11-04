@@ -5,12 +5,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { loadReviewPage } from "@/lib/route-preload";
 
 const Index = lazy(() => import("./pages/Index"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const AddWordPage = lazy(() => import("./pages/AddWordPage"));
 const LibraryPage = lazy(() => import("./pages/LibraryPage"));
-const ReviewPage = lazy(() => import("./pages/ReviewPage"));
+const ReviewPage = lazy(loadReviewPage);
 const ProgressPage = lazy(() => import("./pages/ProgressPage"));
 const AchievementsPage = lazy(() => import("./pages/AchievementsPage"));
 const GrammarRulesPage = lazy(() => import("./pages/GrammarRulesPage"));

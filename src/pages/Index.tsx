@@ -14,6 +14,7 @@ import { clearStreaks } from '@/lib/daily-clears';
 import { useAuth } from '@/contexts/AuthContext';
 import { seedWordsIfEmpty } from '@/lib/seed-words';
 import { getIdentity } from '@/lib/identity';
+import { loadReviewPage } from '@/lib/route-preload';
 // The journey is heavy and opened rarely, so its code downloads only when needed:
 // on hover/focus of the card that opens it, or on the click itself.
 const loadJourney = () => import('@/components/IdentityJourneyMap');
@@ -265,6 +266,13 @@ export default function Dashboard() {
   /* ── Greatest Hits (10/10 trophies) ──────────────────────────────── */
   const [trophies, setTrophies] = useState<TrophyEntry[]>([]);
   useEffect(() => { setTrophies(getTrophies()); }, []);
+
+  // Reviewing is the main thing people do from here, so fetch the review
+  // page's code once the dashboard has settled; Start review then opens at once.
+  useEffect(() => {
+    const id = window.setTimeout(() => { loadReviewPage().catch(() => { /* fetched on click instead */ }); }, 1500);
+    return () => window.clearTimeout(id);
+  }, []);
 
   /* ── Hero mission ────────────────────────────────────────────────── */
   // Your real pace from finished sessions, so the time estimate is honest

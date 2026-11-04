@@ -17,9 +17,14 @@ type Spec =
 
 export type Params = Record<string, string | string[] | boolean | undefined>;
 
+export type ThinkingLevel = 'minimal' | 'low' | 'medium' | 'high';
+
 export interface TaskDef {
   params: Record<string, Spec>;
   temperature: number;
+  // How long the model may reason before answering. Short generations set it
+  // low so the learner isn't kept waiting; unset uses the model's default.
+  thinking?: ThinkingLevel;
   // Learner slices this task gets; [] means the prompt is learner-independent
   context: readonly Slice[];
   // Param that names the target word (for word-specific notes and filtering)
@@ -66,6 +71,7 @@ export const TASKS: Record<string, TaskDef> = {
       exclude: { kind: 'list', maxItems: 50, maxLength: 60, optional: true },
     },
     temperature: 0.9,
+    thinking: 'minimal',
     context: ['level'],
     candidates: true,
     system: p => `You are a vocabulary coach. Suggest English words for a learner to study.
@@ -185,6 +191,7 @@ Respond ONLY with this JSON:
       exclude: { kind: 'list', maxItems: 10, maxLength: 600, optional: true },
     },
     temperature: 0.9,
+    thinking: 'minimal',
     context: ['known_words'],
     wordParam: 'word',
     system: p => `You are a vocabulary teacher. Generate example sentences for English learners.
@@ -218,6 +225,7 @@ Respond ONLY with this JSON:
       exclude: { kind: 'list', maxItems: 30, maxLength: 80, optional: true },
     },
     temperature: 0.9,
+    thinking: 'minimal',
     context: ['confusions'],
     wordParam: 'word',
     system: p => `You are a vocabulary coach. Generate common collocations for English learners.
@@ -251,6 +259,7 @@ Respond ONLY with this JSON:
       exclude: { kind: 'list', maxItems: 30, maxLength: 60, optional: true },
     },
     temperature: 0.9,
+    thinking: 'minimal',
     context: ['known_words'],
     wordParam: 'word',
     system: p => `You are a vocabulary depth coach. Your job is to expand a learner's understanding of a word — not just replace it.
@@ -289,6 +298,7 @@ Respond ONLY with this JSON:
       cefr: { kind: 'string', max: 10 },
     },
     temperature: 0.85,
+    thinking: 'minimal',
     context: [],
     system: () => `You are a dark, analytical vocabulary intelligence system. You give cold, data-driven insights about language learning strategy — no fluff, no encouragement, just sharp analysis. ${JSON_ONLY}`,
     user: (p, seed) => {
@@ -319,6 +329,7 @@ Respond ONLY with this JSON:
       exclude: { kind: 'list', maxItems: 10, maxLength: 600, optional: true },
     },
     temperature: 0.9,
+    thinking: 'minimal',
     context: [],
     wordParam: 'word',
     system: () => `You are helping someone practice using vocabulary in real spoken conversation. Generate a short, natural two-line exchange between two people — the kind of thing that could actually happen in conversation or a text thread. ${JSON_ONLY}`,
@@ -344,6 +355,7 @@ Respond ONLY with this JSON:
   memory_trick: {
     params: { word: WORD, definition: DEFINITION },
     temperature: 0.85,
+    thinking: 'low',
     context: ['techniques'],
     wordParam: 'word',
     system: () => `You are an expert vocabulary mnemonics coach. For every word you ALWAYS find the best memory trick using exactly one of these 7 techniques. Your goal: make the word's meaning impossible to forget.
@@ -425,6 +437,7 @@ Respond ONLY with this JSON:
       exclude_definition: { kind: 'string', max: 400, optional: true },
     },
     temperature: 0.5,
+    thinking: 'minimal',
     context: [],
     wordParam: 'word',
     system: p => `You are a plain-English dictionary. Your only job is to make the reader instantly understand what a word means — nothing more.
@@ -464,6 +477,7 @@ Respond ONLY with this JSON — no extra fields, no markdown:
   word_bundle: {
     params: { word: WORD, style: STYLE },
     temperature: 0.7,
+    thinking: 'low',
     context: ['known_words', 'techniques', 'confusions'],
     wordParam: 'word',
     system: p => `You are a vocabulary coach building a complete study card for one English word.
@@ -639,6 +653,7 @@ Grade per the rubric above. Return JSON only.`;
       domain: { kind: 'string', max: 40 },
     },
     temperature: 0.85,
+    thinking: 'minimal',
     context: ['writing'],
     system: () => `You are an IELTS Task 2 examiner with 15 years of experience coaching learners. You are given a fixed exam prompt — do not alter, paraphrase, or repeat it. Your only job is to write ONE sharp framing tip for the learner.
 
@@ -712,7 +727,7 @@ export function assemblePrompt(def: TaskDef, params: Params, learnerBlock: strin
   const user = useLearner
     ? `<learner>\n${learnerBlock}\n</learner>\n\n${def.user(params, seed)}`
     : def.user(params, seed);
-  return { system, user, temperature: def.temperature };
+  return { system, user, temperature: def.temperature, thinking: def.thinking };
 }
 
 // suggest_word replies with candidates; keep the first one the learner hasn't

@@ -27,6 +27,14 @@ import { calculateStreak } from '@/lib/streak';
 import { matureNeedsGeneration, markGenerated } from '@/lib/generation-log';
 import { REVIEW_CHUNK_SIZE } from '@/lib/review-chunks';
 
+interface WordData {
+  contexts: WordContext[];
+  collocations: WordCollocation[];
+  synonyms: string[];
+}
+
+// How long Context Theater waits for the AI dialogue before using a stored example
+const CLOZE_WAIT_MS = 5000;
 
 export default function ReviewPage() {
   const [searchParams] = useSearchParams();
@@ -132,44 +140,103 @@ export default function ReviewPage() {
   // Forge gating decision is made after the battle phase.
   const { data: collocationHistory } = useCollocationHistoryForWord(currentItem?.word.id);
 
+  // Each word's stored data and Context Theater dialogue, requested once per
+  // session. The next word is requested while the current one is on screen, so
+  // its dialogue is usually written before the learner gets there.
+  const wordDataCache = useRef(new Map<string, Promise<WordData>>());
+  const clozeCache = useRef(new Map<string, Promise<ClozeDialogue | null>>());
+  // The word on screen; replies for any other word are ignored
+  const activeWordId = useRef<string | null>(null);
+  // Which word's dialogue is final; a reply arriving later must not swap it mid-answer
+  const clozeSettled = useRef<string | null>(null);
+
+  const fetchWordData = (wordId: string) => {
+    let data = wordDataCache.current.get(wordId);
+    if (!data) {
+      data = Promise.all([
+        supabase.from('word_contexts').select('*').eq('word_id', wordId),
+        supabase.from('word_collocations').select('*').eq('word_id', wordId),
+        supabase.from('semantic_connections').select('connected_word').eq('word_id', wordId).eq('connection_type', 'synonym'),
+      ]).then(([ctxRes, colRes, synRes]) => ({
+        contexts: ctxRes.data || [],
+        collocations: colRes.data || [],
+        synonyms: (synRes.data || []).map((r: { connected_word: string }) => r.connected_word),
+      }));
+      // A failed load is retried next time instead of being cached
+      data.catch(() => wordDataCache.current.delete(wordId));
+      wordDataCache.current.set(wordId, data);
+    }
+    return data;
+  };
+
+  // Resolves to null when the AI is unavailable; the caller falls back to a stored example
+  const fetchCloze = (item: DueWordItem, contexts: WordContext[]) => {
+    let dialogue = clozeCache.current.get(item.word.id);
+    if (!dialogue) {
+      dialogue = generateClozeSentence(item.word.word, item.word.definition, contexts.map(c => c.sentence))
+        .catch(() => null);
+      clozeCache.current.set(item.word.id, dialogue);
+    }
+    return dialogue;
+  };
+
+  const prefetchWord = (item: DueWordItem) => {
+    fetchWordData(item.word.id)
+      .then(data => { if (data.contexts.length > 0) fetchCloze(item, data.contexts); })
+      .catch(() => { /* loaded again when the word comes up */ });
+  };
+
+  // A randomly picked stored example, so the exercise works without the AI
+  const fallbackDialogue = (contexts: WordContext[]): ClozeDialogue => ({
+    setup: '',
+    response: contexts[Math.floor(Math.random() * contexts.length)].sentence,
+  });
+
   const loadWordData = async (item: DueWordItem) => {
     const wordId = item.word.id;
-    const [ctxRes, colRes, synRes] = await Promise.all([
-      supabase.from('word_contexts').select('*').eq('word_id', wordId),
-      supabase.from('word_collocations').select('*').eq('word_id', wordId),
-      supabase.from('semantic_connections').select('connected_word').eq('word_id', wordId).eq('connection_type', 'synonym'),
-    ]);
-    const loadedContexts = ctxRes.data || [];
+    activeWordId.current = wordId;
+    clozeSettled.current = null;
+    const { contexts: loadedContexts, collocations, synonyms } = await fetchWordData(wordId);
+    if (activeWordId.current !== wordId) return;
     setContexts(loadedContexts);
-    setCollocations(colRes.data || []);
-    setSynonyms((synRes.data || []).map((r: { connected_word: string }) => r.connected_word));
+    setCollocations(collocations);
+    setSynonyms(synonyms);
 
-    // Kick off cloze generation the moment this word's stored examples land —
-    // right as Battle mounts, well before the learner reaches the quiz step —
-    // so the LLM round trip has the whole Battle phase to finish in the
-    // background instead of racing the few seconds before Context Theater.
+    // Ask for the dialogue as soon as the word comes up (if it wasn't already
+    // prefetched), so the AI has the whole Battle phase to answer.
     if (loadedContexts.length > 0) {
       setClozeLoading(true);
       setClozeDialogue(null);
-      generateClozeSentence(
-        item.word.word,
-        item.word.definition,
-        loadedContexts.map(c => c.sentence),
-      )
-        .then(dialogue => setClozeDialogue(dialogue))
-        .catch(() => {
-          // AI unavailable: fall back to a randomly picked stored example so the
-          // exercise still works offline, instead of always the same first one.
-          const pick = loadedContexts[Math.floor(Math.random() * loadedContexts.length)];
-          setClozeDialogue({ setup: '', response: pick.sentence });
-        })
-        .finally(() => setClozeLoading(false));
+      const dialogue = await fetchCloze(item, loadedContexts);
+      // Moved on, or the learner already got the stored example after waiting too long
+      if (activeWordId.current !== wordId || clozeSettled.current === wordId) return;
+      clozeSettled.current = wordId;
+      setClozeDialogue(dialogue ?? fallbackDialogue(loadedContexts));
+      setClozeLoading(false);
     }
   };
 
   useEffect(() => {
-    if (currentItem) loadWordData(currentItem);
+    if (!currentItem) return;
+    loadWordData(currentItem);
+    const next = sessionWords[currentIndex + 1];
+    if (next) prefetchWord(next);
   }, [currentItem?.word.id]);
+
+  // Don't keep the learner staring at a skeleton: if the dialogue still isn't
+  // here a few seconds after they reach Context Theater, use a stored example.
+  const currentWordId = currentItem?.word.id;
+  useEffect(() => {
+    if (phase !== 'context' || !clozeLoading || !currentWordId || contexts.length === 0) return;
+    const wordId = currentWordId;
+    const timer = setTimeout(() => {
+      if (activeWordId.current !== wordId || clozeSettled.current === wordId) return;
+      clozeSettled.current = wordId;
+      setClozeDialogue(fallbackDialogue(contexts));
+      setClozeLoading(false);
+    }, CLOZE_WAIT_MS);
+    return () => clearTimeout(timer);
+  }, [phase, clozeLoading, currentWordId, contexts]);
 
   useEffect(() => {
     setClozeAnswer('');

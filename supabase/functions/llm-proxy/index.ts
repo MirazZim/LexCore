@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { TASKS, assemblePrompt, pickNewWord, validateParams } from './tasks.ts'
+import { TASKS, assemblePrompt, pickNewWord, validateParams, type ThinkingLevel } from './tasks.ts'
 import { knownWordSet, renderLearner } from './learner.ts'
 import { extractNote } from './memory.ts'
 import { loadLearnerRows, rememberNote } from './db.ts'
@@ -32,8 +32,8 @@ class UpstreamError extends Error {
   }
 }
 
-async function callGemini(system: string, user: string, temperature: number): Promise<string> {
-  const response = await fetch(
+async function callGemini(system: string, user: string, temperature: number, thinking?: ThinkingLevel): Promise<string> {
+  const request = (withThinking: boolean) => fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
     {
       method: 'POST',
@@ -45,10 +45,19 @@ async function callGemini(system: string, user: string, temperature: number): Pr
           temperature,
           maxOutputTokens: 4096,
           responseMimeType: 'application/json',
+          ...(withThinking && thinking ? { thinkingConfig: { thinkingLevel: thinking } } : {}),
         },
       }),
     }
   )
+
+  let response = await request(true)
+  // A model that doesn't accept this thinking level answers 400; ask again
+  // with the model's default rather than failing the learner's request.
+  if (response.status === 400 && thinking) {
+    console.warn('[llm-proxy] thinking level rejected, retrying with the default', thinking, await response.text())
+    response = await request(false)
+  }
 
   const raw = await response.text()
   let data: {
@@ -86,6 +95,7 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  const started = Date.now()
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) return json({ error: 'Unauthorized' }, 401)
 
@@ -121,14 +131,19 @@ serve(async (req) => {
 
   const seed = Math.random().toString(36).slice(2, 8)
   const prompt = assemblePrompt(def, params, learnerBlock, seed)
-  console.log('[llm-proxy]', body.task, {
-    promptChars: prompt.system.length + prompt.user.length,
-    learnerChars: learnerBlock.length,
-  })
+  const prepared = Date.now()
 
   let content: string
   try {
-    content = await callGemini(prompt.system, prompt.user, prompt.temperature)
+    content = await callGemini(prompt.system, prompt.user, prompt.temperature, prompt.thinking)
+    // Where the time goes: auth + learner context, then the model itself
+    console.log('[llm-proxy]', body.task, {
+      promptChars: prompt.system.length + prompt.user.length,
+      learnerChars: learnerBlock.length,
+      thinking: prompt.thinking ?? 'default',
+      prepareMs: prepared - started,
+      modelMs: Date.now() - prepared,
+    })
   } catch (e) {
     const status = e instanceof UpstreamError ? e.status : 500
     return json({ error: { message: e instanceof Error ? e.message : 'Gemini request failed' } }, status)

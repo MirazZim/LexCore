@@ -188,7 +188,7 @@ export function useReviewSessions() {
 
 export function useDueWords() {
   const { user } = useAuth();
-  const { data: prefs } = useUserPreferences();
+  const { data: prefs, isLoading: prefsLoading } = useUserPreferences();
   const newCardsPerDay = prefs?.new_cards_per_day ?? PREF_DEFAULTS.new_cards_per_day;
 
   return useQuery({
@@ -201,21 +201,21 @@ export function useDueWords() {
 
       // A card's first-ever review is logged with state_before=0, so this
       // counts new cards already introduced today — making the cap truly
-      // per-day instead of per-session.
-      const [reviewRes, introducedRes] = await Promise.all([
+      // per-day instead of per-session. New cards are fetched up to the full
+      // daily cap alongside it and trimmed after, saving a round trip.
+      const [reviewRes, introducedRes, newRes] = await Promise.all([
         supabase.from('word_stats').select('*').eq('user_id', user!.id).neq('state', 0).lte('next_review_at', nowIso).order('next_review_at', { ascending: true }),
         supabase.from('review_events').select('*', { count: 'exact', head: true }).eq('user_id', user!.id).eq('state_before', 0).gte('reviewed_at', startOfToday.toISOString()),
+        newCardsPerDay > 0
+          ? supabase.from('word_stats').select('*').eq('user_id', user!.id).eq('state', 0).lte('next_review_at', nowIso).order('next_review_at', { ascending: true }).limit(newCardsPerDay)
+          : Promise.resolve({ data: [] as WordStats[], error: null }),
       ]);
       if (reviewRes.error) throw reviewRes.error;
       if (introducedRes.error) throw introducedRes.error;
+      if (newRes.error) throw newRes.error;
 
       const newBudget = Math.max(0, newCardsPerDay - (introducedRes.count ?? 0));
-      let newStats: WordStats[] = [];
-      if (newBudget > 0) {
-        const newRes = await supabase.from('word_stats').select('*').eq('user_id', user!.id).eq('state', 0).lte('next_review_at', nowIso).order('next_review_at', { ascending: true }).limit(newBudget);
-        if (newRes.error) throw newRes.error;
-        newStats = (newRes.data ?? []) as WordStats[];
-      }
+      const newStats = ((newRes.data ?? []) as WordStats[]).slice(0, newBudget);
 
       const stats = [...(reviewRes.data ?? []), ...newStats];
       if (stats.length === 0) return [];
@@ -228,7 +228,13 @@ export function useDueWords() {
         .map(s => ({ word: words!.find(w => w.id === s.word_id) as Word, stats: s as WordStats }))
         .filter(item => item.word);
     },
-    enabled: !!user,
+    // Wait for the new-card cap, or the list is fetched once with the default
+    // and again with the learner's own setting
+    enabled: !!user && !prefsLoading,
+    // Reuse the dashboard's copy when Start review opens the review page, instead
+    // of fetching it again before the first word shows. Ratings and new words
+    // still refresh it straight away (they invalidate due_words).
+    staleTime: 2 * 60 * 1000,
   });
 }
 
