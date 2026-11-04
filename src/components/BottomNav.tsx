@@ -39,8 +39,17 @@ export function BottomNav() {
       setBox({ left: el.offsetLeft, top: el.offsetTop, width: el.offsetWidth, height: el.offsetHeight });
     };
     measure();
+    // Re-measure once fonts land and whenever the nav reflows, so the pill
+    // never stays parked on a stale position.
+    document.fonts?.ready.then(measure);
+    const nav = linkRefs.current[0]?.parentElement;
+    const ro = nav ? new ResizeObserver(measure) : null;
+    if (nav) ro!.observe(nav);
     window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', measure);
+    };
   }, [location.pathname]);
 
   useEffect(() => {

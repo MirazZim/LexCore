@@ -42,6 +42,7 @@ const SectionEyebrow = ({ children }: { children: ReactNode }) => (
 /* ─── Auth card ─────────────────────────────────────────────────── */
 function AuthCard({ emailRef }: { emailRef: React.RefObject<HTMLInputElement> }) {
   const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -56,7 +57,7 @@ function AuthCard({ emailRef }: { emailRef: React.RefObject<HTMLInputElement> })
         await signIn(email, password);
         memeToast.signIn();
       } else {
-        await signUp(email, password);
+        await signUp(email, password, name.trim() || undefined);
         toast.success('Account created! Check your email to confirm.');
       }
     } catch (err: unknown) {
@@ -109,6 +110,22 @@ function AuthCard({ emailRef }: { emailRef: React.RefObject<HTMLInputElement> })
       </AnimatePresence>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        {!isLogin && (
+          <label className="block">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Name</span>
+            <input
+              id="name"
+              type="text"
+              autoComplete="name"
+              placeholder="What should we call you?"
+              value={name}
+              maxLength={40}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="land-input mt-2"
+            />
+          </label>
+        )}
         <label className="block">
           <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Email</span>
           <input

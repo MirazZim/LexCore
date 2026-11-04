@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Brain, Layers, ChevronUp, ChevronDown, HelpCircle, ChevronDown as ExpandIcon, Zap } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Settings, Brain, Layers, ChevronUp, ChevronDown, HelpCircle, ChevronDown as ExpandIcon, Zap, UserRound } from 'lucide-react';
+import { ProfileTab } from '@/components/settings/ProfileTab';
 import { AppLayout } from '@/components/AppLayout';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -103,7 +105,18 @@ function SectionHeader({ icon: Icon, title, subtitle }: { icon: React.ElementTyp
   );
 }
 
+const TABS = [
+  { id: 'profile', label: 'Profile', icon: UserRound },
+  { id: 'learning', label: 'Learning', icon: Brain },
+] as const;
+type Tab = (typeof TABS)[number]['id'];
+
 export default function SettingsPage() {
+  // Tab lives in the URL so /settings?tab=learning can be linked to directly
+  const [params, setParams] = useSearchParams();
+  const tab: Tab = params.get('tab') === 'learning' ? 'learning' : 'profile';
+  const setTab = (t: Tab) => setParams(t === 'profile' ? {} : { tab: t }, { replace: true });
+
   const { data: prefs, isLoading } = useUserPreferences();
   const updatePrefs = useUpdateUserPreferences();
 
@@ -152,22 +165,51 @@ export default function SettingsPage() {
   return (
     <AppLayout>
       <motion.div
-        className="max-w-lg mx-auto px-4 pt-24 pb-16 space-y-6"
+        className={`${tab === 'profile' ? 'max-w-5xl' : 'max-w-2xl'} mx-auto px-4 pt-6 pb-16 space-y-6 transition-[max-width] duration-300`}
         variants={container}
         initial="hidden"
         animate="show"
       >
-        {/* Header */}
-        <motion.div variants={item} className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-primary/10 ring-1 ring-primary/20">
-            <Settings className="w-5 h-5 text-primary" />
-          </div>
+        {/* Header: title on the left, tab switch on the right */}
+        <motion.div variants={item} className="flex flex-col sm:flex-row sm:items-end justify-between gap-5">
           <div>
-            <h1 className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Settings</h1>
-            <p className="text-xs text-white/40">Tune your learning algorithm</p>
+            <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-[#c8922a]">
+              <Settings className="h-3.5 w-3.5" /> Settings
+            </p>
+            <h1 className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              {tab === 'profile' ? 'Your profile' : 'How you learn'}
+            </h1>
+            <p className="mt-1.5 text-sm text-zinc-500">
+              {tab === 'profile' ? 'Who you are on LexCore, and your account.' : 'Tune how reviews are scheduled and graded.'}
+            </p>
+          </div>
+
+          <div className="relative flex self-start sm:self-auto p-1.5 rounded-2xl bg-white/[0.06] ring-1 ring-inset ring-white/[0.08] backdrop-blur-2xl shadow-lg shadow-black/20">
+            {TABS.map(t => {
+              const on = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  aria-pressed={on}
+                  className={`relative flex items-center gap-2 h-9 px-4 text-sm font-medium rounded-xl transition-colors duration-300 ${on ? 'text-zinc-900' : 'text-white/50 hover:text-white'}`}
+                >
+                  {on && (
+                    <motion.span
+                      layoutId="settings-tab-pill"
+                      className="absolute inset-0 rounded-xl bg-white shadow-[0_0_24px_2px_rgba(255,255,255,0.2),0_6px_22px_rgba(168,85,247,0.45)]"
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    />
+                  )}
+                  <t.icon className="relative w-4 h-4" />
+                  <span className="relative">{t.label}</span>
+                </button>
+              );
+            })}
           </div>
         </motion.div>
 
+        {tab === 'profile' ? <ProfileTab /> : <>
         {/* Algorithm section */}
         <motion.div variants={item} className="bg-white/[0.04] rounded-2xl ring-1 ring-white/[0.08] p-5 space-y-8">
           <SectionHeader icon={Brain} title="Algorithm" subtitle="Controls how FSRS schedules your reviews" />
@@ -403,6 +445,7 @@ export default function SettingsPage() {
             {updatePrefs.isPending ? 'Saving…' : dirty ? 'Save Settings' : 'No Changes'}
           </Button>
         </motion.div>
+        </>}
       </motion.div>
     </AppLayout>
   );
